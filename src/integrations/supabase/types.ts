@@ -14,7 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      hazard_reports: {
+        Row: {
+          confidence_score: number
+          confirmed_count: number
+          created_at: string
+          denied_count: number
+          expires_at: string
+          id: string
+          latitude: number
+          longitude: number
+          reported_by: string
+          type: Database["public"]["Enums"]["hazard_type"]
+        }
+        Insert: {
+          confidence_score?: number
+          confirmed_count?: number
+          created_at?: string
+          denied_count?: number
+          expires_at?: string
+          id?: string
+          latitude: number
+          longitude: number
+          reported_by: string
+          type: Database["public"]["Enums"]["hazard_type"]
+        }
+        Update: {
+          confidence_score?: number
+          confirmed_count?: number
+          created_at?: string
+          denied_count?: number
+          expires_at?: string
+          id?: string
+          latitude?: number
+          longitude?: number
+          reported_by?: string
+          type?: Database["public"]["Enums"]["hazard_type"]
+        }
+        Relationships: []
+      }
+      trip_history: {
+        Row: {
+          alerts_received: number
+          distance_km: number
+          ended_at: string | null
+          id: string
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          alerts_received?: number
+          distance_km?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          alerts_received?: number
+          distance_km?: number
+          ended_at?: string | null
+          id?: string
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +88,13 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      hazard_type:
+        | "radar_fixe"
+        | "radar_mobile"
+        | "accident"
+        | "travaux"
+        | "obstacle"
+        | "ralentissement"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +221,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      hazard_type: [
+        "radar_fixe",
+        "radar_mobile",
+        "accident",
+        "travaux",
+        "obstacle",
+        "ralentissement",
+      ],
+    },
   },
 } as const
