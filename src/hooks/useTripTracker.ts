@@ -19,7 +19,7 @@ export function useTripTracker(userId: string | null) {
       if (tripIdRef.current) return;
       const { data, error } = await supabase
         .from("trip_history")
-        .insert({ user_id: userId })
+        .insert({ user_id: userId! })
         .select("id")
         .single();
       if (!cancelled && !error && data) tripIdRef.current = data.id;
