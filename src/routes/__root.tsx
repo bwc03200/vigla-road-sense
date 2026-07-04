@@ -93,6 +93,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#0B0F14" },
+      { name: "twitter:title", content: "VIGLA — Alertes routières temps réel" },
+      { name: "description", content: "VIGLA — application communautaire d'alerte de zones de danger routières : radars, accidents, travaux, obstacles. Temps réel, mobile et tableau de bord." },
+      { property: "og:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières : radars, accidents, travaux, obstacles. Temps réel, mobile et tableau de bord." },
+      { name: "twitter:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières : radars, accidents, travaux, obstacles. Temps réel, mobile et tableau de bord." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3030c30-946d-446b-9961-53a859594fad/id-preview-906fec6a--067a541a-e668-45e9-bd24-a7b365c91b4d.lovable.app-1783142455787.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3030c30-946d-446b-9961-53a859594fad/id-preview-906fec6a--067a541a-e668-45e9-bd24-a7b365c91b4d.lovable.app-1783142455787.png" },
     ],
     links: [
       {
