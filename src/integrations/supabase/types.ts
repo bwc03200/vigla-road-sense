@@ -53,6 +53,42 @@ export type Database = {
         }
         Relationships: []
       }
+      official_radars: {
+        Row: {
+          date_installation: string | null
+          id: string
+          latitude: number
+          longitude: number
+          route: string | null
+          source: string
+          type: string | null
+          updated_at: string
+          vitesse_controlee: number | null
+        }
+        Insert: {
+          date_installation?: string | null
+          id: string
+          latitude: number
+          longitude: number
+          route?: string | null
+          source?: string
+          type?: string | null
+          updated_at?: string
+          vitesse_controlee?: number | null
+        }
+        Update: {
+          date_installation?: string | null
+          id?: string
+          latitude?: number
+          longitude?: number
+          route?: string | null
+          source?: string
+          type?: string | null
+          updated_at?: string
+          vitesse_controlee?: number | null
+        }
+        Relationships: []
+      }
       trip_history: {
         Row: {
           alerts_received: number
