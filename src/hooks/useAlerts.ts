@@ -3,7 +3,7 @@ import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import { HAZARD_LABELS } from "@/types/vigla";
 
-const ALERT_RADIUS_M = 400; // considered "in zone"
+const ALERT_RADIUS_M = 400;
 const ALERT_LEAD_S = 30;
 
 function beep() {
@@ -35,6 +35,7 @@ export function useAlerts(
   const position = useVigla((s) => s.position);
   const speedKmh = useVigla((s) => s.speedKmh);
   const hazards = useVigla((s) => s.hazards);
+  const route = useVigla((s) => s.route);
   const alertedIds = useVigla((s) => s.alertedIds);
   const markAlerted = useVigla((s) => s.markAlerted);
   const clearAlert = useVigla((s) => s.clearAlert);
@@ -43,9 +44,11 @@ export function useAlerts(
 
   useEffect(() => {
     if (!position) return;
-    const speedMs = Math.max((speedKmh * 1000) / 3600, 3); // min 3 m/s for stopped user
+    const speedMs = Math.max((speedKmh * 1000) / 3600, 3);
+    const allowed = route ? new Set(route.hazardIds) : null;
 
     for (const h of hazards) {
+      if (allowed && !allowed.has(h.id)) continue;
       const d = haversine(position.lat, position.lng, h.latitude, h.longitude);
       const eta = d / speedMs;
       const already = alertedIds.has(h.id);
@@ -58,9 +61,8 @@ export function useAlerts(
         }
         cbRef.current?.(HAZARD_LABELS[h.type], d);
       } else if (already && d > ALERT_RADIUS_M * 2) {
-        // exited the zone → allow re-alert next time
         clearAlert(h.id);
       }
     }
-  }, [position, speedKmh, hazards, alertedIds, markAlerted, clearAlert]);
+  }, [position, speedKmh, hazards, route, alertedIds, markAlerted, clearAlert]);
 }

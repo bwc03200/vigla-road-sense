@@ -39,41 +39,36 @@
 
 :root {
   --radius: 1rem;
-  /* VIGLA dark theme — sombre only */
-  --background: oklch(0.16 0.02 250);        /* #0B0F14-ish */
-  --foreground: oklch(0.97 0.01 250);
-  --card: oklch(0.21 0.02 250);
-  --card-foreground: oklch(0.97 0.01 250);
-  --popover: oklch(0.21 0.02 250);
-  --popover-foreground: oklch(0.97 0.01 250);
-  --primary: oklch(0.72 0.19 45);            /* #FF6B35 danger orange */
-  --primary-foreground: oklch(0.15 0 0);
-  --secondary: oklch(0.28 0.02 250);
-  --secondary-foreground: oklch(0.97 0.01 250);
-  --muted: oklch(0.26 0.02 250);
-  --muted-foreground: oklch(0.72 0.02 250);
-  --accent: oklch(0.30 0.03 250);
-  --accent-foreground: oklch(0.97 0.01 250);
-  --destructive: oklch(0.65 0.24 27);
-  --destructive-foreground: oklch(0.98 0 0);
-  --border: oklch(0.30 0.02 250);
-  --input: oklch(0.28 0.02 250);
+  /* VIGLA light theme — daylight readable */
+  --background: oklch(0.985 0.005 250);       /* #F8FAFC */
+  --foreground: oklch(0.20 0.03 250);         /* #0F172A */
+  --card: oklch(1 0 0);                        /* white */
+  --card-foreground: oklch(0.20 0.03 250);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.20 0.03 250);
+  --primary: oklch(0.72 0.19 45);              /* #FF6B35 */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.01 250);
+  --secondary-foreground: oklch(0.20 0.03 250);
+  --muted: oklch(0.95 0.01 250);
+  --muted-foreground: oklch(0.50 0.02 250);
+  --accent: oklch(0.94 0.02 250);
+  --accent-foreground: oklch(0.20 0.03 250);
+  --destructive: oklch(0.60 0.24 27);
+  --destructive-foreground: oklch(1 0 0);
+  --border: oklch(0.90 0.01 250);
+  --input: oklch(0.92 0.01 250);
   --ring: oklch(0.72 0.19 45);
-  --danger: oklch(0.72 0.19 45);              /* #FF6B35 */
-  --info: oklch(0.80 0.14 200);               /* #22D3EE */
-  --success: oklch(0.78 0.15 160);            /* #34D399 */
-}
-
-.dark {
-  --background: oklch(0.16 0.02 250);
-  --foreground: oklch(0.97 0.01 250);
+  --danger: oklch(0.72 0.19 45);               /* #FF6B35 */
+  --info: oklch(0.60 0.18 245);                /* #3B82F6 */
+  --success: oklch(0.65 0.18 155);
 }
 
 html, body, #root { height: 100%; }
 
 @layer base {
   * { border-color: var(--color-border); }
-  html { color-scheme: dark; }
+  html { color-scheme: light; }
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -83,14 +78,14 @@ html, body, #root { height: 100%; }
   .tabular-nums { font-variant-numeric: tabular-nums; }
 }
 
-/* Leaflet dark tweaks */
+/* Leaflet light tweaks */
 .leaflet-container {
-  background: #0B0F14;
+  background: #E5E7EB;
   font-family: inherit;
 }
 .leaflet-control-attribution {
-  background: rgba(0,0,0,0.5) !important;
-  color: #94a3b8 !important;
+  background: rgba(255,255,255,0.85) !important;
+  color: #475569 !important;
   font-size: 10px !important;
 }
-.leaflet-control-attribution a { color: #cbd5e1 !important; }
+.leaflet-control-attribution a { color: #1e40af !important; }
