@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { HazardReport } from "@/types/vigla";
+import type { HazardReport, OfficialRadar, RouteState } from "@/types/vigla";
 
 export interface Position {
   lat: number;
@@ -10,22 +10,25 @@ export interface Position {
 
 interface ViglaState {
   position: Position | null;
-  speedKmh: number; // smoothed
+  speedKmh: number;
   hazards: HazardReport[];
+  officialRadars: OfficialRadar[];
   online: boolean;
   alertedIds: Set<string>;
   geoError: string | null;
+  route: RouteState | null;
   setPosition: (p: Position, speedFromApi: number | null) => void;
   setHazards: (h: HazardReport[]) => void;
   upsertHazard: (h: HazardReport) => void;
   removeHazard: (id: string) => void;
+  setOfficialRadars: (r: OfficialRadar[]) => void;
   setOnline: (v: boolean) => void;
   markAlerted: (id: string) => void;
   clearAlert: (id: string) => void;
   setGeoError: (e: string | null) => void;
+  setRoute: (r: RouteState | null) => void;
 }
 
-// Ring buffer for speed smoothing.
 const speedBuffer: number[] = [];
 let lastPos: Position | null = null;
 
@@ -33,14 +36,16 @@ export const useVigla = create<ViglaState>((set) => ({
   position: null,
   speedKmh: 0,
   hazards: [],
+  officialRadars: [],
   online: true,
   alertedIds: new Set<string>(),
   geoError: null,
+  route: null,
 
   setPosition: (p, speedFromApi) => {
     let instant = 0;
     if (speedFromApi != null && !Number.isNaN(speedFromApi) && speedFromApi >= 0) {
-      instant = speedFromApi * 3.6; // m/s -> km/h
+      instant = speedFromApi * 3.6;
     } else if (lastPos) {
       const dt = (p.timestamp - lastPos.timestamp) / 1000;
       if (dt > 0.2) {
@@ -75,6 +80,7 @@ export const useVigla = create<ViglaState>((set) => ({
     }),
   removeHazard: (id) =>
     set((s) => ({ hazards: s.hazards.filter((x) => x.id !== id) })),
+  setOfficialRadars: (r) => set({ officialRadars: r }),
   setOnline: (v) => set({ online: v }),
   markAlerted: (id) =>
     set((s) => {
@@ -89,4 +95,5 @@ export const useVigla = create<ViglaState>((set) => ({
       return { alertedIds: next };
     }),
   setGeoError: (e) => set({ geoError: e }),
+  setRoute: (r) => set({ route: r }),
 }));

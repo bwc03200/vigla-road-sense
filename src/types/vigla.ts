@@ -28,6 +28,26 @@ export interface TripHistory {
   alerts_received: number;
 }
 
+export interface OfficialRadar {
+  id: string;
+  latitude: number;
+  longitude: number;
+  type: string | null;
+  route: string | null;
+  vitesse_controlee: number | null;
+  date_installation: string | null;
+  source: string;
+  updated_at: string;
+}
+
+export interface RouteState {
+  destination: { lat: number; lng: number; label: string };
+  coords: [number, number][]; // [lat, lng] polyline points
+  distanceM: number;
+  durationS: number;
+  hazardIds: string[]; // hazard_reports ids within 500m of route
+}
+
 export const HAZARD_LABELS: Record<HazardType, string> = {
   radar_fixe: "Radar fixe",
   radar_mobile: "Radar mobile",
