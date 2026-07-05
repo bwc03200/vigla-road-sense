@@ -107,10 +107,12 @@ function normalizeRow(
     longitude: lng,
     type: pick(row, ["type", "categorie"]),
     route: pick(row, ["route", "voie", "axe", "emplacement", "departement"]),
-    vitesse_controlee:
-      parseNum(pick(row, ["vitesse", "vma", "vitesse_vehiculesleg"])) != null
-        ? Math.round(parseNum(pick(row, ["vitesse", "vma", "vitesse_vehiculesleg"]))!)
-        : null,
+    vitesse_controlee: (() => {
+      const v =
+        parseNum(pick(row, ["vitesse_vehicules_leger", "vitesse_leger", "vma"])) ??
+        parseNum(pick(row, ["vitesse"]));
+      return v == null ? null : Math.round(v);
+    })(),
     date_installation: parseDate(pick(row, ["date_installation", "date_mise_en_service", "date"])),
   };
 }
