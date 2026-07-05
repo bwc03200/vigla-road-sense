@@ -178,16 +178,16 @@ async function pickResource(datasetId: string): Promise<{
   format: string;
 } | null> {
   const res = await fetch(
-    `https://www.data.gouv.fr/api/1/datasets/${datasetId}/resources/?page_size=50`,
+    `https://www.data.gouv.fr/api/1/datasets/${datasetId}/`,
   );
   if (!res.ok) return null;
   const data = await res.json();
-  const items = (data?.data ?? []) as Array<{
+  const items = ((data?.resources ?? []) as Array<{
     url: string;
     format?: string;
     title?: string;
     last_modified?: string;
-  }>;
+  }>);
   const scored = items
     .map((r) => {
       const fmt = (r.format ?? "").toLowerCase();
