@@ -5,6 +5,7 @@ import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useHazards } from "@/hooks/useHazards";
+import { useOfficialRadars } from "@/hooks/useOfficialRadars";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useTripTracker } from "@/hooks/useTripTracker";
 import { useVigla } from "@/lib/vigla-store";
@@ -14,8 +15,9 @@ import { ReportGrid } from "@/components/vigla/ReportGrid";
 import { HistoryList } from "@/components/vigla/HistoryList";
 import { OfflineBadge } from "@/components/vigla/OfflineBadge";
 import { BottomTabs, type Tab } from "@/components/vigla/BottomTabs";
+import { RoutePlanner } from "@/components/vigla/RoutePlanner";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, LogOut, Shield } from "lucide-react";
+import { AlertTriangle, LogOut, Shield, Navigation, X } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
 
 export const Route = createFileRoute("/")({
@@ -73,8 +75,10 @@ function Index() {
 
 function ViglaApp({ userId, email }: { userId: string; email: string }) {
   const [tab, setTab] = useState<Tab>("map");
+  const [showRoute, setShowRoute] = useState(false);
   useGeolocation();
   useHazards();
+  useOfficialRadars();
   const tracker = useTripTracker(userId);
   useAlerts((label, distance) => {
     tracker.incrementAlerts();
@@ -84,16 +88,38 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
     });
   });
   const geoError = useVigla((s) => s.geoError);
+  const route = useVigla((s) => s.route);
+  const setRoute = useVigla((s) => s.setRoute);
 
   return (
     <div className="relative min-h-screen bg-background">
-      <Toaster position="top-center" theme="dark" richColors closeButton />
+      <Toaster position="top-center" theme="light" richColors closeButton />
       <main className="fixed inset-0 bottom-16">
         {tab === "map" && (
           <div className="relative h-full w-full">
             <MapView />
             <TopBar />
             <OfflineBadge />
+            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[600] flex justify-center px-4">
+              {route ? (
+                <button
+                  onClick={() => setRoute(null)}
+                  className="pointer-events-auto flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.15)] ring-1 ring-slate-200"
+                >
+                  <X className="h-4 w-4" />
+                  Annuler l'itinéraire
+                </button>
+              ) : (
+                <button
+                  onClick={() => setShowRoute(true)}
+                  className="pointer-events-auto flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(255,107,53,0.35)]"
+                >
+                  <Navigation className="h-4 w-4" />
+                  Itinéraire
+                </button>
+              )}
+            </div>
+            {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
             {geoError && <GeoErrorOverlay code={geoError} />}
           </div>
         )}
