@@ -16,7 +16,7 @@ interface NominatimResult {
   lon: string;
 }
 
-const ROUTE_HAZARD_RADIUS_M = 500;
+
 
 export function RoutePlanner({ onClose }: { onClose: () => void }) {
   const position = useVigla((s) => s.position);
