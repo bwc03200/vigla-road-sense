@@ -94,6 +94,31 @@ function Recenter({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
+function NavigationFollow({
+  lat,
+  lng,
+  heading,
+}: {
+  lat: number;
+  lng: number;
+  heading: number | null;
+}) {
+  const map = useMap();
+  useEffect(() => {
+    map.setView([lat, lng], 17, { animate: true });
+  }, [lat, lng, map]);
+  useEffect(() => {
+    const el = map.getContainer();
+    const h = heading ?? 0;
+    el.style.transition = "transform 400ms ease-out";
+    el.style.transform = `rotate(${-h}deg)`;
+    return () => {
+      el.style.transform = "";
+    };
+  }, [heading, map]);
+  return null;
+}
+
 function FitRoute({ coords }: { coords: [number, number][] }) {
   const map = useMap();
   useEffect(() => {
@@ -103,6 +128,7 @@ function FitRoute({ coords }: { coords: [number, number][] }) {
   }, [coords, map]);
   return null;
 }
+
 
 export function MapView() {
   const position = useVigla((s) => s.position);
