@@ -4,7 +4,9 @@ import { Search, X, Loader2, Navigation, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
-import { distanceToPolyline, formatDistance, haversine } from "@/lib/geo";
+import { formatDistance, haversine } from "@/lib/geo";
+import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+
 import { HAZARD_LABELS } from "@/types/vigla";
 
 interface NominatimResult {
