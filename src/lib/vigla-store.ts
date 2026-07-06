@@ -103,4 +103,8 @@ export const useVigla = create<ViglaState>((set) => ({
     }),
   setGeoError: (e) => set({ geoError: e }),
   setRoute: (r) => set({ route: r }),
+  setNavigation: (n) => set({ navigation: n }),
+  patchNavigation: (patch) =>
+    set((s) => (s.navigation ? { navigation: { ...s.navigation, ...patch } } : {})),
 }));
+
