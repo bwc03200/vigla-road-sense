@@ -180,13 +180,19 @@ function ArrivalScreen({ onClose }: { onClose: () => void }) {
     return () => window.clearTimeout(id);
   }, [onClose]);
 
+function ArrivalScreen({ onClose }: { onClose: () => void }) {
+  const navigation = useVigla((s) => s.navigation)!;
+  const route = useVigla((s) => s.route);
+
+  useEffect(() => {
+    const id = window.setTimeout(onClose, 8000);
+    return () => window.clearTimeout(id);
+  }, [onClose]);
+
   const durationMs = Date.now() - new Date(navigation.startedAt).getTime();
   const durationMin = Math.max(1, Math.round(durationMs / 60000));
-  const distanceKm = (
-    (navigation.routeCoords.length > 0
-      ? navigation.distanceRemainingM + 0
-      : 0) / 1000
-  ).toFixed(1);
+  const distanceKm = ((route?.distanceM ?? 0) / 1000).toFixed(1);
+
 
   return (
     <div className="absolute inset-0 z-[900] flex items-center justify-center bg-white/95 p-6 backdrop-blur">
