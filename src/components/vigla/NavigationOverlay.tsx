@@ -172,13 +172,6 @@ export function NavigationOverlay() {
   );
 }
 
-function ArrivalScreen({ onClose }: { onClose: () => void }) {
-  const navigation = useVigla((s) => s.navigation)!;
-
-  useEffect(() => {
-    const id = window.setTimeout(onClose, 8000);
-    return () => window.clearTimeout(id);
-  }, [onClose]);
 
 function ArrivalScreen({ onClose }: { onClose: () => void }) {
   const navigation = useVigla((s) => s.navigation)!;
