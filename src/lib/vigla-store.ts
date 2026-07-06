@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import type { HazardReport, OfficialRadar, RouteState } from "@/types/vigla";
+import type { ActiveNavigation, HazardReport, OfficialRadar, RouteState } from "@/types/vigla";
+
 
 export interface Position {
   lat: number;
