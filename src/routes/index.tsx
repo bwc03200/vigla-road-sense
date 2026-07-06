@@ -85,8 +85,11 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   useHazards();
   useOfficialRadars();
   const tracker = useTripTracker(userId);
+  const patchNavigation = useVigla((s) => s.patchNavigation);
   useAlerts((label, distance) => {
     tracker.incrementAlerts();
+    const nav = useVigla.getState().navigation;
+    if (nav) patchNavigation({ alertsReceived: nav.alertsReceived + 1 });
     toast(`⚠️ ${label}`, {
       description: `À ${formatDistance(distance)}`,
       duration: 5000,
@@ -94,7 +97,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   });
   const geoError = useVigla((s) => s.geoError);
   const route = useVigla((s) => s.route);
-  const setRoute = useVigla((s) => s.setRoute);
+  const navigation = useVigla((s) => s.navigation);
+  const navActive = !!navigation && !navigation.arrived;
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -103,18 +107,10 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
         {tab === "map" && (
           <div className="relative h-full w-full">
             <MapView />
-            <TopBar />
+            {!navActive && <TopBar />}
             <OfflineBadge />
-            <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[600] flex justify-center px-4">
-              {route ? (
-                <button
-                  onClick={() => setRoute(null)}
-                  className="pointer-events-auto flex items-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-medium text-slate-900 shadow-[0_8px_24px_rgba(15,23,42,0.15)] ring-1 ring-slate-200"
-                >
-                  <X className="h-4 w-4" />
-                  Annuler l'itinéraire
-                </button>
-              ) : (
+            {!route && !navActive && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[600] flex justify-center px-4">
                 <button
                   onClick={() => setShowRoute(true)}
                   className="pointer-events-auto flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(255,107,53,0.35)]"
@@ -122,12 +118,15 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                   <Navigation className="h-4 w-4" />
                   Itinéraire
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+            <StartTripBar />
+            <NavigationOverlay />
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
             {geoError && <GeoErrorOverlay code={geoError} />}
           </div>
         )}
+
         {tab === "report" && (
           <div className="h-full overflow-y-auto pt-6">
             <h2 className="px-4 text-lg font-semibold">Signaler une zone</h2>
