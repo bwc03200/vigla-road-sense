@@ -4,7 +4,9 @@ import { Search, X, Loader2, Navigation, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
-import { distanceToPolyline, formatDistance, haversine } from "@/lib/geo";
+import { formatDistance, haversine } from "@/lib/geo";
+import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+
 import { HAZARD_LABELS } from "@/types/vigla";
 
 interface NominatimResult {
@@ -14,7 +16,7 @@ interface NominatimResult {
   lon: string;
 }
 
-const ROUTE_HAZARD_RADIUS_M = 500;
+
 
 export function RoutePlanner({ onClose }: { onClose: () => void }) {
   const position = useVigla((s) => s.position);
@@ -79,32 +81,21 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
     setComputing(true);
     setResults([]);
     try {
-      const url = `https://router.project-osrm.org/route/v1/driving/${position.lng},${position.lat};${destLng},${destLat}?overview=full&geometries=geojson`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("osrm");
-      const data = await res.json();
-      const r0 = data?.routes?.[0];
-      if (!r0) throw new Error("no-route");
-      const coords: [number, number][] = r0.geometry.coordinates.map(
-        ([lng, lat]: [number, number]) => [lat, lng],
+      const result = await fetchOsrmRoute(
+        position.lat,
+        position.lng,
+        destLat,
+        destLng,
       );
-      const hazardIds = hazards
-        .filter(
-          (h) =>
-            distanceToPolyline(h.latitude, h.longitude, coords) <
-            ROUTE_HAZARD_RADIUS_M,
-        )
-        .map((h) => h.id);
-      setRoute({
-        destination: { lat: destLat, lng: destLng, label: r.display_name },
-        coords,
-        distanceM: r0.distance ?? 0,
-        durationS: r0.duration ?? 0,
-        hazardIds,
-      });
+      const state = buildRouteState(
+        { lat: destLat, lng: destLng, label: r.display_name },
+        result,
+        hazards,
+      );
+      setRoute(state);
       setQuery("");
       toast.success("Itinéraire calculé", {
-        description: `${(r0.distance / 1000).toFixed(1)} km · ${hazardIds.length} zone(s) de danger`,
+        description: `${(state.distanceM / 1000).toFixed(1)} km · ${state.hazardIds.length} zone(s) de danger`,
       });
       onClose();
     } catch {
@@ -113,6 +104,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
       setComputing(false);
     }
   }
+
 
   function cancelRoute() {
     setRoute(null);

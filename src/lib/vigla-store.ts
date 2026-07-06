@@ -1,5 +1,6 @@
 import { create } from "zustand";
-import type { HazardReport, OfficialRadar, RouteState } from "@/types/vigla";
+import type { ActiveNavigation, HazardReport, OfficialRadar, RouteState } from "@/types/vigla";
+
 
 export interface Position {
   lat: number;
@@ -17,6 +18,7 @@ interface ViglaState {
   alertedIds: Set<string>;
   geoError: string | null;
   route: RouteState | null;
+  navigation: ActiveNavigation | null;
   setPosition: (p: Position, speedFromApi: number | null) => void;
   setHazards: (h: HazardReport[]) => void;
   upsertHazard: (h: HazardReport) => void;
@@ -27,7 +29,10 @@ interface ViglaState {
   clearAlert: (id: string) => void;
   setGeoError: (e: string | null) => void;
   setRoute: (r: RouteState | null) => void;
+  setNavigation: (n: ActiveNavigation | null) => void;
+  patchNavigation: (patch: Partial<ActiveNavigation>) => void;
 }
+
 
 const speedBuffer: number[] = [];
 let lastPos: Position | null = null;
@@ -41,6 +46,8 @@ export const useVigla = create<ViglaState>((set) => ({
   alertedIds: new Set<string>(),
   geoError: null,
   route: null,
+  navigation: null,
+
 
   setPosition: (p, speedFromApi) => {
     let instant = 0;
@@ -96,4 +103,8 @@ export const useVigla = create<ViglaState>((set) => ({
     }),
   setGeoError: (e) => set({ geoError: e }),
   setRoute: (r) => set({ route: r }),
+  setNavigation: (n) => set({ navigation: n }),
+  patchNavigation: (patch) =>
+    set((s) => (s.navigation ? { navigation: { ...s.navigation, ...patch } } : {})),
 }));
+
