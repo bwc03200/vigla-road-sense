@@ -40,13 +40,39 @@ export interface OfficialRadar {
   updated_at: string;
 }
 
+export interface RouteStep {
+  instruction: string;
+  distanceMeters: number;
+  maneuverType: string;
+  location: [number, number]; // [lat, lng] of the maneuver point
+}
+
 export interface RouteState {
   destination: { lat: number; lng: number; label: string };
   coords: [number, number][]; // [lat, lng] polyline points
   distanceM: number;
   durationS: number;
   hazardIds: string[]; // hazard_reports ids within 500m of route
+  steps: RouteStep[];
 }
+
+export interface ActiveNavigation {
+  routeCoords: [number, number][];
+  remainingCoords: [number, number][];
+  consumedCoords: [number, number][];
+  steps: RouteStep[];
+  currentStepIndex: number;
+  distanceRemainingM: number;
+  durationRemainingS: number;
+  distanceToNextManeuverM: number;
+  offRouteM: number;
+  offRouteSince: number | null;
+  recalculating: boolean;
+  arrived: boolean;
+  startedAt: string;
+  alertsReceived: number;
+}
+
 
 export const HAZARD_LABELS: Record<HazardType, string> = {
   radar_fixe: "Radar fixe",
