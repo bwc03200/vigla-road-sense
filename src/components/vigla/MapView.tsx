@@ -135,6 +135,7 @@ export function MapView() {
   const hazards = useVigla((s) => s.hazards);
   const officialRadars = useVigla((s) => s.officialRadars);
   const route = useVigla((s) => s.route);
+  const navigation = useVigla((s) => s.navigation);
 
   const nearbyHazards = useMemo(() => {
     if (!position) return hazards;
@@ -156,6 +157,8 @@ export function MapView() {
     ? [position.lat, position.lng]
     : [48.8566, 2.3522];
 
+  const navActive = !!navigation && !navigation.arrived;
+
   return (
     <MapContainer
       center={center}
@@ -170,7 +173,16 @@ export function MapView() {
         subdomains={["a", "b", "c", "d"]}
         maxZoom={19}
       />
-      {position && !route && <Recenter lat={position.lat} lng={position.lng} />}
+      {position && !route && !navActive && (
+        <Recenter lat={position.lat} lng={position.lng} />
+      )}
+      {position && navActive && (
+        <NavigationFollow
+          lat={position.lat}
+          lng={position.lng}
+          heading={position.heading}
+        />
+      )}
       {position && (
         <>
           <Marker
@@ -189,7 +201,7 @@ export function MapView() {
           />
         </>
       )}
-      {route && (
+      {route && !navActive && (
         <>
           <Polyline
             positions={route.coords}
@@ -202,6 +214,27 @@ export function MapView() {
           <FitRoute coords={route.coords} />
         </>
       )}
+      {navigation && navActive && route && (
+        <>
+          {navigation.consumedCoords.length >= 2 && (
+            <Polyline
+              positions={navigation.consumedCoords}
+              pathOptions={{ color: "#94A3B8", weight: 5, opacity: 0.6 }}
+            />
+          )}
+          {navigation.remainingCoords.length >= 2 && (
+            <Polyline
+              positions={navigation.remainingCoords}
+              pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
+            />
+          )}
+          <Marker
+            position={[route.destination.lat, route.destination.lng]}
+            icon={destinationIcon()}
+          />
+        </>
+      )}
+
       {nearbyHazards.map((h) => (
         <Marker
           key={h.id}
