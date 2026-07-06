@@ -18,6 +18,7 @@ interface ViglaState {
   alertedIds: Set<string>;
   geoError: string | null;
   route: RouteState | null;
+  navigation: ActiveNavigation | null;
   setPosition: (p: Position, speedFromApi: number | null) => void;
   setHazards: (h: HazardReport[]) => void;
   upsertHazard: (h: HazardReport) => void;
@@ -28,7 +29,10 @@ interface ViglaState {
   clearAlert: (id: string) => void;
   setGeoError: (e: string | null) => void;
   setRoute: (r: RouteState | null) => void;
+  setNavigation: (n: ActiveNavigation | null) => void;
+  patchNavigation: (patch: Partial<ActiveNavigation>) => void;
 }
+
 
 const speedBuffer: number[] = [];
 let lastPos: Position | null = null;
