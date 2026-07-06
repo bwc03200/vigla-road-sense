@@ -16,9 +16,14 @@ import { HistoryList } from "@/components/vigla/HistoryList";
 import { OfflineBadge } from "@/components/vigla/OfflineBadge";
 import { BottomTabs, type Tab } from "@/components/vigla/BottomTabs";
 import { RoutePlanner } from "@/components/vigla/RoutePlanner";
+import {
+  NavigationOverlay,
+  StartTripBar,
+} from "@/components/vigla/NavigationOverlay";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, LogOut, Shield, Navigation, X } from "lucide-react";
+import { AlertTriangle, LogOut, Shield, Navigation } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
