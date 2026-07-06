@@ -46,6 +46,8 @@ export const useVigla = create<ViglaState>((set) => ({
   alertedIds: new Set<string>(),
   geoError: null,
   route: null,
+  navigation: null,
+
 
   setPosition: (p, speedFromApi) => {
     let instant = 0;
