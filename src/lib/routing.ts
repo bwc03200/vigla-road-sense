@@ -76,17 +76,33 @@ export async function fetchOsrmRoute(
   const data = await res.json();
   const r0 = data?.routes?.[0];
   if (!r0) throw new Error("no-route");
-  const coords: [number, number][] = r0.geometry.coordinates.map(
-    ([lng, lat]: [number, number]) => [lat, lng],
-  );
+  const rawCoords = Array.isArray(r0?.geometry?.coordinates)
+    ? r0.geometry.coordinates
+    : [];
+  const coords: [number, number][] = rawCoords
+    .filter(
+      (c: unknown): c is [number, number] =>
+        Array.isArray(c) &&
+        c.length >= 2 &&
+        Number.isFinite(c[0]) &&
+        Number.isFinite(c[1]),
+    )
+    .map(([lng, lat]: [number, number]) => [lat, lng]);
+  if (coords.length < 2) throw new Error("no-route");
   const steps: RouteStep[] = [];
-  for (const leg of r0.legs ?? []) {
-    for (const s of (leg.steps ?? []) as OsrmStep[]) {
-      const loc = s.maneuver.location ?? [0, 0];
+  const legs = Array.isArray(r0?.legs) ? r0.legs : [];
+  for (const leg of legs) {
+    const legSteps = Array.isArray(leg?.steps) ? (leg.steps as OsrmStep[]) : [];
+    for (const s of legSteps) {
+      if (!s || !s.maneuver) continue;
+      const loc =
+        Array.isArray(s.maneuver.location) && s.maneuver.location.length >= 2
+          ? s.maneuver.location
+          : [0, 0];
       steps.push({
         instruction: stepInstruction(s),
-        distanceMeters: s.distance ?? 0,
-        maneuverType: s.maneuver.type,
+        distanceMeters: Number.isFinite(s.distance) ? s.distance : 0,
+        maneuverType: s.maneuver.type ?? "continue",
         location: [loc[1], loc[0]],
       });
     }
