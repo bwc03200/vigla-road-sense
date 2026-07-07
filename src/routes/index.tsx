@@ -121,8 +121,14 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                 </button>
               </div>
             )}
-            <StartTripBar />
-            <NavigationOverlay />
+            <NavigationErrorBoundary
+              onReset={() => {
+                useVigla.setState({ navigation: null, route: null });
+              }}
+            >
+              <StartTripBar />
+              <NavigationOverlay />
+            </NavigationErrorBoundary>
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
             {geoError && <GeoErrorOverlay code={geoError} />}
           </div>
