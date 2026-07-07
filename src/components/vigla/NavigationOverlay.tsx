@@ -23,15 +23,18 @@ export function StartTripBar() {
 
   function start() {
     if (!route) return;
+    const coords = Array.isArray(route.coords) ? route.coords : [];
+    const steps = Array.isArray(route.steps) ? route.steps : [];
+    if (coords.length < 2) return;
     const nav: ActiveNavigation = {
-      routeCoords: route.coords,
-      remainingCoords: route.coords,
+      routeCoords: coords,
+      remainingCoords: coords,
       consumedCoords: [],
-      steps: route.steps,
+      steps,
       currentStepIndex: 0,
-      distanceRemainingM: route.distanceM,
-      durationRemainingS: route.durationS,
-      distanceToNextManeuverM: route.steps[0]?.distanceMeters ?? 0,
+      distanceRemainingM: route.distanceM ?? 0,
+      durationRemainingS: route.durationS ?? 0,
+      distanceToNextManeuverM: steps[0]?.distanceMeters ?? 0,
       offRouteM: 0,
       offRouteSince: null,
       recalculating: false,
