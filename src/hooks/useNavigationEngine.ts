@@ -80,7 +80,7 @@ export function useNavigationEngine() {
         distanceRemainingM: 0,
         durationRemainingS: 0,
         distanceToNextManeuverM: 0,
-        currentStepIndex: navigation.steps.length - 1,
+        currentStepIndex: Math.max(0, steps.length - 1),
         offRouteM: proj.distanceToRouteM,
         offRouteSince: null,
         arrived: true,
