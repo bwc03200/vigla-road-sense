@@ -30,6 +30,7 @@ export function useNavigationEngine() {
     if (navigation.arrived) return;
 
     const coords = route.coords;
+    if (!Array.isArray(coords) || coords.length < 2) return;
     const proj = projectOnPolyline(position.lat, position.lng, coords);
     const totalLen = polylineLength(coords);
     const distanceRemainingM = Math.max(0, totalLen - proj.distanceAlongM);
@@ -49,12 +50,14 @@ export function useNavigationEngine() {
     ];
 
     // Advance step index by finding the next step location ahead of projection.
-    let stepIdx = navigation.currentStepIndex;
+    const steps = Array.isArray(navigation.steps) ? navigation.steps : [];
+    let stepIdx = Math.min(navigation.currentStepIndex, Math.max(0, steps.length - 1));
     let distanceToNext = 0;
-    for (let i = stepIdx; i < navigation.steps.length; i++) {
-      const s = navigation.steps[i];
+    for (let i = stepIdx; i < steps.length; i++) {
+      const s = steps[i];
+      if (!s || !Array.isArray(s.location) || s.location.length < 2) continue;
       const d = haversine(position.lat, position.lng, s.location[0], s.location[1]);
-      if (d < 25 && i < navigation.steps.length - 1) {
+      if (d < 25 && i < steps.length - 1) {
         stepIdx = i + 1;
         continue;
       }
