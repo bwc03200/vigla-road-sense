@@ -20,6 +20,7 @@ import {
   NavigationOverlay,
   StartTripBar,
 } from "@/components/vigla/NavigationOverlay";
+import { NavigationErrorBoundary } from "@/components/vigla/NavigationErrorBoundary";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, LogOut, Shield, Navigation } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
