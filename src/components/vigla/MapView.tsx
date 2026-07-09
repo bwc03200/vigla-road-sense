@@ -27,11 +27,7 @@ function hazardIcon(type: HazardType) {
   const color = HAZARD_COLORS[type];
   return L.divIcon({
     className: "vigla-hazard-icon",
-    html: `<div style="
-      width:36px;height:36px;border-radius:50%;
-      background:${color};display:flex;align-items:center;justify-content:center;
-      box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 3px #ffffff;
-      font-size:18px;">${HAZARD_EMOJI[type]}</div>`,
+    html: `<div style="width:36px;height:36px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 3px #ffffff;font-size:18px;">${HAZARD_EMOJI[type]}</div>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
   });
@@ -40,11 +36,7 @@ function hazardIcon(type: HazardType) {
 function officialRadarIcon() {
   return L.divIcon({
     className: "vigla-official-radar-icon",
-    html: `<div style="
-      width:32px;height:32px;border-radius:8px;
-      background:#3B82F6;display:flex;align-items:center;justify-content:center;
-      box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 2px #ffffff;
-      color:white;font-size:14px;font-weight:700;">R</div>`,
+    html: `<div style="width:32px;height:32px;border-radius:8px;background:#3B82F6;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 2px #ffffff;color:white;font-size:14px;font-weight:700;">R</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 16],
   });
@@ -54,14 +46,7 @@ function userIcon(heading: number | null) {
   const rot = heading ?? 0;
   return L.divIcon({
     className: "vigla-user-icon",
-    html: `<div style="transform:rotate(${rot}deg);width:28px;height:28px;">
-      <div style="
-        width:0;height:0;
-        border-left:14px solid transparent;
-        border-right:14px solid transparent;
-        border-bottom:28px solid #2563EB;
-        filter:drop-shadow(0 2px 4px rgba(15,23,42,.35));"></div>
-    </div>`,
+    html: `<div style="transform:rotate(${rot}deg);width:28px;height:28px;"><div style="width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:28px solid #2563EB;filter:drop-shadow(0 2px 4px rgba(15,23,42,.35));"></div></div>`,
     iconSize: [28, 28],
     iconAnchor: [14, 14],
   });
@@ -70,13 +55,19 @@ function userIcon(heading: number | null) {
 function destinationIcon() {
   return L.divIcon({
     className: "vigla-destination-icon",
-    html: `<div style="
-      width:32px;height:32px;border-radius:50%;
-      background:#0F172A;display:flex;align-items:center;justify-content:center;
-      box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;
-      color:white;font-size:16px;">📍</div>`,
+    html: `<div style="width:32px;height:32px;border-radius:50%;background:#0F172A;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-size:16px;">📍</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 32],
+  });
+}
+
+function convoyMemberIcon(name: string) {
+  const letter = (name.charAt(0) || "?").toUpperCase();
+  return L.divIcon({
+    className: "vigla-convoy-icon",
+    html: `<div style="width:34px;height:34px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-weight:700;font-size:14px;">${letter}</div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
   });
 }
 
@@ -94,15 +85,7 @@ function Recenter({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
-function NavigationFollow({
-  lat,
-  lng,
-  heading,
-}: {
-  lat: number;
-  lng: number;
-  heading: number | null;
-}) {
+function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; heading: number | null }) {
   const map = useMap();
   useEffect(() => {
     map.setView([lat, lng], 17, { animate: true });
@@ -129,88 +112,53 @@ function FitRoute({ coords }: { coords: [number, number][] }) {
   return null;
 }
 
-
 export function MapView() {
   const position = useVigla((s) => s.position);
   const hazards = useVigla((s) => s.hazards);
   const officialRadars = useVigla((s) => s.officialRadars);
   const route = useVigla((s) => s.route);
   const navigation = useVigla((s) => s.navigation);
+  const convoyMembers = useVigla((s) => s.convoyMembers);
 
   const nearbyHazards = useMemo(() => {
     if (!position) return hazards;
-    return hazards.filter(
-      (h) =>
-        haversine(position.lat, position.lng, h.latitude, h.longitude) < 8000,
-    );
+    return hazards.filter((h) => haversine(position.lat, position.lng, h.latitude, h.longitude) < 8000);
   }, [hazards, position]);
 
   const nearbyOfficial = useMemo(() => {
     if (!position) return officialRadars.slice(0, 500);
-    return officialRadars.filter(
-      (r) =>
-        haversine(position.lat, position.lng, r.latitude, r.longitude) < 8000,
-    );
+    return officialRadars.filter((r) => haversine(position.lat, position.lng, r.latitude, r.longitude) < 8000);
   }, [officialRadars, position]);
 
-  const center: [number, number] = position
-    ? [position.lat, position.lng]
-    : [48.8566, 2.3522];
-
+  const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
   return (
-    <MapContainer
-      center={center}
-      zoom={15}
-      zoomControl={false}
-      className="h-full w-full"
-      attributionControl={true}
-    >
+    <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <TileLayer
         url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         subdomains={["a", "b", "c", "d"]}
         maxZoom={19}
       />
-      {position && !route && !navActive && (
-        <Recenter lat={position.lat} lng={position.lng} />
-      )}
+      {position && !route && !navActive && <Recenter lat={position.lat} lng={position.lng} />}
       {position && navActive && (
-        <NavigationFollow
-          lat={position.lat}
-          lng={position.lng}
-          heading={position.heading}
-        />
+        <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
       )}
       {position && (
         <>
-          <Marker
-            position={[position.lat, position.lng]}
-            icon={userIcon(position.heading)}
-          />
+          <Marker position={[position.lat, position.lng]} icon={userIcon(position.heading)} />
           <Circle
             center={[position.lat, position.lng]}
             radius={30}
-            pathOptions={{
-              color: "#2563EB",
-              fillColor: "#2563EB",
-              fillOpacity: 0.12,
-              weight: 1,
-            }}
+            pathOptions={{ color: "#2563EB", fillColor: "#2563EB", fillOpacity: 0.12, weight: 1 }}
           />
         </>
       )}
       {route && !navActive && (
         <>
-          <Polyline
-            positions={route.coords}
-            pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }}
-          />
-          <Marker
-            position={[route.destination.lat, route.destination.lng]}
-            icon={destinationIcon()}
-          />
+          <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
+          <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
         </>
       )}
@@ -228,27 +176,25 @@ export function MapView() {
               pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
             />
           )}
-          <Marker
-            position={[route.destination.lat, route.destination.lng]}
-            icon={destinationIcon()}
-          />
+          <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
         </>
       )}
 
       {nearbyHazards.map((h) => (
-        <Marker
-          key={h.id}
-          position={[h.latitude, h.longitude]}
-          icon={hazardIcon(h.type)}
-        />
+        <Marker key={h.id} position={[h.latitude, h.longitude]} icon={hazardIcon(h.type)} />
       ))}
       {nearbyOfficial.map((r) => (
-        <Marker
-          key={r.id}
-          position={[r.latitude, r.longitude]}
-          icon={officialRadarIcon()}
-        />
+        <Marker key={r.id} position={[r.latitude, r.longitude]} icon={officialRadarIcon()} />
       ))}
+      {convoyMembers
+        .filter((m) => m.last_lat != null && m.last_lng != null)
+        .map((m) => (
+          <Marker
+            key={m.id}
+            position={[m.last_lat!, m.last_lng!]}
+            icon={convoyMemberIcon(m.display_name)}
+          />
+        ))}
     </MapContainer>
   );
 }

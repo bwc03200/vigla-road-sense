@@ -44,15 +44,15 @@ export interface RouteStep {
   instruction: string;
   distanceMeters: number;
   maneuverType: string;
-  location: [number, number]; // [lat, lng] of the maneuver point
+  location: [number, number];
 }
 
 export interface RouteState {
   destination: { lat: number; lng: number; label: string };
-  coords: [number, number][]; // [lat, lng] polyline points
+  coords: [number, number][];
   distanceM: number;
   durationS: number;
-  hazardIds: string[]; // hazard_reports ids within 500m of route
+  hazardIds: string[];
   steps: RouteStep[];
 }
 
@@ -71,8 +71,8 @@ export interface ActiveNavigation {
   arrived: boolean;
   startedAt: string;
   alertsReceived: number;
+  protectionOnly?: boolean;
 }
-
 
 export const HAZARD_LABELS: Record<HazardType, string> = {
   radar_fixe: "Radar fixe",
@@ -81,4 +81,89 @@ export const HAZARD_LABELS: Record<HazardType, string> = {
   travaux: "Travaux",
   obstacle: "Obstacle",
   ralentissement: "Ralentissement",
+};
+
+export interface EmergencyContact {
+  id: string;
+  user_id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  created_at: string;
+}
+
+export type CrashState =
+  | { status: "idle" }
+  | { status: "suspected"; startedAt: number };
+
+export interface Convoy {
+  id: string;
+  name: string;
+  code: string;
+  owner_id: string;
+  created_at: string;
+  ended_at: string | null;
+}
+
+export interface ConvoyMember {
+  id: string;
+  convoy_id: string;
+  user_id: string;
+  display_name: string;
+  joined_at: string;
+  last_lat: number | null;
+  last_lng: number | null;
+  last_seen: string;
+}
+
+export type ConvoyReactionKind = "wait" | "join" | "break" | "fuel" | "message";
+
+export interface ConvoyAlert {
+  id: string;
+  convoy_id: string;
+  user_id: string;
+  display_name: string;
+  kind: ConvoyReactionKind;
+  payload: { text?: string };
+  created_at: string;
+  expires_at: string;
+}
+
+export interface Roadbook {
+  id: string;
+  created_by: string;
+  title: string;
+  description: string | null;
+  duration_days: number | null;
+  distance_km: number | null;
+  route_geojson: {
+    coords?: [number, number][];
+    destination?: { lat: number; lng: number; label: string };
+  } | null;
+  cover_hint: string | null;
+  is_public: boolean;
+  created_at: string;
+}
+
+export interface DiscoverySuggestion {
+  id: string;
+  title: string;
+  region: string;
+  distanceKm: number;
+  durationMin: number;
+  description: string;
+  origin: { lat: number; lng: number };
+  destination: { lat: number; lng: number };
+  waypoints?: { lat: number; lng: number }[];
+}
+
+export const REACTION_META: Record<
+  ConvoyReactionKind,
+  { emoji: string; label: string; text: string }
+> = {
+  wait: { emoji: "🖐️", label: "Attends-moi", text: "Hé, attends-moi !" },
+  join: { emoji: "👋", label: "Je rejoins", text: "J'arrive, je vous rejoins." },
+  break: { emoji: "☕", label: "Pause", text: "On fait une pause ?" },
+  fuel: { emoji: "⛽", label: "Essence", text: "J'ai besoin d'essence." },
+  message: { emoji: "💬", label: "Message", text: "" },
 };
