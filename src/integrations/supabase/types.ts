@@ -14,6 +14,142 @@ export type Database = {
   }
   public: {
     Tables: {
+      convoy_alerts: {
+        Row: {
+          convoy_id: string
+          created_at: string
+          display_name: string
+          expires_at: string
+          id: string
+          kind: string
+          payload: Json
+          user_id: string
+        }
+        Insert: {
+          convoy_id: string
+          created_at?: string
+          display_name: string
+          expires_at?: string
+          id?: string
+          kind: string
+          payload?: Json
+          user_id: string
+        }
+        Update: {
+          convoy_id?: string
+          created_at?: string
+          display_name?: string
+          expires_at?: string
+          id?: string
+          kind?: string
+          payload?: Json
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convoy_alerts_convoy_id_fkey"
+            columns: ["convoy_id"]
+            isOneToOne: false
+            referencedRelation: "convoys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      convoy_members: {
+        Row: {
+          convoy_id: string
+          display_name: string
+          id: string
+          joined_at: string
+          last_lat: number | null
+          last_lng: number | null
+          last_seen: string
+          user_id: string
+        }
+        Insert: {
+          convoy_id: string
+          display_name: string
+          id?: string
+          joined_at?: string
+          last_lat?: number | null
+          last_lng?: number | null
+          last_seen?: string
+          user_id: string
+        }
+        Update: {
+          convoy_id?: string
+          display_name?: string
+          id?: string
+          joined_at?: string
+          last_lat?: number | null
+          last_lng?: number | null
+          last_seen?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "convoy_members_convoy_id_fkey"
+            columns: ["convoy_id"]
+            isOneToOne: false
+            referencedRelation: "convoys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      convoys: {
+        Row: {
+          code: string
+          created_at: string
+          ended_at: string | null
+          id: string
+          name: string
+          owner_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          name: string
+          owner_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          ended_at?: string | null
+          id?: string
+          name?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
+      emergency_contacts: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       hazard_reports: {
         Row: {
           confidence_score: number
@@ -89,6 +225,45 @@ export type Database = {
         }
         Relationships: []
       }
+      roadbooks: {
+        Row: {
+          cover_hint: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          distance_km: number | null
+          duration_days: number | null
+          id: string
+          is_public: boolean
+          route_geojson: Json | null
+          title: string
+        }
+        Insert: {
+          cover_hint?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          distance_km?: number | null
+          duration_days?: number | null
+          id?: string
+          is_public?: boolean
+          route_geojson?: Json | null
+          title: string
+        }
+        Update: {
+          cover_hint?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          distance_km?: number | null
+          duration_days?: number | null
+          id?: string
+          is_public?: boolean
+          route_geojson?: Json | null
+          title?: string
+        }
+        Relationships: []
+      }
       trip_history: {
         Row: {
           alerts_received: number
@@ -121,7 +296,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_convoy_member: {
+        Args: { _convoy: string; _user: string }
+        Returns: boolean
+      }
     }
     Enums: {
       hazard_type:

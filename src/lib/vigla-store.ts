@@ -1,6 +1,16 @@
 import { create } from "zustand";
-import type { ActiveNavigation, HazardReport, OfficialRadar, RouteState } from "@/types/vigla";
-
+import type {
+  ActiveNavigation,
+  Convoy,
+  ConvoyAlert,
+  ConvoyMember,
+  CrashState,
+  EmergencyContact,
+  HazardReport,
+  OfficialRadar,
+  Roadbook,
+  RouteState,
+} from "@/types/vigla";
 
 export interface Position {
   lat: number;
@@ -19,6 +29,18 @@ interface ViglaState {
   geoError: string | null;
   route: RouteState | null;
   navigation: ActiveNavigation | null;
+
+  // v3
+  crashState: CrashState;
+  crashDetectionEnabled: boolean;
+  autoProtectDismissedAt: number | null;
+  emergencyContacts: EmergencyContact[];
+  convoy: Convoy | null;
+  convoyMembers: ConvoyMember[];
+  convoyAlerts: ConvoyAlert[];
+  roadbooks: Roadbook[];
+  displayName: string;
+
   setPosition: (p: Position, speedFromApi: number | null) => void;
   setHazards: (h: HazardReport[]) => void;
   upsertHazard: (h: HazardReport) => void;
@@ -31,11 +53,30 @@ interface ViglaState {
   setRoute: (r: RouteState | null) => void;
   setNavigation: (n: ActiveNavigation | null) => void;
   patchNavigation: (patch: Partial<ActiveNavigation>) => void;
-}
 
+  setCrashState: (s: CrashState) => void;
+  setCrashDetectionEnabled: (v: boolean) => void;
+  setAutoProtectDismissed: () => void;
+  setEmergencyContacts: (c: EmergencyContact[]) => void;
+  setConvoy: (c: Convoy | null) => void;
+  setConvoyMembers: (m: ConvoyMember[]) => void;
+  setConvoyAlerts: (a: ConvoyAlert[]) => void;
+  pushConvoyAlert: (a: ConvoyAlert) => void;
+  setRoadbooks: (r: Roadbook[]) => void;
+  setDisplayName: (n: string) => void;
+}
 
 const speedBuffer: number[] = [];
 let lastPos: Position | null = null;
+
+const savedName =
+  typeof window !== "undefined"
+    ? window.localStorage.getItem("vigla:displayName") ?? ""
+    : "";
+const savedCrashEnabled =
+  typeof window !== "undefined"
+    ? window.localStorage.getItem("vigla:crash") !== "0"
+    : true;
 
 export const useVigla = create<ViglaState>((set) => ({
   position: null,
@@ -48,6 +89,15 @@ export const useVigla = create<ViglaState>((set) => ({
   route: null,
   navigation: null,
 
+  crashState: { status: "idle" },
+  crashDetectionEnabled: savedCrashEnabled,
+  autoProtectDismissedAt: null,
+  emergencyContacts: [],
+  convoy: null,
+  convoyMembers: [],
+  convoyAlerts: [],
+  roadbooks: [],
+  displayName: savedName,
 
   setPosition: (p, speedFromApi) => {
     let instant = 0;
@@ -106,5 +156,26 @@ export const useVigla = create<ViglaState>((set) => ({
   setNavigation: (n) => set({ navigation: n }),
   patchNavigation: (patch) =>
     set((s) => (s.navigation ? { navigation: { ...s.navigation, ...patch } } : {})),
-}));
 
+  setCrashState: (s) => set({ crashState: s }),
+  setCrashDetectionEnabled: (v) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("vigla:crash", v ? "1" : "0");
+    }
+    set({ crashDetectionEnabled: v });
+  },
+  setAutoProtectDismissed: () => set({ autoProtectDismissedAt: Date.now() }),
+  setEmergencyContacts: (c) => set({ emergencyContacts: c }),
+  setConvoy: (c) => set({ convoy: c, convoyMembers: c ? [] : [], convoyAlerts: c ? [] : [] }),
+  setConvoyMembers: (m) => set({ convoyMembers: m }),
+  setConvoyAlerts: (a) => set({ convoyAlerts: a }),
+  pushConvoyAlert: (a) =>
+    set((s) => ({ convoyAlerts: [...s.convoyAlerts.filter((x) => x.id !== a.id), a] })),
+  setRoadbooks: (r) => set({ roadbooks: r }),
+  setDisplayName: (n) => {
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem("vigla:displayName", n);
+    }
+    set({ displayName: n });
+  },
+}));

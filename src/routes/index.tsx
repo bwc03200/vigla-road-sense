@@ -8,23 +8,28 @@ import { useHazards } from "@/hooks/useHazards";
 import { useOfficialRadars } from "@/hooks/useOfficialRadars";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useTripTracker } from "@/hooks/useTripTracker";
+import { useCrashDetection } from "@/hooks/useCrashDetection";
+import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
+import { useConvoy } from "@/hooks/useConvoy";
+import { useRoadbooks } from "@/hooks/useRoadbooks";
 import { useVigla } from "@/lib/vigla-store";
 import { MapView } from "@/components/vigla/MapView";
 import { TopBar } from "@/components/vigla/TopBar";
 import { ReportGrid } from "@/components/vigla/ReportGrid";
-import { HistoryList } from "@/components/vigla/HistoryList";
 import { OfflineBadge } from "@/components/vigla/OfflineBadge";
 import { BottomTabs, type Tab } from "@/components/vigla/BottomTabs";
 import { RoutePlanner } from "@/components/vigla/RoutePlanner";
-import {
-  NavigationOverlay,
-  StartTripBar,
-} from "@/components/vigla/NavigationOverlay";
+import { NavigationOverlay, StartTripBar } from "@/components/vigla/NavigationOverlay";
 import { NavigationErrorBoundary } from "@/components/vigla/NavigationErrorBoundary";
+import { CrashAlertOverlay } from "@/components/vigla/CrashAlertOverlay";
+import { AutoProtectBanner, ProtectionBadge } from "@/components/vigla/AutoProtectBanner";
+import { ConvoyPanel } from "@/components/vigla/ConvoyPanel";
+import { ConvoyReactionBar, ConvoyMessageBubbles } from "@/components/vigla/ConvoyReactionBar";
+import { EmergencyContactsScreen } from "@/components/vigla/EmergencyContactsScreen";
+import { RoadbookList } from "@/components/vigla/RoadbookList";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, LogOut, Shield, Navigation } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
-
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -39,8 +44,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "VIGLA — Alertes routières temps réel" },
       {
         property: "og:description",
-        content:
-          "Signalez et évitez les radars, accidents, travaux et obstacles en temps réel.",
+        content: "Signalez et évitez les radars, accidents, travaux et obstacles en temps réel.",
       },
     ],
   }),
@@ -85,31 +89,39 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   useGeolocation();
   useHazards();
   useOfficialRadars();
+  useEmergencyContacts(userId);
+  useRoadbooks(userId);
+  useConvoy(userId);
   const tracker = useTripTracker(userId);
   const patchNavigation = useVigla((s) => s.patchNavigation);
   useAlerts((label, distance) => {
     tracker.incrementAlerts();
     const nav = useVigla.getState().navigation;
     if (nav) patchNavigation({ alertsReceived: nav.alertsReceived + 1 });
-    toast(`⚠️ ${label}`, {
-      description: `À ${formatDistance(distance)}`,
-      duration: 5000,
-    });
+    toast(`⚠️ ${label}`, { description: `À ${formatDistance(distance)}`, duration: 5000 });
   });
   const geoError = useVigla((s) => s.geoError);
   const route = useVigla((s) => s.route);
   const navigation = useVigla((s) => s.navigation);
+  const convoy = useVigla((s) => s.convoy);
   const navActive = !!navigation && !navigation.arrived;
+
+  // Crash detection runs whenever nav (or protection) is active.
+  useCrashDetection(navActive);
 
   return (
     <div className="relative min-h-screen bg-background">
       <Toaster position="top-center" theme="light" richColors closeButton />
+      <CrashAlertOverlay />
       <main className="fixed inset-0 bottom-16">
         {tab === "map" && (
           <div className="relative h-full w-full">
             <MapView />
             {!navActive && <TopBar />}
+            <ProtectionBadge />
             <OfflineBadge />
+            <AutoProtectBanner />
+            <ConvoyMessageBubbles />
             {!route && !navActive && (
               <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[600] flex justify-center px-4">
                 <button
@@ -129,6 +141,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
               <StartTripBar />
               <NavigationOverlay />
             </NavigationErrorBoundary>
+            {navActive && convoy && <ConvoyReactionBar userId={userId} />}
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
             {geoError && <GeoErrorOverlay code={geoError} />}
           </div>
@@ -143,33 +156,42 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
             <ReportGrid onReported={() => setTab("map")} />
           </div>
         )}
-        {tab === "history" && (
+        {tab === "roadbooks" && (
           <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">Historique</h2>
-            <HistoryList />
+            <h2 className="px-4 text-lg font-semibold">Roadbooks</h2>
+            <RoadbookList userId={userId} />
+          </div>
+        )}
+        {tab === "convoy" && (
+          <div className="h-full overflow-y-auto pt-6">
+            <h2 className="px-4 text-lg font-semibold">Convoi</h2>
+            <ConvoyPanel userId={userId} />
           </div>
         )}
         {tab === "profile" && (
-          <div className="h-full overflow-y-auto p-6">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                <Shield className="h-6 w-6" />
+          <div className="h-full overflow-y-auto">
+            <div className="p-6 pb-2">
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+                  <Shield className="h-6 w-6" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-foreground">{email}</div>
+                  <div className="text-xs text-muted-foreground">Compte VIGLA</div>
+                </div>
               </div>
-              <div>
-                <div className="text-sm font-semibold text-foreground">{email}</div>
-                <div className="text-xs text-muted-foreground">Compte VIGLA</div>
-              </div>
+              <Button
+                variant="secondary"
+                className="w-full h-11"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                }}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Se déconnecter
+              </Button>
             </div>
-            <Button
-              variant="secondary"
-              className="w-full h-12"
-              onClick={async () => {
-                await supabase.auth.signOut();
-              }}
-            >
-              <LogOut className="mr-2 h-4 w-4" />
-              Se déconnecter
-            </Button>
+            <EmergencyContactsScreen userId={userId} />
           </div>
         )}
       </main>

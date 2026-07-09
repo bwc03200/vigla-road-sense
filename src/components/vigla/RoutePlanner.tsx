@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Search, X, Loader2, Navigation, AlertTriangle } from "lucide-react";
+import { Search, X, Loader2, Navigation, AlertTriangle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
 import { formatDistance, haversine } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
-
+import { RouteGenerator } from "@/components/vigla/RouteGenerator";
 import { HAZARD_LABELS } from "@/types/vigla";
 
 interface NominatimResult {
@@ -16,7 +16,7 @@ interface NominatimResult {
   lon: string;
 }
 
-
+type Mode = "search" | "generate";
 
 export function RoutePlanner({ onClose }: { onClose: () => void }) {
   const position = useVigla((s) => s.position);
@@ -24,6 +24,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
   const route = useVigla((s) => s.route);
   const setRoute = useVigla((s) => s.setRoute);
 
+  const [mode, setMode] = useState<Mode>("search");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -48,9 +49,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
         url.searchParams.set("format", "json");
         url.searchParams.set("limit", "6");
         url.searchParams.set("addressdetails", "0");
-        if (position) {
-          url.searchParams.set("countrycodes", "fr");
-        }
+        if (position) url.searchParams.set("countrycodes", "fr");
         const res = await fetch(url.toString(), {
           signal: ctrl.signal,
           headers: { Accept: "application/json" },
@@ -72,21 +71,13 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
   }, [query, position]);
 
   async function selectDestination(r: NominatimResult) {
-    if (!position) {
-      toast.error("Position GPS indisponible");
-      return;
-    }
+    if (!position) return toast.error("Position GPS indisponible");
     const destLat = parseFloat(r.lat);
     const destLng = parseFloat(r.lon);
     setComputing(true);
     setResults([]);
     try {
-      const result = await fetchOsrmRoute(
-        position.lat,
-        position.lng,
-        destLat,
-        destLng,
-      );
+      const result = await fetchOsrmRoute(position.lat, position.lng, destLat, destLng);
       const state = buildRouteState(
         { lat: destLat, lng: destLng, label: r.display_name },
         result,
@@ -105,7 +96,6 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
     }
   }
 
-
   function cancelRoute() {
     setRoute(null);
     toast("Itinéraire annulé");
@@ -119,12 +109,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
           return {
             id: h.id,
             label: HAZARD_LABELS[h.type],
-            fromStart: haversine(
-              start[0],
-              start[1],
-              h.latitude,
-              h.longitude,
-            ),
+            fromStart: haversine(start[0], start[1], h.latitude, h.longitude),
           };
         })
         .sort((a, b) => a.fromStart - b.fromStart)
@@ -132,7 +117,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
 
   return (
     <div className="absolute inset-0 z-[850] flex items-start justify-center overflow-y-auto bg-white/95 p-4 backdrop-blur">
-      <div className="w-full max-w-lg space-y-4">
+      <div className="w-full max-w-lg space-y-4 pb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
@@ -148,12 +133,8 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
         {route ? (
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">
-                Destination
-              </div>
-              <div className="mt-1 text-sm font-medium text-slate-900">
-                {route.destination.label}
-              </div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">Destination</div>
+              <div className="mt-1 text-sm font-medium text-slate-900">{route.destination.label}</div>
             </div>
             <div className="flex gap-4 text-sm text-slate-700">
               <span>{(route.distanceM / 1000).toFixed(1)} km</span>
@@ -179,48 +160,69 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
                 )}
               </div>
             </div>
-            <Button
-              variant="secondary"
-              className="w-full h-11"
-              onClick={cancelRoute}
-            >
+            <Button variant="secondary" className="w-full h-11" onClick={cancelRoute}>
               Annuler l'itinéraire
             </Button>
           </div>
         ) : (
           <>
-            <div className="relative">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Adresse ou ville de destination"
-                className="h-12 pl-10"
-              />
-              {(searching || computing) && (
-                <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" />
-              )}
+            <div className="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1">
+              <button
+                onClick={() => setMode("search")}
+                className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition ${
+                  mode === "search" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+                }`}
+              >
+                <Search className="h-4 w-4" /> Itinéraire précis
+              </button>
+              <button
+                onClick={() => setMode("generate")}
+                className={`flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition ${
+                  mode === "generate" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
+                }`}
+              >
+                <Sparkles className="h-4 w-4" /> Générer un trajet
+              </button>
             </div>
-            {results.length > 0 && (
-              <ul className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                {results.map((r) => (
-                  <li key={r.place_id}>
-                    <button
-                      onClick={() => selectDestination(r)}
-                      disabled={computing}
-                      className="w-full px-4 py-3 text-left text-sm text-slate-800 transition hover:bg-slate-50 disabled:opacity-50"
-                    >
-                      {r.display_name}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {!position && (
-              <p className="text-xs text-slate-500">
-                Position GPS requise pour calculer un itinéraire.
-              </p>
+
+            {mode === "search" ? (
+              <>
+                <div className="relative">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                  <Input
+                    autoFocus
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Adresse ou ville de destination"
+                    className="h-12 pl-10"
+                  />
+                  {(searching || computing) && (
+                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-slate-400" />
+                  )}
+                </div>
+                {results.length > 0 && (
+                  <ul className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                    {results.map((r) => (
+                      <li key={r.place_id}>
+                        <button
+                          onClick={() => selectDestination(r)}
+                          disabled={computing}
+                          className="w-full px-4 py-3 text-left text-sm text-slate-800 transition hover:bg-slate-50 disabled:opacity-50"
+                        >
+                          {r.display_name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {!position && (
+                  <p className="text-xs text-slate-500">
+                    Position GPS requise pour calculer un itinéraire.
+                  </p>
+                )}
+              </>
+            ) : (
+              <RouteGenerator onDone={onClose} />
             )}
           </>
         )}

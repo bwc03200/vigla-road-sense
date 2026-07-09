@@ -1,11 +1,12 @@
-import { Map, AlertTriangle, History, User } from "lucide-react";
+import { Map, AlertTriangle, BookOpen, Users, User } from "lucide-react";
 
-export type Tab = "map" | "report" | "history" | "profile";
+export type Tab = "map" | "report" | "roadbooks" | "convoy" | "profile";
 
 const TABS: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { id: "map", label: "Carte", icon: Map },
   { id: "report", label: "Signaler", icon: AlertTriangle },
-  { id: "history", label: "Historique", icon: History },
+  { id: "roadbooks", label: "Roadbooks", icon: BookOpen },
+  { id: "convoy", label: "Convoi", icon: Users },
   { id: "profile", label: "Profil", icon: User },
 ];
 
