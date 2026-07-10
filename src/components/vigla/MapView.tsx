@@ -148,16 +148,9 @@ export function MapView() {
       {position && navActive && (
         <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
       )}
-      {position && (
-        <>
-          <Marker position={[position.lat, position.lng]} icon={userIcon(position.heading)} />
-          <Circle
-            center={[position.lat, position.lng]}
-            radius={30}
-            pathOptions={{ color: "#2563EB", fillColor: "#2563EB", fillOpacity: 0.12, weight: 1 }}
-          />
-        </>
-      )}
+      {position && <UserMarker lat={position.lat} lng={position.lng} heading={position.heading} />}
+      <ZoomControls />
+
       {route && !navActive && (
         <>
           <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
