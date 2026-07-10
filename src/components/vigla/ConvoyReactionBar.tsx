@@ -1,7 +1,10 @@
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
+import { vibrateConfirm } from "@/lib/haptics";
 import { REACTION_META, type ConvoyReactionKind } from "@/types/vigla";
+
 
 type AnyClient = { from: (t: string) => any };
 const db = supabase as unknown as AnyClient;
