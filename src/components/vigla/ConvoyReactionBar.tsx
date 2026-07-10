@@ -54,6 +54,14 @@ export function ConvoyReactionBar({ userId }: { userId: string }) {
 
 export function ConvoyMessageBubbles() {
   const alerts = useVigla((s) => s.convoyAlerts);
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setTick((n) => n + 1), 500);
+    return () => window.clearInterval(id);
+  }, []);
+  // Consume tick to keep expiry-based classes fresh.
+  void tick;
+
   if (alerts.length === 0) return null;
   const now = Date.now();
   const active = alerts
@@ -64,10 +72,14 @@ export function ConvoyMessageBubbles() {
     <div className="pointer-events-none absolute inset-x-0 top-24 z-[800] flex flex-col items-center gap-2 px-3">
       {active.map((a) => {
         const meta = REACTION_META[a.kind];
+        const msLeft = new Date(a.expires_at).getTime() - now;
+        const expiring = msLeft < 800;
         return (
           <div
             key={a.id}
-            className="pointer-events-auto animate-in fade-in slide-in-from-top-2 rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(15,23,42,0.15)] ring-1 ring-slate-200"
+            className={`pointer-events-auto animate-in fade-in slide-in-from-top-2 rounded-full bg-white px-4 py-2 text-sm shadow-[0_8px_24px_rgba(15,23,42,0.15)] ring-1 ring-slate-200 ${
+              expiring ? "vigla-bubble-expiring" : ""
+            }`}
           >
             <span className="mr-1 text-base">{meta.emoji}</span>
             <span className="font-semibold text-slate-900">{a.display_name}</span>
@@ -76,5 +88,6 @@ export function ConvoyMessageBubbles() {
         );
       })}
     </div>
+
   );
 }
