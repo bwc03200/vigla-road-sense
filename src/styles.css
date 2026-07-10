@@ -91,13 +91,14 @@ html { scroll-behavior: smooth; }
 }
 .leaflet-control-attribution a { color: #1e40af !important; }
 
-/* User position marker — smooth motion. Leaflet applies its own transform
-   for lat/lng positioning; we transition it linearly so interpolated
-   setLatLng() updates look continuous instead of stepped. */
+/* User position marker — smooth motion. Leaflet writes its own transform
+   for lat/lng positioning; we interpolate setLatLng() at ~60fps in JS so
+   no CSS transition is needed on the container (a transition would fight
+   with map pans). Only the inner arrow rotates via CSS. */
 .leaflet-marker-icon.vigla-user-icon {
-  transition: transform 120ms linear;
   will-change: transform;
 }
+
 .vigla-user-inner {
   width: 28px;
   height: 28px;
