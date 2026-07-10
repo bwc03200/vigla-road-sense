@@ -69,6 +69,34 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
         </div>
       </div>
 
+      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex items-start gap-3">
+          <Vibrate className="mt-0.5 h-5 w-5 shrink-0 text-slate-700" />
+          <div className="flex-1 text-sm">
+            <div className="font-semibold text-slate-900">Vibrations</div>
+            <p className="mt-1 text-xs text-slate-600">
+              Retour tactile sur les taps, les alertes de zone de danger et les
+              actions rapides en convoi. Sans effet si l'appareil ne supporte
+              pas les vibrations (iOS Safari).
+            </p>
+          </div>
+          <button
+            onClick={() => setVibrationEnabled(!vibrationEnabled)}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+              vibrationEnabled ? "bg-[#FF6B35]" : "bg-slate-300"
+            }`}
+            aria-label="Activer les vibrations"
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${
+                vibrationEnabled ? "left-5" : "left-0.5"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
+
       <div>
         <div className="mb-2 flex items-center justify-between">
           <div className="text-sm font-semibold text-slate-900">Contacts d'urgence</div>
