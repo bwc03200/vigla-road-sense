@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Trash2, Phone, Mail, ShieldAlert } from "lucide-react";
+import { Plus, Trash2, Phone, Mail, ShieldAlert, Vibrate } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
