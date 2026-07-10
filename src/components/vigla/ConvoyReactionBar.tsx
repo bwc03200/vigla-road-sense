@@ -18,6 +18,7 @@ export function ConvoyReactionBar({ userId }: { userId: string }) {
 
   async function send(kind: ConvoyReactionKind) {
     const meta = REACTION_META[kind];
+    vibrateConfirm();
     const { error } = await db.from("convoy_alerts").insert({
       convoy_id: convoy!.id,
       user_id: userId,
@@ -27,6 +28,7 @@ export function ConvoyReactionBar({ userId }: { userId: string }) {
     });
     if (error) toast.error("Envoi impossible");
   }
+
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[700] flex justify-center px-3">
