@@ -42,6 +42,8 @@ interface ViglaState {
   convoyAlerts: ConvoyAlert[];
   roadbooks: Roadbook[];
   displayName: string;
+  vibrationEnabled: boolean;
+
 
   setPosition: (p: Position, speedFromApi: number | null) => void;
   setHazards: (h: HazardReport[]) => void;
