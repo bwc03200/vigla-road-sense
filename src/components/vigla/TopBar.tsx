@@ -41,7 +41,7 @@ export function TopBar() {
         <div className="h-10 w-px bg-slate-200" />
         <div className="min-w-0 flex-1">
           {nextHazard ? (
-            <div className="flex items-center gap-2">
+            <div key={nextHazard.label} className="vigla-topbar-alert flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 shrink-0 text-[#FF6B35]" />
               <div className="min-w-0">
                 <div className="truncate text-sm font-semibold text-slate-900">
@@ -52,6 +52,7 @@ export function TopBar() {
                 </div>
               </div>
             </div>
+
           ) : (
             <div className="flex items-center gap-2 text-slate-500">
               <Signal className="h-4 w-4" />

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Plus, Trash2, Phone, Mail, ShieldAlert } from "lucide-react";
+import { Plus, Trash2, Phone, Mail, ShieldAlert, Vibrate } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
@@ -9,9 +10,12 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
   const contacts = useVigla((s) => s.emergencyContacts);
   const crashEnabled = useVigla((s) => s.crashDetectionEnabled);
   const setCrashEnabled = useVigla((s) => s.setCrashDetectionEnabled);
+  const vibrationEnabled = useVigla((s) => s.vibrationEnabled);
+  const setVibrationEnabled = useVigla((s) => s.setVibrationEnabled);
   const displayName = useVigla((s) => s.displayName);
   const setDisplayName = useVigla((s) => s.setDisplayName);
   const { add, remove } = useEmergencyContacts(userId);
+
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -64,6 +68,34 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
           </button>
         </div>
       </div>
+
+      <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="flex items-start gap-3">
+          <Vibrate className="mt-0.5 h-5 w-5 shrink-0 text-slate-700" />
+          <div className="flex-1 text-sm">
+            <div className="font-semibold text-slate-900">Vibrations</div>
+            <p className="mt-1 text-xs text-slate-600">
+              Retour tactile sur les taps, les alertes de zone de danger et les
+              actions rapides en convoi. Sans effet si l'appareil ne supporte
+              pas les vibrations (iOS Safari).
+            </p>
+          </div>
+          <button
+            onClick={() => setVibrationEnabled(!vibrationEnabled)}
+            className={`relative h-6 w-11 shrink-0 rounded-full transition ${
+              vibrationEnabled ? "bg-[#FF6B35]" : "bg-slate-300"
+            }`}
+            aria-label="Activer les vibrations"
+          >
+            <span
+              className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition ${
+                vibrationEnabled ? "left-5" : "left-0.5"
+              }`}
+            />
+          </button>
+        </div>
+      </div>
+
 
       <div>
         <div className="mb-2 flex items-center justify-between">

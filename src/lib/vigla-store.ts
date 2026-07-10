@@ -1,5 +1,7 @@
 import { create } from "zustand";
+import { getVibrationEnabled, setVibrationEnabled as persistVibration } from "@/lib/haptics";
 import type {
+
   ActiveNavigation,
   Convoy,
   ConvoyAlert,
@@ -40,6 +42,8 @@ interface ViglaState {
   convoyAlerts: ConvoyAlert[];
   roadbooks: Roadbook[];
   displayName: string;
+  vibrationEnabled: boolean;
+
 
   setPosition: (p: Position, speedFromApi: number | null) => void;
   setHazards: (h: HazardReport[]) => void;
@@ -64,7 +68,9 @@ interface ViglaState {
   pushConvoyAlert: (a: ConvoyAlert) => void;
   setRoadbooks: (r: Roadbook[]) => void;
   setDisplayName: (n: string) => void;
+  setVibrationEnabled: (v: boolean) => void;
 }
+
 
 const speedBuffer: number[] = [];
 let lastPos: Position | null = null;
@@ -98,6 +104,8 @@ export const useVigla = create<ViglaState>((set) => ({
   convoyAlerts: [],
   roadbooks: [],
   displayName: savedName,
+  vibrationEnabled: getVibrationEnabled(),
+
 
   setPosition: (p, speedFromApi) => {
     let instant = 0;
@@ -178,4 +186,9 @@ export const useVigla = create<ViglaState>((set) => ({
     }
     set({ displayName: n });
   },
+  setVibrationEnabled: (v) => {
+    persistVibration(v);
+    set({ vibrationEnabled: v });
+  },
+
 }));

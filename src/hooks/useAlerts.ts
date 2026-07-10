@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
+import { vibrateAlert } from "@/lib/haptics";
 import { HAZARD_LABELS } from "@/types/vigla";
+
 
 const ALERT_RADIUS_M = 400;
 const ALERT_LEAD_S = 30;
@@ -56,10 +58,9 @@ export function useAlerts(
       if (!already && eta < ALERT_LEAD_S && d < 3000) {
         markAlerted(h.id);
         beep();
-        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          navigator.vibrate?.([200, 100, 200]);
-        }
+        vibrateAlert();
         cbRef.current?.(HAZARD_LABELS[h.type], d);
+
       } else if (already && d > ALERT_RADIUS_M * 2) {
         clearAlert(h.id);
       }

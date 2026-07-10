@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Circle, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
+import { UserMarker } from "@/components/vigla/UserMarker";
+import { ZoomControls } from "@/components/vigla/ZoomControls";
 import type { HazardType } from "@/types/vigla";
+
 
 const HAZARD_COLORS: Record<HazardType, string> = {
   radar_fixe: "#FF6B35",
@@ -42,15 +45,8 @@ function officialRadarIcon() {
   });
 }
 
-function userIcon(heading: number | null) {
-  const rot = heading ?? 0;
-  return L.divIcon({
-    className: "vigla-user-icon",
-    html: `<div style="transform:rotate(${rot}deg);width:28px;height:28px;"><div style="width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:28px solid #2563EB;filter:drop-shadow(0 2px 4px rgba(15,23,42,.35));"></div></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  });
-}
+
+
 
 function destinationIcon() {
   return L.divIcon({
@@ -145,16 +141,9 @@ export function MapView() {
       {position && navActive && (
         <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
       )}
-      {position && (
-        <>
-          <Marker position={[position.lat, position.lng]} icon={userIcon(position.heading)} />
-          <Circle
-            center={[position.lat, position.lng]}
-            radius={30}
-            pathOptions={{ color: "#2563EB", fillColor: "#2563EB", fillOpacity: 0.12, weight: 1 }}
-          />
-        </>
-      )}
+      {position && <UserMarker lat={position.lat} lng={position.lng} heading={position.heading} />}
+      <ZoomControls />
+
       {route && !navActive && (
         <>
           <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />

@@ -90,3 +90,55 @@ html { scroll-behavior: smooth; }
   font-size: 10px !important;
 }
 .leaflet-control-attribution a { color: #1e40af !important; }
+
+/* User position marker — smooth motion. Leaflet writes its own transform
+   for lat/lng positioning; we interpolate setLatLng() at ~60fps in JS so
+   no CSS transition is needed on the container (a transition would fight
+   with map pans). Only the inner arrow rotates via CSS. */
+.leaflet-marker-icon.vigla-user-icon {
+  will-change: transform;
+}
+
+.vigla-user-inner {
+  width: 28px;
+  height: 28px;
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+.vigla-user-arrow {
+  width: 0;
+  height: 0;
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-bottom: 28px solid #2563EB;
+  filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.35));
+}
+
+/* Hazard markers pop in gently instead of appearing abruptly. */
+@keyframes vigla-hazard-pop {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.vigla-hazard-icon > div,
+.vigla-official-radar-icon > div,
+.vigla-convoy-icon > div {
+  animation: vigla-hazard-pop 200ms ease-out both;
+}
+
+/* TopBar next-hazard slide + fade. */
+@keyframes vigla-topbar-slide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.vigla-topbar-alert {
+  animation: vigla-topbar-slide 250ms ease-out both;
+}
+
+/* Convoy bubble expiring fade-out. */
+.vigla-bubble-expiring {
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 400ms ease-in, transform 400ms ease-in;
+}
+
