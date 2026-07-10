@@ -10,9 +10,12 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
   const contacts = useVigla((s) => s.emergencyContacts);
   const crashEnabled = useVigla((s) => s.crashDetectionEnabled);
   const setCrashEnabled = useVigla((s) => s.setCrashDetectionEnabled);
+  const vibrationEnabled = useVigla((s) => s.vibrationEnabled);
+  const setVibrationEnabled = useVigla((s) => s.setVibrationEnabled);
   const displayName = useVigla((s) => s.displayName);
   const setDisplayName = useVigla((s) => s.setDisplayName);
   const { add, remove } = useEmergencyContacts(userId);
+
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
