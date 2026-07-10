@@ -1,7 +1,9 @@
 import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
+import { vibrateAlert } from "@/lib/haptics";
 import { HAZARD_LABELS } from "@/types/vigla";
+
 
 const ALERT_RADIUS_M = 400;
 const ALERT_LEAD_S = 30;
