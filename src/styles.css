@@ -103,9 +103,9 @@ html { scroll-behavior: smooth; }
   width: 28px;
   height: 28px;
   transform-origin: 50% 50%;
-  transition: transform 200ms linear;
   will-change: transform;
 }
+
 .vigla-user-arrow {
   width: 0;
   height: 0;
