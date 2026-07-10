@@ -186,4 +186,9 @@ export const useVigla = create<ViglaState>((set) => ({
     }
     set({ displayName: n });
   },
+  setVibrationEnabled: (v) => {
+    persistVibration(v);
+    set({ vibrationEnabled: v });
+  },
+
 }));
