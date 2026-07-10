@@ -45,15 +45,8 @@ function officialRadarIcon() {
   });
 }
 
-function userIcon(heading: number | null) {
-  const rot = heading ?? 0;
-  return L.divIcon({
-    className: "vigla-user-icon",
-    html: `<div style="transform:rotate(${rot}deg);width:28px;height:28px;"><div style="width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-bottom:28px solid #2563EB;filter:drop-shadow(0 2px 4px rgba(15,23,42,.35));"></div></div>`,
-    iconSize: [28, 28],
-    iconAnchor: [14, 14],
-  });
-}
+
+
 
 function destinationIcon() {
   return L.divIcon({
