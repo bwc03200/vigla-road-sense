@@ -1,5 +1,7 @@
 import { create } from "zustand";
+import { getVibrationEnabled, setVibrationEnabled as persistVibration } from "@/lib/haptics";
 import type {
+
   ActiveNavigation,
   Convoy,
   ConvoyAlert,
