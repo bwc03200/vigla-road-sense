@@ -104,6 +104,8 @@ export const useVigla = create<ViglaState>((set) => ({
   convoyAlerts: [],
   roadbooks: [],
   displayName: savedName,
+  vibrationEnabled: getVibrationEnabled(),
+
 
   setPosition: (p, speedFromApi) => {
     let instant = 0;
