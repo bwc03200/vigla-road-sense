@@ -58,10 +58,9 @@ export function useAlerts(
       if (!already && eta < ALERT_LEAD_S && d < 3000) {
         markAlerted(h.id);
         beep();
-        if (typeof navigator !== "undefined" && "vibrate" in navigator) {
-          navigator.vibrate?.([200, 100, 200]);
-        }
+        vibrateAlert();
         cbRef.current?.(HAZARD_LABELS[h.type], d);
+
       } else if (already && d > ALERT_RADIUS_M * 2) {
         clearAlert(h.id);
       }
