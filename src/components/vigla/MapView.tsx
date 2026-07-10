@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Circle, Polyline, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
 import L from "leaflet";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
+import { UserMarker } from "@/components/vigla/UserMarker";
+import { ZoomControls } from "@/components/vigla/ZoomControls";
 import type { HazardType } from "@/types/vigla";
+
 
 const HAZARD_COLORS: Record<HazardType, string> = {
   radar_fixe: "#FF6B35",
