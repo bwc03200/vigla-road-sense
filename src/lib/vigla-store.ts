@@ -68,7 +68,9 @@ interface ViglaState {
   pushConvoyAlert: (a: ConvoyAlert) => void;
   setRoadbooks: (r: Roadbook[]) => void;
   setDisplayName: (n: string) => void;
+  setVibrationEnabled: (v: boolean) => void;
 }
+
 
 const speedBuffer: number[] = [];
 let lastPos: Position | null = null;
