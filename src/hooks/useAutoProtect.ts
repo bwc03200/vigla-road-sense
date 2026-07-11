@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useVigla } from "@/lib/vigla-store";
 
 const SPEED_MIN_KMH = 15;
@@ -13,26 +13,29 @@ export function useAutoProtect(): {
   const navigation = useVigla((s) => s.navigation);
   const dismissedAt = useVigla((s) => s.autoProtectDismissedAt);
   const setDismissed = useVigla((s) => s.setAutoProtectDismissed);
-  const [sinceMovingAt, setSinceMovingAt] = useState<number | null>(null);
+  const sinceMovingAtRef = useRef<number | null>(null);
   const [suggest, setSuggest] = useState(false);
 
   useEffect(() => {
     if (navigation) {
-      setSinceMovingAt(null);
-      setSuggest(false);
+      sinceMovingAtRef.current = null;
+      setSuggest((s) => (s ? false : s));
       return;
     }
     if (dismissedAt && Date.now() - dismissedAt < 15 * 60_000) return;
 
     if (speedKmh >= SPEED_MIN_KMH) {
-      const start = sinceMovingAt ?? Date.now();
-      if (sinceMovingAt == null) setSinceMovingAt(start);
-      if (Date.now() - start > HOLD_MS) setSuggest(true);
+      if (sinceMovingAtRef.current == null) {
+        sinceMovingAtRef.current = Date.now();
+      }
+      if (Date.now() - sinceMovingAtRef.current > HOLD_MS) {
+        setSuggest((s) => (s ? s : true));
+      }
     } else if (speedKmh < 5) {
-      setSinceMovingAt(null);
-      setSuggest(false);
+      sinceMovingAtRef.current = null;
+      setSuggest((s) => (s ? false : s));
     }
-  }, [speedKmh, navigation, dismissedAt, sinceMovingAt]);
+  }, [speedKmh, navigation, dismissedAt]);
 
   return {
     suggest,
