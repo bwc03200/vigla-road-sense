@@ -9,31 +9,48 @@ interface Props {
 }
 interface State {
   error: Error | null;
+  resetKey: number;
 }
 
+/**
+ * Standard React Error Boundary. Only React's own error propagation
+ * (getDerivedStateFromError / componentDidCatch) can put it in the error
+ * state — no external store observation, no effect-driven fallback.
+ */
 export class NavigationErrorBoundary extends Component<Props, State> {
-  state: State = { error: null };
+  state: State = { error: null, resetKey: 0 };
 
-  static getDerivedStateFromError(error: Error): State {
+  static getDerivedStateFromError(error: Error): Partial<State> {
     return { error };
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string }) {
+    // Log the real exception + component stack before showing the fallback,
+    // so any future trigger leaves an exploitable trace.
+    // eslint-disable-next-line no-console
+    console.error(
+      "[NavigationErrorBoundary] caught error:",
+      error?.message,
+      "\nstack:",
+      error?.stack,
+      "\ncomponentStack:",
+      info?.componentStack,
+    );
     reportLovableError(error, {
       boundary: "NavigationErrorBoundary",
       componentStack: info.componentStack,
     });
-    // eslint-disable-next-line no-console
-    console.error("[NavigationErrorBoundary]", error, info);
   }
 
   reset = () => {
-    this.setState({ error: null });
+    this.setState((s) => ({ error: null, resetKey: s.resetKey + 1 }));
     this.props.onReset?.();
   };
 
   render() {
-    if (!this.state.error) return this.props.children;
+    if (!this.state.error) {
+      return <div key={this.state.resetKey}>{this.props.children}</div>;
+    }
     return (
       <div className="pointer-events-auto absolute inset-x-0 top-0 z-[900] p-3">
         <div className="rounded-3xl bg-slate-900 p-4 text-white shadow-[0_16px_40px_rgba(15,23,42,0.35)]">
