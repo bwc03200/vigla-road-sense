@@ -118,7 +118,7 @@ export function NavigationOverlay() {
   return (
     <>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[700] p-3">
-        <div className="pointer-events-auto rounded-3xl bg-slate-900 text-white shadow-[0_16px_40px_rgba(15,23,42,0.35)]">
+        <div className="pointer-events-auto rounded-3xl bg-slate-900 text-white shadow-[0_16px_40px_rgba(15,23,42,0.35)] transition-[height] duration-300 ease-out">
           <div className="flex items-start gap-3 p-4">
             <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF6B35] text-white">
               <Navigation className="h-5 w-5" />
@@ -127,11 +127,11 @@ export function NavigationOverlay() {
               <div className="text-[11px] uppercase tracking-widest text-white/60">
                 Dans {formatDistance(navigation.distanceToNextManeuverM)}
               </div>
-              <div className="mt-0.5 truncate text-base font-semibold">
+              <div className="mt-0.5 line-clamp-2 text-base font-semibold leading-snug">
                 {step?.instruction ?? "Suivez la route"}
               </div>
               {nextStep && (
-                <div className="mt-1 truncate text-xs text-white/60">
+                <div className="mt-1 line-clamp-2 text-xs leading-snug text-white/60">
                   Puis {nextStep.instruction.toLowerCase()}
                 </div>
               )}
