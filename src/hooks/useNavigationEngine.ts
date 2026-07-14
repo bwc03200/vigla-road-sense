@@ -6,36 +6,139 @@ import {
   projectOnPolyline,
 } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import type { ActiveNavigation } from "@/types/vigla";
 
 const OFF_ROUTE_M = 50;
 const OFF_ROUTE_HOLD_MS = 15000;
 const ARRIVAL_M = 30;
 const RECALC_RETRY_MS = 10000;
+const COORD_EPSILON = 0.0000001;
+const DISTANCE_EPSILON_M = 0.1;
+
+function nearlyEqual(a: number, b: number, epsilon = DISTANCE_EPSILON_M) {
+  return Math.abs(a - b) <= epsilon;
+}
+
+function coordEqual(a: [number, number], b: [number, number]) {
+  return (
+    Math.abs(a[0] - b[0]) <= COORD_EPSILON &&
+    Math.abs(a[1] - b[1]) <= COORD_EPSILON
+  );
+}
+
+function coordsEqual(a: [number, number][], b: [number, number][]) {
+  if (a.length !== b.length) return false;
+  return a.every((coord, index) => coordEqual(coord, b[index]));
+}
+
+function navigationPatchChanged(
+  navigation: ActiveNavigation,
+  patch: Partial<ActiveNavigation>,
+) {
+  if (
+    patch.remainingCoords &&
+    !coordsEqual(navigation.remainingCoords, patch.remainingCoords)
+  ) {
+    return true;
+  }
+  if (
+    patch.consumedCoords &&
+    !coordsEqual(navigation.consumedCoords, patch.consumedCoords)
+  ) {
+    return true;
+  }
+  if (
+    patch.distanceRemainingM != null &&
+    !nearlyEqual(navigation.distanceRemainingM, patch.distanceRemainingM)
+  ) {
+    return true;
+  }
+  if (
+    patch.durationRemainingS != null &&
+    !nearlyEqual(navigation.durationRemainingS, patch.durationRemainingS)
+  ) {
+    return true;
+  }
+  if (
+    patch.distanceToNextManeuverM != null &&
+    !nearlyEqual(
+      navigation.distanceToNextManeuverM,
+      patch.distanceToNextManeuverM,
+    )
+  ) {
+    return true;
+  }
+  if (
+    patch.currentStepIndex != null &&
+    navigation.currentStepIndex !== patch.currentStepIndex
+  ) {
+    return true;
+  }
+  if (
+    patch.offRouteM != null &&
+    !nearlyEqual(navigation.offRouteM, patch.offRouteM)
+  ) {
+    return true;
+  }
+  if (
+    "offRouteSince" in patch &&
+    navigation.offRouteSince !== patch.offRouteSince
+  ) {
+    return true;
+  }
+  if (
+    patch.recalculating != null &&
+    navigation.recalculating !== patch.recalculating
+  ) {
+    return true;
+  }
+  if (patch.arrived != null && navigation.arrived !== patch.arrived) {
+    return true;
+  }
+  return false;
+}
+
+function patchNavigationIfChanged(
+  navigation: ActiveNavigation,
+  patch: Partial<ActiveNavigation>,
+  patchNavigation: (patch: Partial<ActiveNavigation>) => void,
+) {
+  if (navigationPatchChanged(navigation, patch)) {
+    patchNavigation(patch);
+  }
+}
 
 /** Drives ActiveNavigation state from the user's live GPS position. */
 export function useNavigationEngine() {
   const position = useVigla((s) => s.position);
   const route = useVigla((s) => s.route);
-  const navigation = useVigla((s) => s.navigation);
+  const navigationActive = useVigla((s) => Boolean(s.navigation && !s.navigation.arrived));
   const patchNavigation = useVigla((s) => s.patchNavigation);
   const setRoute = useVigla((s) => s.setRoute);
   const setNavigation = useVigla((s) => s.setNavigation);
-  const hazards = useVigla((s) => s.hazards);
 
   const recalcInFlight = useRef(false);
   const lastRecalcAt = useRef(0);
 
   useEffect(() => {
-    if (!navigation || !route || !position) return;
+    const {
+      navigation,
+      route: activeRoute,
+      position: currentPosition,
+      hazards,
+    } = useVigla.getState();
+
+    if (!navigationActive || !navigation || !activeRoute || !currentPosition) return;
     if (navigation.arrived) return;
 
-    const coords = route.coords;
+    const coords = activeRoute.coords;
     if (!Array.isArray(coords) || coords.length < 2) return;
-    const proj = projectOnPolyline(position.lat, position.lng, coords);
+    const proj = projectOnPolyline(currentPosition.lat, currentPosition.lng, coords);
     const totalLen = polylineLength(coords);
     const distanceRemainingM = Math.max(0, totalLen - proj.distanceAlongM);
     // Assume similar avg speed as OSRM baseline.
-    const avgSpeed = route.durationS > 0 ? route.distanceM / route.durationS : 12;
+    const avgSpeed =
+      activeRoute.durationS > 0 ? activeRoute.distanceM / activeRoute.durationS : 12;
     const durationRemainingS =
       avgSpeed > 0 ? distanceRemainingM / avgSpeed : 0;
 
@@ -56,7 +159,12 @@ export function useNavigationEngine() {
     for (let i = stepIdx; i < steps.length; i++) {
       const s = steps[i];
       if (!s || !Array.isArray(s.location) || s.location.length < 2) continue;
-      const d = haversine(position.lat, position.lng, s.location[0], s.location[1]);
+      const d = haversine(
+        currentPosition.lat,
+        currentPosition.lng,
+        s.location[0],
+        s.location[1],
+      );
       if (d < 25 && i < steps.length - 1) {
         stepIdx = i + 1;
         continue;
@@ -68,23 +176,27 @@ export function useNavigationEngine() {
 
     // Arrival.
     const destD = haversine(
-      position.lat,
-      position.lng,
-      route.destination.lat,
-      route.destination.lng,
+      currentPosition.lat,
+      currentPosition.lng,
+      activeRoute.destination.lat,
+      activeRoute.destination.lng,
     );
     if (destD < ARRIVAL_M) {
-      patchNavigation({
-        remainingCoords,
-        consumedCoords,
-        distanceRemainingM: 0,
-        durationRemainingS: 0,
-        distanceToNextManeuverM: 0,
-        currentStepIndex: Math.max(0, steps.length - 1),
-        offRouteM: proj.distanceToRouteM,
-        offRouteSince: null,
-        arrived: true,
-      });
+      patchNavigationIfChanged(
+        navigation,
+        {
+          remainingCoords,
+          consumedCoords,
+          distanceRemainingM: 0,
+          durationRemainingS: 0,
+          distanceToNextManeuverM: 0,
+          currentStepIndex: Math.max(0, steps.length - 1),
+          offRouteM: proj.distanceToRouteM,
+          offRouteSince: null,
+          arrived: true,
+        },
+        patchNavigation,
+      );
       return;
     }
 
@@ -97,16 +209,20 @@ export function useNavigationEngine() {
       offRouteSince = null;
     }
 
-    patchNavigation({
-      remainingCoords,
-      consumedCoords,
-      distanceRemainingM,
-      durationRemainingS,
-      distanceToNextManeuverM: distanceToNext,
-      currentStepIndex: stepIdx,
-      offRouteM: proj.distanceToRouteM,
-      offRouteSince,
-    });
+    patchNavigationIfChanged(
+      navigation,
+      {
+        remainingCoords,
+        consumedCoords,
+        distanceRemainingM,
+        durationRemainingS,
+        distanceToNextManeuverM: distanceToNext,
+        currentStepIndex: stepIdx,
+        offRouteM: proj.distanceToRouteM,
+        offRouteSince,
+      },
+      patchNavigation,
+    );
 
     const shouldRecalc =
       offRouteSince != null &&
@@ -117,15 +233,15 @@ export function useNavigationEngine() {
     if (shouldRecalc) {
       recalcInFlight.current = true;
       lastRecalcAt.current = now;
-      patchNavigation({ recalculating: true });
+      patchNavigationIfChanged(navigation, { recalculating: true }, patchNavigation);
       fetchOsrmRoute(
-        position.lat,
-        position.lng,
-        route.destination.lat,
-        route.destination.lng,
+        currentPosition.lat,
+        currentPosition.lng,
+        activeRoute.destination.lat,
+        activeRoute.destination.lng,
       )
         .then((result) => {
-          const newRoute = buildRouteState(route.destination, result, hazards);
+          const newRoute = buildRouteState(activeRoute.destination, result, hazards);
           setRoute(newRoute);
           setNavigation({
             routeCoords: newRoute.coords,
@@ -145,17 +261,25 @@ export function useNavigationEngine() {
           });
         })
         .catch(() => {
-          patchNavigation({ recalculating: false });
+          const latestNavigation = useVigla.getState().navigation;
+          if (latestNavigation) {
+            patchNavigationIfChanged(
+              latestNavigation,
+              { recalculating: false },
+              patchNavigation,
+            );
+          }
         })
         .finally(() => {
           recalcInFlight.current = false;
         });
     }
   }, [
-    position,
+    position?.lat,
+    position?.lng,
+    position?.timestamp,
     route,
-    navigation,
-    hazards,
+    navigationActive,
     patchNavigation,
     setNavigation,
     setRoute,
