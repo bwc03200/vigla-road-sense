@@ -20,17 +20,35 @@ export function ConvoyPanel({ userId }: { userId: string }) {
     if (!displayName.trim()) return toast.error("Choisis d'abord un pseudo");
     if (!name.trim()) return;
     setBusy(true);
-    await createConvoy(name.trim());
-    setBusy(false);
-    setName("");
+    try {
+      await createConvoy(name.trim());
+      setName("");
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[ConvoyPanel.handleCreate] unexpected exception:", e);
+      toast.error("Création du convoi impossible", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setBusy(false);
+    }
   }
   async function handleJoin() {
     if (!displayName.trim()) return toast.error("Choisis d'abord un pseudo");
     if (!code.trim()) return;
     setBusy(true);
-    await joinConvoy(code);
-    setBusy(false);
-    setCode("");
+    try {
+      await joinConvoy(code);
+      setCode("");
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[ConvoyPanel.handleJoin] unexpected exception:", e);
+      toast.error("Impossible de rejoindre le convoi", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (convoy) {
