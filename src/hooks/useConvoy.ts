@@ -48,8 +48,13 @@ export function useConvoy(userId: string | null) {
     }
     loadInitial();
 
+    // Unique topic per mount to avoid supabase-js reusing an already-
+    // subscribed channel (which would throw "cannot add postgres_changes
+    // callbacks ... after subscribe()" on the second effect run, e.g. in
+    // React StrictMode or on any dependency change).
+    const topic = `convoy:${convoy.id}:${Math.random().toString(36).slice(2, 10)}`;
     const channel = supabase
-      .channel(`convoy:${convoy.id}`)
+      .channel(topic)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "convoy_members", filter: `convoy_id=eq.${convoy.id}` },
