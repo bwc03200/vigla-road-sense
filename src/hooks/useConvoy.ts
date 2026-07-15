@@ -106,61 +106,124 @@ export function useConvoy(userId: string | null) {
   }, [position, convoy, userId]);
 
   async function createConvoy(name: string) {
-    if (!userId) return;
+    if (!userId) {
+      toast.error("Vous devez être connecté pour créer un convoi");
+      return;
+    }
     const code = randomCode();
-    const { data, error } = await db
-      .from("convoys")
-      .insert({ name, code, owner_id: userId })
-      .select("*")
-      .single();
-    if (error || !data) {
-      toast.error("Création du convoi impossible");
-      return;
-    }
-    const c = data as Convoy;
-    await db.from("convoy_members").insert({
-      convoy_id: c.id,
-      user_id: userId,
-      display_name: displayName || "Moi",
-    });
-    setConvoy(c);
-    toast.success(`Convoi créé — code ${c.code}`);
-  }
-
-  async function joinConvoy(code: string) {
-    if (!userId) return;
-    const { data: convoyRow, error } = await db
-      .from("convoys")
-      .select("*")
-      .eq("code", code.trim().toUpperCase())
-      .maybeSingle();
-    if (error || !convoyRow) {
-      toast.error("Code de convoi introuvable");
-      return;
-    }
-    const c = convoyRow as Convoy;
-    await db.from("convoy_members").upsert(
-      {
+    try {
+      const { data, error } = await db
+        .from("convoys")
+        .insert({ name, code, owner_id: userId })
+        .select("*")
+        .single();
+      if (error || !data) {
+        // eslint-disable-next-line no-console
+        console.error("[useConvoy.createConvoy] insert convoys failed:", {
+          error,
+          payload: { name, code, owner_id: userId },
+        });
+        toast.error("Création du convoi impossible", {
+          description: error?.message ?? "Erreur inconnue côté base de données",
+        });
+        return;
+      }
+      const c = data as Convoy;
+      const { error: memberError } = await db.from("convoy_members").insert({
         convoy_id: c.id,
         user_id: userId,
         display_name: displayName || "Moi",
-        last_seen: new Date().toISOString(),
-      },
-      { onConflict: "convoy_id,user_id" },
-    );
-    setConvoy(c);
-    toast.success(`Convoi rejoint : ${c.name}`);
+      });
+      if (memberError) {
+        // eslint-disable-next-line no-console
+        console.error("[useConvoy.createConvoy] insert convoy_members failed:", memberError);
+        toast.error("Convoi créé, mais impossible de vous y ajouter", {
+          description: memberError.message,
+        });
+        return;
+      }
+      setConvoy(c);
+      toast.success(`Convoi créé — code ${c.code}`);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[useConvoy.createConvoy] unexpected exception:", e);
+      toast.error("Création du convoi impossible", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    }
+  }
+
+  async function joinConvoy(code: string) {
+    if (!userId) {
+      toast.error("Vous devez être connecté pour rejoindre un convoi");
+      return;
+    }
+    try {
+      const { data: convoyRow, error } = await db
+        .from("convoys")
+        .select("*")
+        .eq("code", code.trim().toUpperCase())
+        .maybeSingle();
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("[useConvoy.joinConvoy] select convoys failed:", error);
+        toast.error("Impossible de chercher ce convoi", { description: error.message });
+        return;
+      }
+      if (!convoyRow) {
+        toast.error("Code de convoi introuvable");
+        return;
+      }
+      const c = convoyRow as Convoy;
+      const { error: upsertError } = await db.from("convoy_members").upsert(
+        {
+          convoy_id: c.id,
+          user_id: userId,
+          display_name: displayName || "Moi",
+          last_seen: new Date().toISOString(),
+        },
+        { onConflict: "convoy_id,user_id" },
+      );
+      if (upsertError) {
+        // eslint-disable-next-line no-console
+        console.error("[useConvoy.joinConvoy] upsert convoy_members failed:", upsertError);
+        toast.error("Impossible de rejoindre le convoi", { description: upsertError.message });
+        return;
+      }
+      setConvoy(c);
+      toast.success(`Convoi rejoint : ${c.name}`);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[useConvoy.joinConvoy] unexpected exception:", e);
+      toast.error("Impossible de rejoindre le convoi", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   async function leaveConvoy() {
     if (!convoy || !userId) return;
-    await db
-      .from("convoy_members")
-      .delete()
-      .eq("convoy_id", convoy.id)
-      .eq("user_id", userId);
-    setConvoy(null);
-    toast("Convoi quitté");
+    try {
+      const { error } = await db
+        .from("convoy_members")
+        .delete()
+        .eq("convoy_id", convoy.id)
+        .eq("user_id", userId);
+      if (error) {
+        // eslint-disable-next-line no-console
+        console.error("[useConvoy.leaveConvoy] delete failed:", error);
+        toast.error("Impossible de quitter le convoi", { description: error.message });
+        return;
+      }
+      setConvoy(null);
+      toast("Convoi quitté");
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error("[useConvoy.leaveConvoy] unexpected exception:", e);
+      toast.error("Impossible de quitter le convoi", {
+        description: e instanceof Error ? e.message : String(e),
+      });
+    }
   }
 
   return { createConvoy, joinConvoy, leaveConvoy };
