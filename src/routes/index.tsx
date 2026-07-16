@@ -27,6 +27,7 @@ import { ConvoyPanel } from "@/components/vigla/ConvoyPanel";
 import { ConvoyReactionBar, ConvoyMessageBubbles } from "@/components/vigla/ConvoyReactionBar";
 import { EmergencyContactsScreen } from "@/components/vigla/EmergencyContactsScreen";
 import { RoadbookList } from "@/components/vigla/RoadbookList";
+import { HistoryList } from "@/components/vigla/HistoryList";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, LogOut, Shield, Navigation } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
