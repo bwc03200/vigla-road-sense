@@ -61,3 +61,22 @@ export function useHazards() {
     };
   }, [setHazards, upsertHazard, setOnline]);
 }
+
+/**
+ * Confirme un signalement via RPC dédié (SECURITY DEFINER côté serveur).
+ * L'UPDATE direct sur hazard_reports est révoqué pour `authenticated` afin
+ * d'empêcher toute modification d'autres champs (position, type, reported_by…).
+ */
+export async function confirmHazard(hazardId: string) {
+  const { error } = await (supabase as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
+  }).rpc("confirm_hazard", { hazard_id: hazardId });
+  if (error) throw error;
+}
+
+export async function denyHazard(hazardId: string) {
+  const { error } = await (supabase as unknown as {
+    rpc: (fn: string, args: Record<string, unknown>) => Promise<{ error: unknown }>;
+  }).rpc("deny_hazard", { hazard_id: hazardId });
+  if (error) throw error;
+}
