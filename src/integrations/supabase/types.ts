@@ -296,6 +296,8 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      confirm_hazard: { Args: { hazard_id: string }; Returns: undefined }
+      deny_hazard: { Args: { hazard_id: string }; Returns: undefined }
       is_convoy_member: {
         Args: { _convoy: string; _user: string }
         Returns: boolean
