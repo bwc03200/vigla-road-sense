@@ -193,6 +193,12 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
               </Button>
             </div>
             <EmergencyContactsScreen userId={userId} />
+            <div>
+              <div className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Historique des trajets
+              </div>
+              <HistoryList />
+            </div>
           </div>
         )}
       </main>
