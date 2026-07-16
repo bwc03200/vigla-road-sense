@@ -27,6 +27,7 @@ import { ConvoyPanel } from "@/components/vigla/ConvoyPanel";
 import { ConvoyReactionBar, ConvoyMessageBubbles } from "@/components/vigla/ConvoyReactionBar";
 import { EmergencyContactsScreen } from "@/components/vigla/EmergencyContactsScreen";
 import { RoadbookList } from "@/components/vigla/RoadbookList";
+import { HistoryList } from "@/components/vigla/HistoryList";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, LogOut, Shield, Navigation } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
@@ -192,6 +193,12 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
               </Button>
             </div>
             <EmergencyContactsScreen userId={userId} />
+            <div>
+              <div className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                Historique des trajets
+              </div>
+              <HistoryList />
+            </div>
           </div>
         )}
       </main>
