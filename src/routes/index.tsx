@@ -111,10 +111,10 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   useCrashDetection(navActive);
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-[100dvh] bg-background">
       <Toaster position="top-center" theme="light" richColors closeButton />
       <CrashAlertOverlay />
-      <main className="fixed inset-0 bottom-16">
+      <main className="fixed inset-x-0 top-0 bottom-16" style={{ height: "calc(100dvh - 4rem)" }}>
         {tab === "map" && (
           <div className="relative h-full w-full">
             <MapView />
