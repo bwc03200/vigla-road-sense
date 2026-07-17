@@ -9,7 +9,8 @@ import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
 import type { ActiveNavigation } from "@/types/vigla";
 
 const OFF_ROUTE_M = 50;
-const OFF_ROUTE_HOLD_MS = 15000;
+const OFF_ROUTE_M = 50;
+const OFF_ROUTE_HOLD_MS = 8000;
 const ARRIVAL_M = 30;
 const RECALC_RETRY_MS = 10000;
 const COORD_EPSILON = 0.0000001;
