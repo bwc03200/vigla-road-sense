@@ -164,6 +164,7 @@ export function MapView() {
         subdomains={["a", "b", "c", "d"]}
         maxZoom={19}
       />
+      <InvalidateOnResize />
       {position && !route && !navActive && <Recenter lat={position.lat} lng={position.lng} />}
       {position && navActive && (
         <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
