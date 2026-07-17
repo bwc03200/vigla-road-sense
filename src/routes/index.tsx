@@ -12,6 +12,8 @@ import { useCrashDetection } from "@/hooks/useCrashDetection";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
 import { useConvoy } from "@/hooks/useConvoy";
 import { useRoadbooks } from "@/hooks/useRoadbooks";
+import { useWakeLock } from "@/hooks/useWakeLock";
+import { usePersistActiveNavigation, useResumePrompt } from "@/hooks/useNavigationResume";
 import { useVigla } from "@/lib/vigla-store";
 import { MapView } from "@/components/vigla/MapView";
 import { TopBar } from "@/components/vigla/TopBar";
@@ -109,12 +111,17 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
 
   // Crash detection runs whenever nav (or protection) is active.
   useCrashDetection(navActive);
+  // Keep the screen awake while a trip is running.
+  useWakeLock(navActive);
+  // Persist active navigation so we can offer to resume after a background/lock.
+  usePersistActiveNavigation();
+  const resumePrompt = useResumePrompt();
 
   return (
-    <div className="relative min-h-screen bg-background">
+    <div className="relative min-h-[100dvh] bg-background">
       <Toaster position="top-center" theme="light" richColors closeButton />
       <CrashAlertOverlay />
-      <main className="fixed inset-0 bottom-16">
+      <main className="fixed inset-x-0 top-0 bottom-16" style={{ height: "calc(100dvh - 4rem)" }}>
         {tab === "map" && (
           <div className="relative h-full w-full">
             <MapView />
@@ -145,8 +152,16 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
             {navActive && convoy && <ConvoyReactionBar userId={userId} />}
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
             {geoError && <GeoErrorOverlay code={geoError} />}
+            {resumePrompt.candidate && !navActive && !route && (
+              <ResumeBanner
+                label={resumePrompt.candidate.route.destination.label}
+                onResume={resumePrompt.resume}
+                onDismiss={resumePrompt.dismiss}
+              />
+            )}
           </div>
         )}
+
 
         {tab === "report" && (
           <div className="h-full overflow-y-auto pt-6">
@@ -203,6 +218,43 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
         )}
       </main>
       <BottomTabs value={tab} onChange={setTab} />
+    </div>
+  );
+}
+
+function ResumeBanner({
+  label,
+  onResume,
+  onDismiss,
+}: {
+  label: string;
+  onResume: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-20 z-[700] flex justify-center px-4">
+      <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+        <div className="mb-3">
+          <div className="text-xs uppercase tracking-widest text-slate-500">
+            Trajet en cours
+          </div>
+          <div className="mt-1 truncate text-sm font-semibold text-slate-900">
+            Reprendre le trajet vers {label} ?
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="h-11 flex-1" onClick={onDismiss}>
+            Non, nouveau trajet
+          </Button>
+          <Button
+            className="h-11 flex-[2] bg-primary text-primary-foreground"
+            onClick={onResume}
+          >
+            <Navigation className="mr-2 h-4 w-4" />
+            Reprendre
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

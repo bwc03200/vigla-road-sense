@@ -9,7 +9,7 @@ import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
 import type { ActiveNavigation } from "@/types/vigla";
 
 const OFF_ROUTE_M = 50;
-const OFF_ROUTE_HOLD_MS = 15000;
+const OFF_ROUTE_HOLD_MS = 8000;
 const ARRIVAL_M = 30;
 const RECALC_RETRY_MS = 10000;
 const COORD_EPSILON = 0.0000001;
@@ -119,6 +119,8 @@ export function useNavigationEngine() {
 
   const recalcInFlight = useRef(false);
   const lastRecalcAt = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
+  const lastSegmentIdxRef = useRef(0);
 
   useEffect(() => {
     const {
@@ -133,16 +135,23 @@ export function useNavigationEngine() {
 
     const coords = activeRoute.coords;
     if (!Array.isArray(coords) || coords.length < 2) return;
-    const proj = projectOnPolyline(currentPosition.lat, currentPosition.lng, coords);
+    // Restrict search to segments at or ahead of last known projection so we
+    // don't erroneously "jump" forward on routes that loop back near their start.
+    const searchFrom = Math.min(lastSegmentIdxRef.current, coords.length - 2);
+    const proj = projectOnPolyline(
+      currentPosition.lat,
+      currentPosition.lng,
+      coords,
+      searchFrom,
+    );
+    lastSegmentIdxRef.current = proj.segmentIndex;
     const totalLen = polylineLength(coords);
     const distanceRemainingM = Math.max(0, totalLen - proj.distanceAlongM);
-    // Assume similar avg speed as OSRM baseline.
     const avgSpeed =
       activeRoute.durationS > 0 ? activeRoute.distanceM / activeRoute.durationS : 12;
     const durationRemainingS =
       avgSpeed > 0 ? distanceRemainingM / avgSpeed : 0;
 
-    // Split polyline into consumed / remaining at projected point.
     const consumedCoords: [number, number][] = [
       ...coords.slice(0, proj.segmentIndex + 1),
       proj.point,
@@ -152,7 +161,6 @@ export function useNavigationEngine() {
       ...coords.slice(proj.segmentIndex + 1),
     ];
 
-    // Advance step index by finding the next step location ahead of projection.
     const steps = Array.isArray(navigation.steps) ? navigation.steps : [];
     let stepIdx = Math.min(navigation.currentStepIndex, Math.max(0, steps.length - 1));
     let distanceToNext = 0;
@@ -174,14 +182,24 @@ export function useNavigationEngine() {
       break;
     }
 
-    // Arrival.
+    // Arrival: use haversine to the FINAL destination point AND require the
+    // projected remaining polyline distance to be near zero. Both guards prevent
+    // false positives from projection jumps or destination drift.
+    const lastCoord = coords[coords.length - 1];
     const destD = haversine(
       currentPosition.lat,
       currentPosition.lng,
       activeRoute.destination.lat,
       activeRoute.destination.lng,
     );
-    if (destD < ARRIVAL_M) {
+    const lastCoordD = haversine(
+      currentPosition.lat,
+      currentPosition.lng,
+      lastCoord[0],
+      lastCoord[1],
+    );
+    const nearDest = Math.min(destD, lastCoordD) < ARRIVAL_M;
+    if (nearDest && distanceRemainingM < 100) {
       patchNavigationIfChanged(
         navigation,
         {
@@ -209,6 +227,12 @@ export function useNavigationEngine() {
       offRouteSince = null;
     }
 
+    // Show "recalcul en cours" as soon as we detect a sustained off-route,
+    // not only after OSRM answers.
+    const willRecalc =
+      offRouteSince != null &&
+      now - offRouteSince > OFF_ROUTE_HOLD_MS / 2;
+
     patchNavigationIfChanged(
       navigation,
       {
@@ -220,6 +244,7 @@ export function useNavigationEngine() {
         currentStepIndex: stepIdx,
         offRouteM: proj.distanceToRouteM,
         offRouteSince,
+        recalculating: navigation.recalculating || willRecalc,
       },
       patchNavigation,
     );
@@ -231,6 +256,10 @@ export function useNavigationEngine() {
       now - lastRecalcAt.current > RECALC_RETRY_MS;
 
     if (shouldRecalc) {
+      // Cancel any in-flight OSRM call and start a fresh one from current GPS.
+      if (abortRef.current) abortRef.current.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
       recalcInFlight.current = true;
       lastRecalcAt.current = now;
       patchNavigationIfChanged(navigation, { recalculating: true }, patchNavigation);
@@ -239,9 +268,12 @@ export function useNavigationEngine() {
         currentPosition.lng,
         activeRoute.destination.lat,
         activeRoute.destination.lng,
+        controller.signal,
       )
         .then((result) => {
+          if (controller.signal.aborted) return;
           const newRoute = buildRouteState(activeRoute.destination, result, hazards);
+          lastSegmentIdxRef.current = 0;
           setRoute(newRoute);
           setNavigation({
             routeCoords: newRoute.coords,
@@ -260,7 +292,8 @@ export function useNavigationEngine() {
             alertsReceived: navigation.alertsReceived,
           });
         })
-        .catch(() => {
+        .catch((err) => {
+          if (err?.name === "AbortError") return;
           const latestNavigation = useVigla.getState().navigation;
           if (latestNavigation) {
             patchNavigationIfChanged(
@@ -271,6 +304,7 @@ export function useNavigationEngine() {
           }
         })
         .finally(() => {
+          if (abortRef.current === controller) abortRef.current = null;
           recalcInFlight.current = false;
         });
     }
@@ -284,4 +318,17 @@ export function useNavigationEngine() {
     setNavigation,
     setRoute,
   ]);
+
+  // Reset per-navigation refs when a new nav starts / ends.
+  useEffect(() => {
+    if (!navigationActive) {
+      lastSegmentIdxRef.current = 0;
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+      recalcInFlight.current = false;
+    }
+  }, [navigationActive]);
 }
+

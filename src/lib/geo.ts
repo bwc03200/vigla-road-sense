@@ -103,6 +103,7 @@ export function projectOnPolyline(
   lat: number,
   lng: number,
   coords: [number, number][],
+  startIndex = 0,
 ): {
   segmentIndex: number;
   point: [number, number];
@@ -127,12 +128,19 @@ export function projectOnPolyline(
   }
   const toRad = (d: number) => (d * Math.PI) / 180;
   const R = 6371000;
-  let bestIdx = 0;
-  let bestDist = Infinity;
-  let bestT = 0;
-  let bestPoint: [number, number] = coords[0];
+  // Precompute cumulative distances along the whole polyline so results are
+  // consistent regardless of startIndex.
   const cumulative: number[] = [0];
   for (let i = 0; i < coords.length - 1; i++) {
+    const segLen = haversine(coords[i][0], coords[i][1], coords[i + 1][0], coords[i + 1][1]);
+    cumulative.push(cumulative[i] + segLen);
+  }
+  const from = Math.max(0, Math.min(startIndex, coords.length - 2));
+  let bestIdx = from;
+  let bestDist = Infinity;
+  let bestT = 0;
+  let bestPoint: [number, number] = coords[from];
+  for (let i = from; i < coords.length - 1; i++) {
     const [alat, alng] = coords[i];
     const [blat, blng] = coords[i + 1];
     const midLat = toRad((alat + blat) / 2);
@@ -150,8 +158,6 @@ export function projectOnPolyline(
     const cx = ax + t * dx;
     const cy = ay + t * dy;
     const d = Math.hypot(px - cx, py - cy);
-    const segLen = haversine(alat, alng, blat, blng);
-    cumulative.push(cumulative[i] + segLen);
     if (d < bestDist) {
       bestDist = d;
       bestIdx = i;
@@ -173,6 +179,7 @@ export function projectOnPolyline(
     distanceAlongM,
   };
 }
+
 
 export function polylineLength(coords: [number, number][]): number {
   let total = 0;
