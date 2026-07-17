@@ -222,6 +222,43 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   );
 }
 
+function ResumeBanner({
+  label,
+  onResume,
+  onDismiss,
+}: {
+  label: string;
+  onResume: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-20 z-[700] flex justify-center px-4">
+      <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+        <div className="mb-3">
+          <div className="text-xs uppercase tracking-widest text-slate-500">
+            Trajet en cours
+          </div>
+          <div className="mt-1 truncate text-sm font-semibold text-slate-900">
+            Reprendre le trajet vers {label} ?
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="h-11 flex-1" onClick={onDismiss}>
+            Non, nouveau trajet
+          </Button>
+          <Button
+            className="h-11 flex-[2] bg-primary text-primary-foreground"
+            onClick={onResume}
+          >
+            <Navigation className="mr-2 h-4 w-4" />
+            Reprendre
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function GeoErrorOverlay({ code }: { code: string }) {
   const setGeoError = useVigla((s) => s.setGeoError);
   const msg =
