@@ -152,8 +152,16 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
             {navActive && convoy && <ConvoyReactionBar userId={userId} />}
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
             {geoError && <GeoErrorOverlay code={geoError} />}
+            {resumePrompt.candidate && !navActive && !route && (
+              <ResumeBanner
+                label={resumePrompt.candidate.route.destination.label}
+                onResume={resumePrompt.resume}
+                onDismiss={resumePrompt.dismiss}
+              />
+            )}
           </div>
         )}
+
 
         {tab === "report" && (
           <div className="h-full overflow-y-auto pt-6">
