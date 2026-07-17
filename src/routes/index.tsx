@@ -12,6 +12,8 @@ import { useCrashDetection } from "@/hooks/useCrashDetection";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
 import { useConvoy } from "@/hooks/useConvoy";
 import { useRoadbooks } from "@/hooks/useRoadbooks";
+import { useWakeLock } from "@/hooks/useWakeLock";
+import { usePersistActiveNavigation, useResumePrompt } from "@/hooks/useNavigationResume";
 import { useVigla } from "@/lib/vigla-store";
 import { MapView } from "@/components/vigla/MapView";
 import { TopBar } from "@/components/vigla/TopBar";
