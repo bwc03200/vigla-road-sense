@@ -75,6 +75,7 @@ function Recenter({ lat, lng }: { lat: number; lng: number }) {
       map.setView([lat, lng], 15);
       first.current = false;
     } else {
+      // Preserve the user's current zoom — never override with a fixed value.
       map.panTo([lat, lng], { animate: true, duration: 0.5 });
     }
   }, [lat, lng, map]);
@@ -83,8 +84,16 @@ function Recenter({ lat, lng }: { lat: number; lng: number }) {
 
 function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; heading: number | null }) {
   const map = useMap();
+  const firstFollow = useRef(true);
   useEffect(() => {
-    map.setView([lat, lng], 17, { animate: true });
+    if (firstFollow.current) {
+      // On nav start, zoom in once for a driving view.
+      map.setView([lat, lng], Math.max(map.getZoom(), 17), { animate: true });
+      firstFollow.current = false;
+    } else {
+      // Then just recenter, respecting whatever zoom the user chose.
+      map.setView([lat, lng], map.getZoom(), { animate: true });
+    }
   }, [lat, lng, map]);
   useEffect(() => {
     const el = map.getContainer();
@@ -97,6 +106,24 @@ function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; hea
   }, [heading, map]);
   return null;
 }
+
+function InvalidateOnResize() {
+  const map = useMap();
+  useEffect(() => {
+    const invalidate = () => map.invalidateSize();
+    // Handle layout settling after mount (bottom tabs, dvh changes).
+    const t = window.setTimeout(invalidate, 200);
+    window.addEventListener("resize", invalidate);
+    window.addEventListener("orientationchange", invalidate);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener("resize", invalidate);
+      window.removeEventListener("orientationchange", invalidate);
+    };
+  }, [map]);
+  return null;
+}
+
 
 function FitRoute({ coords }: { coords: [number, number][] }) {
   const map = useMap();
