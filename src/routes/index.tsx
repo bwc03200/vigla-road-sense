@@ -111,6 +111,11 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
 
   // Crash detection runs whenever nav (or protection) is active.
   useCrashDetection(navActive);
+  // Keep the screen awake while a trip is running.
+  useWakeLock(navActive);
+  // Persist active navigation so we can offer to resume after a background/lock.
+  usePersistActiveNavigation();
+  const resumePrompt = useResumePrompt();
 
   return (
     <div className="relative min-h-[100dvh] bg-background">
