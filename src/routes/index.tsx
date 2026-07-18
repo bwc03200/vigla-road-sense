@@ -22,6 +22,8 @@ import { HazardFilters } from "@/components/vigla/HazardFilters";
 import { TopBar } from "@/components/vigla/TopBar";
 import { ReportGrid } from "@/components/vigla/ReportGrid";
 import { OfflineBadge } from "@/components/vigla/OfflineBadge";
+import { InstallBanner } from "@/components/vigla/InstallPWA";
+
 import { BottomTabs, type Tab } from "@/components/vigla/BottomTabs";
 import { RoutePlanner } from "@/components/vigla/RoutePlanner";
 import { NavigationOverlay, StartTripBar } from "@/components/vigla/NavigationOverlay";
