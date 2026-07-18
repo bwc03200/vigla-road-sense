@@ -162,24 +162,50 @@ export function useNavigationEngine() {
     ];
 
     const steps = Array.isArray(navigation.steps) ? navigation.steps : [];
-    let stepIdx = Math.min(navigation.currentStepIndex, Math.max(0, steps.length - 1));
+    // Advance current step based on distance traveled ALONG the polyline.
+    // step[i].distanceMeters is the length of step i; the next maneuver
+    // (step i+1) starts at the cumulative sum through step i.
+    let stepIdx = Math.min(
+      navigation.currentStepIndex,
+      Math.max(0, steps.length - 1),
+    );
     let distanceToNext = 0;
-    for (let i = stepIdx; i < steps.length; i++) {
-      const s = steps[i];
-      if (!s || !Array.isArray(s.location) || s.location.length < 2) continue;
-      const d = haversine(
-        currentPosition.lat,
-        currentPosition.lng,
-        s.location[0],
-        s.location[1],
-      );
-      if (d < 25 && i < steps.length - 1) {
-        stepIdx = i + 1;
-        continue;
+    if (steps.length > 0) {
+      let cumulative = 0;
+      // Compute cumulative distance at which each step ENDS (= where next begins).
+      const stepEndDistances: number[] = [];
+      for (const s of steps) {
+        cumulative += Number.isFinite(s?.distanceMeters) ? s.distanceMeters : 0;
+        stepEndDistances.push(cumulative);
       }
-      distanceToNext = d;
-      stepIdx = i;
-      break;
+      const traveled = proj.distanceAlongM;
+      // Advance until the traveled distance is inside the current step's span,
+      // preferring the "next maneuver" (i.e. skip past the depart step quickly).
+      let idx = stepIdx;
+      while (idx < steps.length - 1 && traveled >= stepEndDistances[idx] - 5) {
+        idx += 1;
+      }
+      stepIdx = idx;
+      // Distance until the maneuver at the END of the current step.
+      distanceToNext = Math.max(0, stepEndDistances[stepIdx] - traveled);
+      // Fallback: if step[stepIdx] has a valid maneuver location, prefer the
+      // straight-line distance (matches user expectation for short segments).
+      const s = steps[stepIdx];
+      if (
+        s &&
+        Array.isArray(s.location) &&
+        s.location.length >= 2 &&
+        Number.isFinite(s.location[0]) &&
+        Number.isFinite(s.location[1])
+      ) {
+        const d = haversine(
+          currentPosition.lat,
+          currentPosition.lng,
+          s.location[0],
+          s.location[1],
+        );
+        if (Number.isFinite(d) && d > 0) distanceToNext = d;
+      }
     }
 
     // Arrival: use haversine to the FINAL destination point AND require the
