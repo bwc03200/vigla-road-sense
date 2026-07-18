@@ -8,12 +8,14 @@ import type {
   ConvoyMember,
   CrashState,
   EmergencyContact,
+  HazardFilters,
   HazardReport,
   OfficialRadar,
   Roadbook,
   RouteState,
   UserPreferences,
 } from "@/types/vigla";
+
 
 
 export interface Position {
