@@ -5,7 +5,11 @@ import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
+import { HazardMarker } from "@/components/vigla/HazardMarker";
 import type { HazardType } from "@/types/vigla";
+
+
+
 
 
 const HAZARD_COLORS: Record<HazardType, string> = {
