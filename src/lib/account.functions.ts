@@ -14,10 +14,14 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
       "roadbooks",
       "trip_history",
       "convoy_members",
-    ];
+    ] as const;
+    const admin = supabaseAdmin as unknown as {
+      from: (t: string) => { delete: () => { eq: (c: string, v: string) => Promise<unknown> } };
+    };
     for (const t of tables) {
-      await supabaseAdmin.from(t).delete().eq("user_id", userId);
+      await admin.from(t).delete().eq("user_id", userId);
     }
+
 
     const { error } = await supabaseAdmin.auth.admin.deleteUser(userId);
     if (error) throw new Error(error.message);
