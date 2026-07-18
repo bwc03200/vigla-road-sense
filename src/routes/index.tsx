@@ -139,6 +139,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
 
             <ProtectionBadge />
             <OfflineBadge />
+            <InstallBanner />
+
             <AutoProtectBanner />
             <ConvoyMessageBubbles />
             {!route && !navActive && (
