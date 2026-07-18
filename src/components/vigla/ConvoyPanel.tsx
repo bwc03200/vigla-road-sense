@@ -5,6 +5,18 @@ import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
 import { useConvoy } from "@/hooks/useConvoy";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
 
 export function ConvoyPanel({ userId }: { userId: string }) {
   const convoy = useVigla((s) => s.convoy);
