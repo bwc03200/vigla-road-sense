@@ -78,7 +78,10 @@ interface ViglaState {
   setDisplayName: (n: string) => void;
   setVibrationEnabled: (v: boolean) => void;
   setPreferences: (p: UserPreferences) => void;
+  toggleHazardFilter: (k: HazardFilterKey) => void;
+  setAllHazardFilters: (v: boolean) => void;
 }
+
 
 
 
