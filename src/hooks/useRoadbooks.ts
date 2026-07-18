@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import i18n from "@/i18n/i18n";
 import { useVigla } from "@/lib/vigla-store";
 import type { Roadbook } from "@/types/vigla";
 
@@ -51,17 +52,17 @@ export function useRoadbooks(userId: string | null) {
       .select("*")
       .single();
     if (error || !data) {
-      toast.error("Enregistrement impossible");
+      toast.error(i18n.t("roadbooks.saveFailed"));
       return;
     }
     const current = useVigla.getState().roadbooks;
     useVigla.getState().setRoadbooks([data as Roadbook, ...current]);
-    toast.success("Roadbook enregistré");
+    toast.success(i18n.t("roadbooks.saved"));
   }
 
   async function remove(id: string) {
     const { error } = await db.from("roadbooks").delete().eq("id", id);
-    if (error) return toast.error("Suppression impossible");
+    if (error) return toast.error(i18n.t("roadbooks.removeFailed"));
     const current = useVigla.getState().roadbooks;
     useVigla.getState().setRoadbooks(current.filter((r) => r.id !== id));
   }

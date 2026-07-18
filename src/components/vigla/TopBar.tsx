@@ -1,11 +1,12 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertTriangle, Signal } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, formatDistance, formatSpeed, speedUnitLabel } from "@/lib/geo";
-import { HAZARD_LABELS } from "@/types/vigla";
-
+import { hazardLabel } from "@/lib/i18n-helpers";
 
 export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
+  const { t } = useTranslation();
   const position = useVigla((s) => s.position);
   const speedKmh = useVigla((s) => s.speedKmh);
   const hazards = useVigla((s) => s.hazards);
@@ -21,14 +22,12 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
       if (allowed && !allowed.has(h.id)) continue;
       const d = haversine(position.lat, position.lng, h.latitude, h.longitude);
       if (d < 3000 && (!best || d < best.distance)) {
-        best = { label: HAZARD_LABELS[h.type], distance: d };
+        best = { label: hazardLabel(h.type), distance: d };
       }
     }
     return best;
   }, [hazards, position, route]);
 
-  // When nav is active, TopBar only renders as part of NavigationOverlay's
-  // flex-col stack (embedded=true) so it cannot overlap the instruction banner.
   if (navActive && !embedded) return null;
 
   const wrapperClass = embedded
@@ -48,7 +47,6 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
           <span className="text-[10px] uppercase tracking-widest text-slate-500">
             {speedUnitLabel(speedUnit)}
           </span>
-
         </div>
         <div className="h-10 w-px bg-slate-200" />
         <div className="min-w-0 flex-1">
@@ -60,16 +58,15 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
                   {nextHazard.label}
                 </div>
                 <div className="text-xs text-slate-500">
-                  dans {formatDistance(nextHazard.distance)}
+                  {t("map.in", { distance: formatDistance(nextHazard.distance) })}
                 </div>
               </div>
             </div>
-
           ) : (
             <div className="flex items-center gap-2 text-slate-500">
               <Signal className="h-4 w-4" />
               <span className="text-xs">
-                {route ? "Itinéraire actif — voie dégagée" : "Voie dégagée"}
+                {route ? t("map.routeActive") : t("map.clear")}
               </span>
             </div>
           )}

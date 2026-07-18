@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,7 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
@@ -36,17 +38,14 @@ function AuthPage() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success("Compte créé — vous êtes connecté");
+        toast.success(t("auth.accountCreated"));
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+        const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
       navigate({ to: "/" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Erreur inconnue");
+      toast.error(err instanceof Error ? err.message : t("common.unknownError"));
     } finally {
       setLoading(false);
     }
@@ -63,14 +62,12 @@ function AuthPage() {
         </div>
         <div className="rounded-3xl border border-border bg-card p-6 shadow-2xl">
           <h1 className="text-lg font-semibold text-foreground">
-            {mode === "signin" ? "Connexion" : "Créer un compte"}
+            {mode === "signin" ? t("auth.signin") : t("auth.signup")}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Signalez et évitez les zones de danger en temps réel.
-          </p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("auth.subtitle")}</p>
           <form onSubmit={onSubmit} className="mt-5 space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
                 id="email"
                 type="email"
@@ -81,7 +78,7 @@ function AuthPage() {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="password">Mot de passe</Label>
+              <Label htmlFor="password">{t("auth.password")}</Label>
               <Input
                 id="password"
                 type="password"
@@ -93,7 +90,7 @@ function AuthPage() {
               />
             </div>
             <Button type="submit" disabled={loading} className="w-full h-12 text-base">
-              {loading ? "…" : mode === "signin" ? "Se connecter" : "S'inscrire"}
+              {loading ? "…" : mode === "signin" ? t("auth.signInBtn") : t("auth.signUpBtn")}
             </Button>
           </form>
           <button
@@ -101,9 +98,7 @@ function AuthPage() {
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
             className="mt-4 w-full text-sm text-muted-foreground hover:text-foreground"
           >
-            {mode === "signin"
-              ? "Pas encore de compte ? S'inscrire"
-              : "Déjà un compte ? Se connecter"}
+            {mode === "signin" ? t("auth.toSignup") : t("auth.toSignin")}
           </button>
         </div>
       </div>

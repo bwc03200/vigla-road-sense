@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import { vibrateAlert } from "@/lib/haptics";
-import { HAZARD_LABELS } from "@/types/vigla";
+import { hazardLabel } from "@/lib/i18n-helpers";
 
 
 const ALERT_RADIUS_M = 400;
@@ -68,7 +68,7 @@ export function useAlerts(
         markAlerted(h.id);
         if (soundAlerts) beep();
         if (vibrationAlerts) vibrateAlert();
-        cbRef.current?.(HAZARD_LABELS[h.type], d);
+        cbRef.current?.(hazardLabel(h.type), d);
 
       } else if (already && d > ALERT_RADIUS_M * 2) {
         clearAlert(h.id);

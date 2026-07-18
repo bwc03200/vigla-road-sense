@@ -1,8 +1,11 @@
 import { useEffect } from "react";
 import { toast } from "sonner";
+import i18n from "@/i18n/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { EmergencyContact } from "@/types/vigla";
+
+const t = (k: string) => i18n.t(k);
 
 // Types file is regenerated after migrations; cast until then.
 type AnyClient = { from: (t: string) => any };
@@ -39,7 +42,7 @@ export function useEmergencyContacts(userId: string | null) {
       .select("*")
       .single();
     if (error) {
-      toast.error("Ajout impossible");
+      toast.error(t("contacts.addFailed"));
       return;
     }
     const current = useVigla.getState().emergencyContacts;
@@ -49,7 +52,7 @@ export function useEmergencyContacts(userId: string | null) {
   async function remove(id: string) {
     const { error } = await db.from("emergency_contacts").delete().eq("id", id);
     if (error) {
-      toast.error("Suppression impossible");
+      toast.error(t("contacts.deleteFailed"));
       return;
     }
     const current = useVigla.getState().emergencyContacts;

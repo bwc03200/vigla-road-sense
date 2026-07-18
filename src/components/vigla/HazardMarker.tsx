@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { toast } from "sonner";
 import { confirmHazard, denyHazard } from "@/hooks/useHazards";
 import { supabase } from "@/integrations/supabase/client";
+import { hazardLabel } from "@/lib/i18n-helpers";
 import type { HazardReport, HazardType } from "@/types/vigla";
 
 const HAZARD_COLORS: Record<HazardType, string> = {
@@ -22,15 +24,6 @@ const HAZARD_EMOJI: Record<HazardType, string> = {
   travaux: "🚧",
   obstacle: "⚠️",
   ralentissement: "🐌",
-};
-
-const HAZARD_LABELS: Record<HazardType, string> = {
-  radar_fixe: "Radar fixe",
-  radar_mobile: "Radar mobile",
-  accident: "Accident",
-  travaux: "Travaux",
-  obstacle: "Obstacle",
-  ralentissement: "Ralentissement",
 };
 
 const VOTES_KEY = "vigla:hazard-votes";
@@ -64,16 +57,8 @@ function hazardIcon(type: HazardType) {
   });
 }
 
-function formatAge(createdAt: string): string {
-  const ms = Date.now() - new Date(createdAt).getTime();
-  const min = Math.max(0, Math.floor(ms / 60000));
-  if (min < 1) return "à l'instant";
-  if (min < 60) return `il y a ${min} min`;
-  const h = Math.floor(min / 60);
-  return `il y a ${h} h`;
-}
-
 export function HazardMarker({ hazard }: { hazard: HazardReport }) {
+  const { t } = useTranslation();
   const [pending, setPending] = useState<null | "confirm" | "deny">(null);
   const [voted, setVoted] = useState<"confirm" | "deny" | null>(
     () => loadVotes()[hazard.id] ?? null,
@@ -85,15 +70,21 @@ export function HazardMarker({ hazard }: { hazard: HazardReport }) {
     supabase.auth.getUser().then(({ data }) => {
       if (!cancelled) setAuthed(!!data.user);
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
+
+  function formatAge(createdAt: string): string {
+    const ms = Date.now() - new Date(createdAt).getTime();
+    const min = Math.max(0, Math.floor(ms / 60000));
+    if (min < 1) return t("hazard.popup.justNow");
+    if (min < 60) return t("hazard.popup.minAgo", { n: min });
+    return t("hazard.popup.hAgo", { n: Math.floor(min / 60) });
+  }
 
   async function vote(kind: "confirm" | "deny") {
     if (pending || voted) return;
     if (!authed) {
-      toast.error("Connecte-toi pour voter");
+      toast.error(t("hazard.popup.loginToVote"));
       return;
     }
     setPending(kind);
@@ -102,13 +93,13 @@ export function HazardMarker({ hazard }: { hazard: HazardReport }) {
       else await denyHazard(hazard.id);
       saveVote(hazard.id, kind);
       setVoted(kind);
-      toast.success(kind === "confirm" ? "Merci pour ta confirmation" : "Signalement infirmé");
+      toast.success(kind === "confirm" ? t("hazard.popup.thanks") : t("hazard.popup.denied"));
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (!navigator.onLine) {
-        toast.error("Impossible d'envoyer ta réponse, réessaie plus tard");
+        toast.error(t("hazard.popup.offlineVote"));
       } else {
-        toast.error("Échec du vote", { description: msg });
+        toast.error(t("hazard.popup.voteFailed"), { description: msg });
       }
     } finally {
       setPending(null);
@@ -123,10 +114,10 @@ export function HazardMarker({ hazard }: { hazard: HazardReport }) {
             <span className="text-xl leading-none">{HAZARD_EMOJI[hazard.type]}</span>
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-foreground">
-                {HAZARD_LABELS[hazard.type]}
+                {hazardLabel(hazard.type)}
               </span>
               <span className="text-xs text-muted-foreground">
-                Signalé {formatAge(hazard.created_at)}
+                {t("hazard.popup.reported", { age: formatAge(hazard.created_at) })}
               </span>
             </div>
           </div>
@@ -136,7 +127,7 @@ export function HazardMarker({ hazard }: { hazard: HazardReport }) {
           </div>
           {voted ? (
             <div className="rounded-md bg-muted px-2 py-1.5 text-center text-xs text-muted-foreground">
-              {voted === "confirm" ? "Déjà confirmé" : "Déjà infirmé"}
+              {voted === "confirm" ? t("hazard.popup.alreadyConfirmed") : t("hazard.popup.alreadyDenied")}
             </div>
           ) : (
             <div className="flex gap-2">
@@ -146,7 +137,7 @@ export function HazardMarker({ hazard }: { hazard: HazardReport }) {
                 disabled={pending !== null || !authed}
                 className="flex-1 rounded-md bg-emerald-600 px-2 py-1.5 text-xs font-semibold text-white active:scale-95 disabled:opacity-50"
               >
-                {pending === "confirm" ? "…" : "✅ Confirmer"}
+                {pending === "confirm" ? "…" : t("hazard.popup.confirm")}
               </button>
               <button
                 type="button"
@@ -154,7 +145,7 @@ export function HazardMarker({ hazard }: { hazard: HazardReport }) {
                 disabled={pending !== null || !authed}
                 className="flex-1 rounded-md bg-rose-600 px-2 py-1.5 text-xs font-semibold text-white active:scale-95 disabled:opacity-50"
               >
-                {pending === "deny" ? "…" : "❌ Fausse alerte"}
+                {pending === "deny" ? "…" : t("hazard.popup.falseAlarm")}
               </button>
             </div>
           )}

@@ -1,7 +1,14 @@
 import type { HazardReport, RouteState, RouteStep } from "@/types/vigla";
 import { distanceToPolyline } from "./geo";
+import i18n from "@/i18n/i18n";
 
 const ROUTE_HAZARD_RADIUS_M = 500;
+
+// NOTE: the public OSRM demo server does not reliably serve localized step
+// text via a language query param, so we build instructions ourselves from
+// the maneuver type/modifier and translate via i18next. Instruction text is
+// snapshotted at route-fetch time; switching language mid-trip won't
+// re-translate an already-computed route until it is recalculated.
 
 interface OsrmManeuver {
   type: string;
@@ -14,47 +21,43 @@ interface OsrmStep {
   name?: string;
 }
 
-const MANEUVER_FR: Record<string, string> = {
-  turn: "Tournez",
-  "new name": "Continuez",
-  depart: "Départ",
-  arrive: "Arrivée",
-  merge: "Rejoignez",
-  "on ramp": "Prenez la bretelle",
-  "off ramp": "Sortez",
-  fork: "À l'embranchement",
-  "end of road": "En bout de rue",
-  continue: "Continuez",
-  roundabout: "Prenez le rond-point",
-  rotary: "Prenez le rond-point",
-  "roundabout turn": "Au rond-point, tournez",
-  notification: "Continuez",
-  "exit roundabout": "Sortez du rond-point",
-  "exit rotary": "Sortez du rond-point",
-};
-
-const MODIFIER_FR: Record<string, string> = {
-  left: "à gauche",
-  right: "à droite",
-  "sharp left": "franchement à gauche",
-  "sharp right": "franchement à droite",
-  "slight left": "légèrement à gauche",
-  "slight right": "légèrement à droite",
-  straight: "tout droit",
-  uturn: "faites demi-tour",
+const MANEUVER_KEY: Record<string, string> = {
+  turn: "turn",
+  "new name": "newName",
+  depart: "depart",
+  arrive: "arrive",
+  merge: "merge",
+  "on ramp": "onRamp",
+  "off ramp": "offRamp",
+  fork: "fork",
+  "end of road": "endOfRoad",
+  continue: "continue",
+  roundabout: "roundabout",
+  rotary: "roundabout",
+  "roundabout turn": "roundaboutTurn",
+  notification: "notification",
+  "exit roundabout": "exitRoundabout",
+  "exit rotary": "exitRoundabout",
 };
 
 function stepInstruction(s: OsrmStep): string {
-  const t = s.maneuver.type;
-  const m = s.maneuver.modifier;
+  const t = i18n.t.bind(i18n);
+  const typ = s.maneuver.type;
+  const mod = s.maneuver.modifier;
   const name = s.name?.trim();
-  const base = MANEUVER_FR[t] ?? "Continuez";
-  if (t === "arrive") return "Vous êtes arrivé";
-  if (t === "depart") return name ? `Départ sur ${name}` : "Départ";
-  const dir = m ? ` ${MODIFIER_FR[m] ?? ""}`.trimEnd() : "";
-  const on = name ? ` sur ${name}` : "";
-  return `${base}${dir}${on}`.trim();
+  if (typ === "arrive") return t("navigation.instructions.arrive");
+  if (typ === "depart") {
+    return name
+      ? t("navigation.instructions.departNamed", { name })
+      : t("navigation.instructions.depart");
+  }
+  const key = MANEUVER_KEY[typ] ?? "continue";
+  const base = t(`navigation.instructions.${key}`);
+  const dir = mod ? " " + t(`navigation.modifier.${mod}`, { defaultValue: "" }) : "";
+  const on = name ? t("navigation.instructions.on", { name }) : "";
+  return `${base}${dir}${on}`.replace(/\s+/g, " ").trim();
 }
+
 
 export interface OsrmRouteResult {
   coords: [number, number][];
