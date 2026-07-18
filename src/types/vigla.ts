@@ -167,3 +167,18 @@ export const REACTION_META: Record<
   fuel: { emoji: "⛽", label: "Essence", text: "J'ai besoin d'essence." },
   message: { emoji: "💬", label: "Message", text: "" },
 };
+
+export type SpeedUnit = "kmh" | "mph";
+export type MapTheme = "light" | "dark";
+export type AlertLeadTime = "short" | "normal" | "long";
+
+export interface UserPreferences {
+  speed_unit: SpeedUnit;
+  map_theme: MapTheme;
+  auto_recenter: boolean;
+  voice_alerts: boolean;
+  sound_alerts: boolean;
+  vibration_alerts: boolean;
+  alert_lead_time: AlertLeadTime;
+  moto_mode: boolean;
+}
