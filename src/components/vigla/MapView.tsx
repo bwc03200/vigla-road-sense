@@ -6,39 +6,8 @@ import { haversine } from "@/lib/geo";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
-import type { HazardType } from "@/types/vigla";
 
 
-
-
-
-const HAZARD_COLORS: Record<HazardType, string> = {
-  radar_fixe: "#FF6B35",
-  radar_mobile: "#F97316",
-  accident: "#EF4444",
-  travaux: "#F59E0B",
-  obstacle: "#EAB308",
-  ralentissement: "#0EA5E9",
-};
-
-const HAZARD_EMOJI: Record<HazardType, string> = {
-  radar_fixe: "📷",
-  radar_mobile: "🚔",
-  accident: "💥",
-  travaux: "🚧",
-  obstacle: "⚠️",
-  ralentissement: "🐌",
-};
-
-function hazardIcon(type: HazardType) {
-  const color = HAZARD_COLORS[type];
-  return L.divIcon({
-    className: "vigla-hazard-icon",
-    html: `<div style="width:36px;height:36px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 3px #ffffff;font-size:18px;">${HAZARD_EMOJI[type]}</div>`,
-    iconSize: [36, 36],
-    iconAnchor: [18, 18],
-  });
-}
 
 function officialRadarIcon() {
   return L.divIcon({
