@@ -6,7 +6,12 @@ import { HAZARD_LABELS } from "@/types/vigla";
 
 
 const ALERT_RADIUS_M = 400;
-const ALERT_LEAD_S = 30;
+const LEAD_TIME_S: Record<"short" | "normal" | "long", number> = {
+  short: 15,
+  normal: 30,
+  long: 50,
+};
+
 
 function beep() {
   try {
