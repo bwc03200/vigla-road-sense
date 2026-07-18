@@ -27,6 +27,8 @@ export function ConvoyPanel({ userId }: { userId: string }) {
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  const [leaveDialogOpen, setLeaveDialogOpen] = useState(false);
+
 
   async function handleCreate() {
     if (!displayName.trim()) return toast.error("Choisis d'abord un pseudo");
