@@ -73,7 +73,9 @@ interface ViglaState {
   setRoadbooks: (r: Roadbook[]) => void;
   setDisplayName: (n: string) => void;
   setVibrationEnabled: (v: boolean) => void;
+  setPreferences: (p: UserPreferences) => void;
 }
+
 
 
 const speedBuffer: number[] = [];
