@@ -123,40 +123,35 @@ export function NavigationOverlay() {
   return (
     <>
       <div className="pointer-events-none absolute inset-x-0 top-0 z-[700] p-3">
-        <div className="pointer-events-auto rounded-3xl bg-slate-900 text-white shadow-[0_16px_40px_rgba(15,23,42,0.35)] transition-[height] duration-300 ease-out">
-          <div className="flex items-start gap-3 p-4">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#FF6B35] text-white">
-              <Navigation className="h-5 w-5" />
+        <div className="pointer-events-auto rounded-2xl bg-slate-900 text-white shadow-[0_12px_32px_rgba(15,23,42,0.35)]">
+          <div className="flex items-start gap-3 p-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35] text-white">
+              <Navigation className="h-4 w-4" />
             </div>
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] uppercase tracking-widest text-white/60">
+              <div className="text-[10px] uppercase tracking-widest text-white/60">
                 Dans {formatDistance(navigation.distanceToNextManeuverM)}
               </div>
-              <div className="mt-0.5 line-clamp-2 text-base font-semibold leading-snug">
+              <div className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug">
                 {step?.instruction ?? "Suivez la route"}
               </div>
-              {nextStep && (
-                <div className="mt-1 line-clamp-2 text-xs leading-snug text-white/60">
-                  Puis {nextStep.instruction.toLowerCase()}
-                </div>
-              )}
             </div>
             <button
               onClick={stop}
               aria-label="Arrêter la navigation"
-              className="rounded-xl p-2 text-white/70 hover:bg-white/10 hover:text-white"
+              className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
             >
-              <X className="h-5 w-5" />
+              <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="flex items-center justify-between border-t border-white/10 px-4 py-2.5 text-xs">
+          <div className="flex items-center justify-between border-t border-white/10 px-3 py-1.5 text-[11px]">
             <div className="tabular-nums">
               <span className="font-semibold text-white">
                 {(navigation.distanceRemainingM / 1000).toFixed(1)} km
               </span>
               <span className="mx-1 text-white/40">·</span>
               <span className="text-white/80">
-                {formatDuration(navigation.durationRemainingS)} restants
+                {formatDuration(navigation.durationRemainingS)}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -169,11 +164,13 @@ export function NavigationOverlay() {
               {gpsWeak && (
                 <span className="flex items-center gap-1 text-amber-300">
                   <SignalLow className="h-3 w-3" />
-                  Signal GPS faible
+                  GPS faible
                 </span>
               )}
             </div>
           </div>
+        </div>
+      </div>
         </div>
       </div>
     </>
