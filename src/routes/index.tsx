@@ -203,6 +203,14 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                 </div>
               </div>
               <Button
+                variant="outline"
+                className="mb-2 w-full h-11"
+                onClick={() => setShowSettings(true)}
+              >
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                Voir les paramètres
+              </Button>
+              <Button
                 variant="secondary"
                 className="w-full h-11"
                 onClick={async () => {
@@ -224,9 +232,15 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
         )}
       </main>
       <BottomTabs value={tab} onChange={setTab} />
+      {showSettings && (
+        <div className="fixed inset-0 z-[900] bg-slate-50">
+          <SettingsScreen userId={userId} email={email} onBack={() => setShowSettings(false)} />
+        </div>
+      )}
     </div>
   );
 }
+
 
 function ResumeBanner({
   label,
