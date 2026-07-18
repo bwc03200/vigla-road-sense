@@ -16,7 +16,7 @@ export function RoadbookList({ userId }: { userId: string }) {
   const hazards = useVigla((s) => s.hazards);
   const setRoute = useVigla((s) => s.setRoute);
   const { create, remove } = useRoadbooks(userId);
-  const [tab, setTab] = useState<Tab>("public");
+  const [tab, setTab] = useState<Tab>("mine");
   const [creating, setCreating] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
