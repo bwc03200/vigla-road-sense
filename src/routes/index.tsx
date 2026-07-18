@@ -30,9 +30,12 @@ import { ConvoyReactionBar, ConvoyMessageBubbles } from "@/components/vigla/Conv
 import { EmergencyContactsScreen } from "@/components/vigla/EmergencyContactsScreen";
 import { RoadbookList } from "@/components/vigla/RoadbookList";
 import { HistoryList } from "@/components/vigla/HistoryList";
+import { SettingsScreen } from "@/components/vigla/SettingsScreen";
+import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, LogOut, Shield, Navigation } from "lucide-react";
+import { AlertTriangle, LogOut, Shield, Navigation, Settings as SettingsIcon } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
