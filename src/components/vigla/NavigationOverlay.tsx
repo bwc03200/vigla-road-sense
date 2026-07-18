@@ -171,8 +171,6 @@ export function NavigationOverlay() {
           </div>
         </div>
       </div>
-        </div>
-      </div>
     </>
   );
 }
