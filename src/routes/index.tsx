@@ -133,6 +133,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
           <div className="relative h-full w-full">
             <MapView />
             <TopBar />
+            <HazardFilters />
+
             <ProtectionBadge />
             <OfflineBadge />
             <AutoProtectBanner />
