@@ -131,7 +131,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
         {tab === "map" && (
           <div className="relative h-full w-full">
             <MapView />
-            {!navActive && <TopBar />}
+            <TopBar />
             <ProtectionBadge />
             <OfflineBadge />
             <AutoProtectBanner />
