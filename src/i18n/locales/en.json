@@ -95,8 +95,14 @@
     "computed": "Route computed",
     "computeFailed": "Couldn't compute the route",
     "compass": {
-      "N": "North", "NE": "North-East", "E": "East", "SE": "South-East",
-      "S": "South", "SW": "South-West", "W": "West", "NW": "North-West"
+      "N": "North",
+      "NE": "North-East",
+      "E": "East",
+      "SE": "South-East",
+      "S": "South",
+      "SW": "South-West",
+      "W": "West",
+      "NW": "North-West"
     }
   },
   "navigation": {
@@ -158,7 +164,10 @@
     "emptyMine": "No saved roadbooks.",
     "loadAsRoute": "Load as route",
     "loaded": "Roadbook loaded as route",
-    "noTrack": "This roadbook has no track"
+    "noTrack": "This roadbook has no track",
+    "saveFailed": "Couldn't save",
+    "saved": "Roadbook saved",
+    "removeFailed": "Couldn't delete"
   },
   "convoy": {
     "title": "Convoy",
@@ -193,7 +202,18 @@
       "joinMsg": "On my way, joining you.",
       "breakMsg": "Shall we take a break?",
       "fuelMsg": "I need fuel."
-    }
+    },
+    "loginRequiredCreate": "You must be signed in to create a convoy",
+    "loginRequiredJoin": "You must be signed in to join a convoy",
+    "createdWithCode": "Convoy created — code {{code}}",
+    "createdButNotAdded": "Convoy created, but couldn't add you to it",
+    "searchFailed": "Couldn't look up this convoy",
+    "codeNotFound": "Convoy code not found",
+    "joined": "Joined convoy: {{name}}",
+    "leaveFailed": "Couldn't leave the convoy",
+    "left": "Left the convoy",
+    "me": "Me",
+    "dbUnknownError": "Unknown database error"
   },
   "profile": {
     "account": "VIGLA account",
@@ -385,7 +405,14 @@
     "compareEyebrow": "Compare",
     "compareTitle": "VIGLA vs the others",
     "compareSub": "Everyone has their strengths. Here's where VIGLA stands out, without bashing anyone.",
-    "compareHeaders": ["Criterion", "VIGLA", "Waze", "Coyote", "OOONO", "Liberty Rider"],
+    "compareHeaders": [
+      "Criterion",
+      "VIGLA",
+      "Waze",
+      "Coyote",
+      "OOONO",
+      "Liberty Rider"
+    ],
     "compareRows": [
       "Native motorcycle mode",
       "Real-time convoy mode",
@@ -430,9 +457,18 @@
     "whyEyebrow": "Why VIGLA",
     "whyTitle": "Three reasons that make the difference",
     "why": [
-      { "t": "Device + rider alerts + convoy", "d": "The only one combining a discreet device, native rider alerts and real-time convoy mode." },
-      { "t": "Official cameras always up to date", "d": "Road Safety database synced automatically every week." },
-      { "t": "Built by a rider", "d": "Not a generic car product patched later — motorcycle-first from the first line of code." }
+      {
+        "t": "Device + rider alerts + convoy",
+        "d": "The only one combining a discreet device, native rider alerts and real-time convoy mode."
+      },
+      {
+        "t": "Official cameras always up to date",
+        "d": "Road Safety database synced automatically every week."
+      },
+      {
+        "t": "Built by a rider",
+        "d": "Not a generic car product patched later — motorcycle-first from the first line of code."
+      }
     ],
     "ctaTitle": "Ready to ride better protected?",
     "ctaSub": "Create your free account in under a minute.",

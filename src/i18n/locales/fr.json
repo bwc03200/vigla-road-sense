@@ -95,8 +95,14 @@
     "computed": "Itinéraire calculé",
     "computeFailed": "Impossible de calculer l'itinéraire",
     "compass": {
-      "N": "Nord", "NE": "Nord-Est", "E": "Est", "SE": "Sud-Est",
-      "S": "Sud", "SW": "Sud-Ouest", "W": "Ouest", "NW": "Nord-Ouest"
+      "N": "Nord",
+      "NE": "Nord-Est",
+      "E": "Est",
+      "SE": "Sud-Est",
+      "S": "Sud",
+      "SW": "Sud-Ouest",
+      "W": "Ouest",
+      "NW": "Nord-Ouest"
     }
   },
   "navigation": {
@@ -158,7 +164,10 @@
     "emptyMine": "Aucun roadbook enregistré.",
     "loadAsRoute": "Charger comme itinéraire",
     "loaded": "Roadbook chargé comme itinéraire",
-    "noTrack": "Ce roadbook n'a pas de tracé"
+    "noTrack": "Ce roadbook n'a pas de tracé",
+    "saveFailed": "Enregistrement impossible",
+    "saved": "Roadbook enregistré",
+    "removeFailed": "Suppression impossible"
   },
   "convoy": {
     "title": "Convoi",
@@ -193,7 +202,18 @@
       "joinMsg": "J'arrive, je vous rejoins.",
       "breakMsg": "On fait une pause ?",
       "fuelMsg": "J'ai besoin d'essence."
-    }
+    },
+    "loginRequiredCreate": "Vous devez être connecté pour créer un convoi",
+    "loginRequiredJoin": "Vous devez être connecté pour rejoindre un convoi",
+    "createdWithCode": "Convoi créé — code {{code}}",
+    "createdButNotAdded": "Convoi créé, mais impossible de vous y ajouter",
+    "searchFailed": "Impossible de chercher ce convoi",
+    "codeNotFound": "Code de convoi introuvable",
+    "joined": "Convoi rejoint : {{name}}",
+    "leaveFailed": "Impossible de quitter le convoi",
+    "left": "Convoi quitté",
+    "me": "Moi",
+    "dbUnknownError": "Erreur inconnue côté base de données"
   },
   "profile": {
     "account": "Compte VIGLA",
@@ -385,7 +405,14 @@
     "compareEyebrow": "Comparatif",
     "compareTitle": "VIGLA face aux autres",
     "compareSub": "Chacun a ses forces. Voici où VIGLA se distingue, sans dénigrer personne.",
-    "compareHeaders": ["Critère", "VIGLA", "Waze", "Coyote", "OOONO", "Liberty Rider"],
+    "compareHeaders": [
+      "Critère",
+      "VIGLA",
+      "Waze",
+      "Coyote",
+      "OOONO",
+      "Liberty Rider"
+    ],
     "compareRows": [
       "Mode moto natif",
       "Mode convoi temps réel",
@@ -430,9 +457,18 @@
     "whyEyebrow": "Pourquoi VIGLA",
     "whyTitle": "Trois raisons qui font la différence",
     "why": [
-      { "t": "Boîtier + alertes moto + convoi", "d": "Le seul à combiner un boîtier discret, des alertes moto natives et le mode convoi temps réel." },
-      { "t": "Radars officiels toujours à jour", "d": "Base Sécurité Routière synchronisée automatiquement chaque semaine." },
-      { "t": "Créé par un motard", "d": "Pas un produit voiture générique adapté après coup — pensé moto dès la première ligne de code." }
+      {
+        "t": "Boîtier + alertes moto + convoi",
+        "d": "Le seul à combiner un boîtier discret, des alertes moto natives et le mode convoi temps réel."
+      },
+      {
+        "t": "Radars officiels toujours à jour",
+        "d": "Base Sécurité Routière synchronisée automatiquement chaque semaine."
+      },
+      {
+        "t": "Créé par un motard",
+        "d": "Pas un produit voiture générique adapté après coup — pensé moto dès la première ligne de code."
+      }
     ],
     "ctaTitle": "Prêt à rouler mieux protégé ?",
     "ctaSub": "Crée ton compte gratuitement en moins d'une minute.",
