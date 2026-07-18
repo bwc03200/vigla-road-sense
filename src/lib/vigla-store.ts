@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getVibrationEnabled, setVibrationEnabled as persistVibration } from "@/lib/haptics";
+import { DEFAULT_HAZARD_FILTERS } from "@/types/vigla";
 import type {
 
   ActiveNavigation,
@@ -8,6 +9,7 @@ import type {
   ConvoyMember,
   CrashState,
   EmergencyContact,
+  HazardFilterKey,
   HazardFilters,
   HazardReport,
   OfficialRadar,
@@ -15,6 +17,7 @@ import type {
   RouteState,
   UserPreferences,
 } from "@/types/vigla";
+
 
 
 
