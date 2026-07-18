@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { User } from "@supabase/supabase-js";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,7 +37,6 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle, LogOut, Shield, Navigation, Settings as SettingsIcon } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
 
-
 export const Route = createFileRoute("/")({
   ssr: false,
   head: () => ({
@@ -58,6 +58,7 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { t } = useTranslation();
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const navigate = useNavigate();
 
@@ -82,7 +83,7 @@ function Index() {
   }, [user, navigate]);
 
   if (user === undefined) {
-    return <div className="p-6 text-sm text-muted-foreground">Chargement…</div>;
+    return <div className="p-6 text-sm text-muted-foreground">{t("common.loading")}</div>;
   }
   if (!user) return null;
 
@@ -90,6 +91,7 @@ function Index() {
 }
 
 function ViglaApp({ userId, email }: { userId: string; email: string }) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>("map");
   const [showRoute, setShowRoute] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -107,7 +109,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
     tracker.incrementAlerts();
     const nav = useVigla.getState().navigation;
     if (nav) patchNavigation({ alertsReceived: nav.alertsReceived + 1 });
-    toast(`⚠️ ${label}`, { description: `À ${formatDistance(distance)}`, duration: 5000 });
+    toast(`⚠️ ${label}`, { description: t("map.in", { distance: formatDistance(distance) }), duration: 5000 });
   });
   const geoError = useVigla((s) => s.geoError);
   const route = useVigla((s) => s.route);
@@ -115,11 +117,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   const convoy = useVigla((s) => s.convoy);
   const navActive = !!navigation && !navigation.arrived;
 
-  // Crash detection runs whenever nav (or protection) is active.
   useCrashDetection(navActive);
-  // Keep the screen awake while a trip is running.
   useWakeLock(navActive);
-  // Persist active navigation so we can offer to resume after a background/lock.
   usePersistActiveNavigation();
   const resumePrompt = useResumePrompt();
 
@@ -143,7 +142,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                   className="pointer-events-auto flex items-center gap-2 rounded-full bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(255,107,53,0.35)]"
                 >
                   <Navigation className="h-4 w-4" />
-                  Itinéraire
+                  {t("route.cta")}
                 </button>
               </div>
             )}
@@ -168,25 +167,22 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
           </div>
         )}
 
-
         {tab === "report" && (
           <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">Signaler une zone</h2>
-            <p className="px-4 text-sm text-muted-foreground">
-              Un appui envoie immédiatement le signalement à votre position GPS actuelle.
-            </p>
+            <h2 className="px-4 text-lg font-semibold">{t("hazard.report.title")}</h2>
+            <p className="px-4 text-sm text-muted-foreground">{t("hazard.report.subtitle")}</p>
             <ReportGrid onReported={() => setTab("map")} />
           </div>
         )}
         {tab === "roadbooks" && (
           <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">Roadbooks</h2>
+            <h2 className="px-4 text-lg font-semibold">{t("roadbooks.title")}</h2>
             <RoadbookList userId={userId} />
           </div>
         )}
         {tab === "convoy" && (
           <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">Convoi</h2>
+            <h2 className="px-4 text-lg font-semibold">{t("convoy.title")}</h2>
             <ConvoyPanel userId={userId} />
           </div>
         )}
@@ -199,7 +195,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-foreground">{email}</div>
-                  <div className="text-xs text-muted-foreground">Compte VIGLA</div>
+                  <div className="text-xs text-muted-foreground">{t("profile.account")}</div>
                 </div>
               </div>
               <Button
@@ -208,23 +204,21 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                 onClick={() => setShowSettings(true)}
               >
                 <SettingsIcon className="mr-2 h-4 w-4" />
-                Voir les paramètres
+                {t("profile.viewSettings")}
               </Button>
               <Button
                 variant="secondary"
                 className="w-full h-11"
-                onClick={async () => {
-                  await supabase.auth.signOut();
-                }}
+                onClick={async () => { await supabase.auth.signOut(); }}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Se déconnecter
+                {t("profile.signOut")}
               </Button>
             </div>
             <EmergencyContactsScreen userId={userId} />
             <div>
               <div className="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Historique des trajets
+                {t("profile.tripHistory")}
               </div>
               <HistoryList />
             </div>
@@ -241,37 +235,28 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   );
 }
 
-
 function ResumeBanner({
-  label,
-  onResume,
-  onDismiss,
-}: {
-  label: string;
-  onResume: () => void;
-  onDismiss: () => void;
-}) {
+  label, onResume, onDismiss,
+}: { label: string; onResume: () => void; onDismiss: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-20 z-[700] flex justify-center px-4">
       <div className="pointer-events-auto w-full max-w-md rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
         <div className="mb-3">
           <div className="text-xs uppercase tracking-widest text-slate-500">
-            Trajet en cours
+            {t("navigation.resumeCaption")}
           </div>
           <div className="mt-1 truncate text-sm font-semibold text-slate-900">
-            Reprendre le trajet vers {label} ?
+            {t("navigation.resumeQuestion", { label })}
           </div>
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" className="h-11 flex-1" onClick={onDismiss}>
-            Non, nouveau trajet
+            {t("navigation.resumeNo")}
           </Button>
-          <Button
-            className="h-11 flex-[2] bg-primary text-primary-foreground"
-            onClick={onResume}
-          >
+          <Button className="h-11 flex-[2] bg-primary text-primary-foreground" onClick={onResume}>
             <Navigation className="mr-2 h-4 w-4" />
-            Reprendre
+            {t("navigation.resumeYes")}
           </Button>
         </div>
       </div>
@@ -280,13 +265,12 @@ function ResumeBanner({
 }
 
 function GeoErrorOverlay({ code }: { code: string }) {
+  const { t } = useTranslation();
   const setGeoError = useVigla((s) => s.setGeoError);
   const msg =
-    code === "denied"
-      ? "L'accès à votre position est refusé. Autorisez la géolocalisation dans les réglages du navigateur (icône de cadenas dans la barre d'adresse), puis réessayez."
-      : code === "unsupported"
-        ? "Votre navigateur ne prend pas en charge la géolocalisation. Essayez Chrome, Safari ou Firefox à jour."
-        : "Position GPS momentanément indisponible. Vérifiez que le GPS est activé.";
+    code === "denied" ? t("geoError.denied")
+    : code === "unsupported" ? t("geoError.unsupported")
+    : t("geoError.unavailable");
 
   function retry() {
     setGeoError(null);
@@ -308,10 +292,10 @@ function GeoErrorOverlay({ code }: { code: string }) {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-danger/15 text-danger">
           <AlertTriangle className="h-7 w-7" />
         </div>
-        <h2 className="text-lg font-semibold text-foreground">Géolocalisation requise</h2>
+        <h2 className="text-lg font-semibold text-foreground">{t("geoError.title")}</h2>
         <p className="mt-2 text-sm text-muted-foreground">{msg}</p>
         <Button onClick={retry} className="mt-5 w-full h-12">
-          Réessayer
+          {t("common.retry")}
         </Button>
       </div>
     </div>
