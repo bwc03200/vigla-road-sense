@@ -115,6 +115,9 @@ export function MapView() {
   const route = useVigla((s) => s.route);
   const navigation = useVigla((s) => s.navigation);
   const convoyMembers = useVigla((s) => s.convoyMembers);
+  const mapTheme = useVigla((s) => s.preferences.map_theme);
+  const autoRecenter = useVigla((s) => s.preferences.auto_recenter);
+
 
   const nearbyHazards = useMemo(() => {
     if (!position) return hazards;
