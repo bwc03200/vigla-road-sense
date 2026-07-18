@@ -113,10 +113,37 @@ export function ConvoyPanel({ userId }: { userId: string }) {
           </div>
         </div>
 
-        <Button variant="secondary" className="h-12 w-full" onClick={leaveConvoy}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Quitter le convoi
-        </Button>
+        <AlertDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
+          <AlertDialogTrigger asChild>
+            <Button variant="secondary" className="h-12 w-full">
+              <LogOut className="mr-2 h-4 w-4" />
+              Quitter le convoi
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Quitter le convoi ?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tu ne verras plus la position des autres membres.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setLeaveDialogOpen(false)}>
+                Annuler
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => {
+                  setLeaveDialogOpen(false);
+                  leaveConvoy();
+                }}
+                className="bg-[#FF6B35] text-white hover:bg-[#FF6B35]/90"
+              >
+                Quitter
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
       </div>
     );
   }
