@@ -13,11 +13,6 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   const route = useVigla((s) => s.route);
   const navActive = useVigla((s) => Boolean(s.navigation && !s.navigation.arrived));
 
-  // When embedded inside NavigationOverlay's flex-col stack, skip our own
-  // absolute positioning so the parent controls layout and we cannot overlap
-  // the instruction banner above us.
-  if (navActive && !embedded) return null;
-
   const nextHazard = useMemo(() => {
     if (!position) return null;
     const allowed = route ? new Set(route.hazardIds) : null;
@@ -31,6 +26,10 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
     }
     return best;
   }, [hazards, position, route]);
+
+  // When nav is active, TopBar only renders as part of NavigationOverlay's
+  // flex-col stack (embedded=true) so it cannot overlap the instruction banner.
+  if (navActive && !embedded) return null;
 
   const wrapperClass = embedded
     ? ""
