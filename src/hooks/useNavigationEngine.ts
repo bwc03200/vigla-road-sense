@@ -162,24 +162,55 @@ export function useNavigationEngine() {
     ];
 
     const steps = Array.isArray(navigation.steps) ? navigation.steps : [];
-    let stepIdx = Math.min(navigation.currentStepIndex, Math.max(0, steps.length - 1));
+    // Advance the "upcoming maneuver" step index based on distance traveled
+    // ALONG the polyline. step[i].distanceMeters is the length of step i;
+    // step[i] STARTS at cumulative sum of step[0..i-1]. We want to show the
+    // next maneuver the driver hasn't yet reached.
+    let stepIdx = Math.min(
+      navigation.currentStepIndex,
+      Math.max(0, steps.length - 1),
+    );
     let distanceToNext = 0;
-    for (let i = stepIdx; i < steps.length; i++) {
-      const s = steps[i];
-      if (!s || !Array.isArray(s.location) || s.location.length < 2) continue;
-      const d = haversine(
-        currentPosition.lat,
-        currentPosition.lng,
-        s.location[0],
-        s.location[1],
-      );
-      if (d < 25 && i < steps.length - 1) {
-        stepIdx = i + 1;
-        continue;
+    if (steps.length > 0) {
+      // stepStartDistances[i] = distance along route at which step i begins.
+      const stepStartDistances: number[] = [0];
+      let cumulative = 0;
+      for (let i = 0; i < steps.length - 1; i++) {
+        cumulative += Number.isFinite(steps[i]?.distanceMeters)
+          ? steps[i].distanceMeters
+          : 0;
+        stepStartDistances.push(cumulative);
       }
-      distanceToNext = d;
-      stepIdx = i;
-      break;
+      const traveled = proj.distanceAlongM;
+      // Find the first upcoming step whose start we haven't crossed yet.
+      // Never regress below the current index (protects against GPS jitter).
+      let idx = Math.max(1, stepIdx);
+      while (
+        idx < steps.length - 1 &&
+        traveled >= stepStartDistances[idx] - 5
+      ) {
+        idx += 1;
+      }
+      stepIdx = idx;
+      distanceToNext = Math.max(0, stepStartDistances[stepIdx] - traveled);
+      // Prefer straight-line distance to the maneuver point when available —
+      // matches driver expectation (the banner counts down to the intersection).
+      const s = steps[stepIdx];
+      if (
+        s &&
+        Array.isArray(s.location) &&
+        s.location.length >= 2 &&
+        Number.isFinite(s.location[0]) &&
+        Number.isFinite(s.location[1])
+      ) {
+        const d = haversine(
+          currentPosition.lat,
+          currentPosition.lng,
+          s.location[0],
+          s.location[1],
+        );
+        if (Number.isFinite(d)) distanceToNext = d;
+      }
     }
 
     // Arrival: use haversine to the FINAL destination point AND require the

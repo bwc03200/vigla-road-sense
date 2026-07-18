@@ -11,6 +11,7 @@ export function TopBar() {
   const hazards = useVigla((s) => s.hazards);
   const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const route = useVigla((s) => s.route);
+  const navActive = useVigla((s) => Boolean(s.navigation && !s.navigation.arrived));
 
 
   const nextHazard = useMemo(() => {
@@ -28,8 +29,10 @@ export function TopBar() {
   }, [hazards, position, route]);
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-0 z-[500] p-3">
-      <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-3 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-slate-200">
+    <div
+      className={`pointer-events-none absolute inset-x-0 z-[500] p-3 transition-[top] duration-200 ${navActive ? "top-[120px]" : "top-0"}`}
+    >
+      <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-slate-200">
         <div className="flex flex-col items-center leading-none">
           <span
             className="tabular-nums text-[32px] font-bold text-slate-900"
