@@ -92,13 +92,16 @@ function Index() {
 function ViglaApp({ userId, email }: { userId: string; email: string }) {
   const [tab, setTab] = useState<Tab>("map");
   const [showRoute, setShowRoute] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   useGeolocation();
   useHazards();
   useOfficialRadars();
   useEmergencyContacts(userId);
+  usePreferences(userId);
   useRoadbooks(userId);
   useConvoy(userId);
   const tracker = useTripTracker(userId);
+
   const patchNavigation = useVigla((s) => s.patchNavigation);
   useAlerts((label, distance) => {
     tracker.incrementAlerts();
