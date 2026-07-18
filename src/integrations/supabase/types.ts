@@ -291,6 +291,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_preferences: {
+        Row: {
+          alert_lead_time: string
+          auto_recenter: boolean
+          created_at: string
+          map_theme: string
+          moto_mode: boolean
+          sound_alerts: boolean
+          speed_unit: string
+          updated_at: string
+          user_id: string
+          vibration_alerts: boolean
+          voice_alerts: boolean
+        }
+        Insert: {
+          alert_lead_time?: string
+          auto_recenter?: boolean
+          created_at?: string
+          map_theme?: string
+          moto_mode?: boolean
+          sound_alerts?: boolean
+          speed_unit?: string
+          updated_at?: string
+          user_id: string
+          vibration_alerts?: boolean
+          voice_alerts?: boolean
+        }
+        Update: {
+          alert_lead_time?: string
+          auto_recenter?: boolean
+          created_at?: string
+          map_theme?: string
+          moto_mode?: boolean
+          sound_alerts?: boolean
+          speed_unit?: string
+          updated_at?: string
+          user_id?: string
+          vibration_alerts?: boolean
+          voice_alerts?: boolean
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
