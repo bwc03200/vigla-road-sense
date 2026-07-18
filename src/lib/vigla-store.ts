@@ -111,6 +111,17 @@ export const useVigla = create<ViglaState>((set) => ({
   roadbooks: [],
   displayName: savedName,
   vibrationEnabled: getVibrationEnabled(),
+  preferences: {
+    speed_unit: "kmh",
+    map_theme: "light",
+    auto_recenter: true,
+    voice_alerts: false,
+    sound_alerts: true,
+    vibration_alerts: true,
+    alert_lead_time: "normal",
+    moto_mode: false,
+  },
+
 
 
   setPosition: (p, speedFromApi) => {
