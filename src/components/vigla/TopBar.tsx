@@ -35,11 +35,12 @@ export function TopBar() {
             className="tabular-nums text-[32px] font-bold text-slate-900"
             style={{ fontFeatureSettings: '"tnum"' }}
           >
-            {formatSpeed(speedKmh)}
+            {formatSpeed(speedKmh, speedUnit)}
           </span>
           <span className="text-[10px] uppercase tracking-widest text-slate-500">
-            km/h
+            {speedUnitLabel(speedUnit)}
           </span>
+
         </div>
         <div className="h-10 w-px bg-slate-200" />
         <div className="min-w-0 flex-1">
