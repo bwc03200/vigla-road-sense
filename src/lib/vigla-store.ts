@@ -12,7 +12,9 @@ import type {
   OfficialRadar,
   Roadbook,
   RouteState,
+  UserPreferences,
 } from "@/types/vigla";
+
 
 export interface Position {
   lat: number;
