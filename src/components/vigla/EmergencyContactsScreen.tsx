@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Plus, Trash2, Phone, Mail, ShieldAlert, Vibrate } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
+import type { EmergencyContact } from "@/types/vigla";
+
 
 export function EmergencyContactsScreen({ userId }: { userId: string }) {
   const contacts = useVigla((s) => s.emergencyContacts);
