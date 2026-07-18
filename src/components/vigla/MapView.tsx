@@ -115,6 +115,9 @@ export function MapView() {
   const route = useVigla((s) => s.route);
   const navigation = useVigla((s) => s.navigation);
   const convoyMembers = useVigla((s) => s.convoyMembers);
+  const mapTheme = useVigla((s) => s.preferences.map_theme);
+  const autoRecenter = useVigla((s) => s.preferences.auto_recenter);
+
 
   const nearbyHazards = useMemo(() => {
     if (!position) return hazards;
@@ -132,16 +135,22 @@ export function MapView() {
   return (
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <TileLayer
-        url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        key={mapTheme}
+        url={
+          mapTheme === "dark"
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+        }
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         subdomains={["a", "b", "c", "d"]}
         maxZoom={19}
       />
       <InvalidateOnResize />
-      {position && !route && !navActive && <Recenter lat={position.lat} lng={position.lng} />}
-      {position && navActive && (
+      {position && autoRecenter && !route && !navActive && <Recenter lat={position.lat} lng={position.lng} />}
+      {position && autoRecenter && navActive && (
         <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
       )}
+
       {position && <UserMarker lat={position.lat} lng={position.lng} heading={position.heading} />}
       <ZoomControls />
 

@@ -1,14 +1,17 @@
 import { useMemo } from "react";
 import { AlertTriangle, Signal } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
-import { haversine, formatDistance, formatSpeed } from "@/lib/geo";
+import { haversine, formatDistance, formatSpeed, speedUnitLabel } from "@/lib/geo";
 import { HAZARD_LABELS } from "@/types/vigla";
+
 
 export function TopBar() {
   const position = useVigla((s) => s.position);
   const speedKmh = useVigla((s) => s.speedKmh);
   const hazards = useVigla((s) => s.hazards);
+  const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const route = useVigla((s) => s.route);
+
 
   const nextHazard = useMemo(() => {
     if (!position) return null;
@@ -32,11 +35,12 @@ export function TopBar() {
             className="tabular-nums text-[32px] font-bold text-slate-900"
             style={{ fontFeatureSettings: '"tnum"' }}
           >
-            {formatSpeed(speedKmh)}
+            {formatSpeed(speedKmh, speedUnit)}
           </span>
           <span className="text-[10px] uppercase tracking-widest text-slate-500">
-            km/h
+            {speedUnitLabel(speedUnit)}
           </span>
+
         </div>
         <div className="h-10 w-px bg-slate-200" />
         <div className="min-w-0 flex-1">

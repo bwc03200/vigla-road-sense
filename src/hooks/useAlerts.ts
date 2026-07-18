@@ -6,7 +6,12 @@ import { HAZARD_LABELS } from "@/types/vigla";
 
 
 const ALERT_RADIUS_M = 400;
-const ALERT_LEAD_S = 30;
+const LEAD_TIME_S: Record<"short" | "normal" | "long", number> = {
+  short: 15,
+  normal: 30,
+  long: 50,
+};
+
 
 function beep() {
   try {
@@ -41,6 +46,9 @@ export function useAlerts(
   const alertedIds = useVigla((s) => s.alertedIds);
   const markAlerted = useVigla((s) => s.markAlerted);
   const clearAlert = useVigla((s) => s.clearAlert);
+  const soundAlerts = useVigla((s) => s.preferences.sound_alerts);
+  const vibrationAlerts = useVigla((s) => s.preferences.vibration_alerts);
+  const leadTime = useVigla((s) => s.preferences.alert_lead_time);
   const cbRef = useRef(onAlert);
   cbRef.current = onAlert;
 
@@ -48,6 +56,7 @@ export function useAlerts(
     if (!position) return;
     const speedMs = Math.max((speedKmh * 1000) / 3600, 3);
     const allowed = route ? new Set(route.hazardIds) : null;
+    const leadS = LEAD_TIME_S[leadTime] ?? LEAD_TIME_S.normal;
 
     for (const h of hazards) {
       if (allowed && !allowed.has(h.id)) continue;
@@ -55,15 +64,16 @@ export function useAlerts(
       const eta = d / speedMs;
       const already = alertedIds.has(h.id);
 
-      if (!already && eta < ALERT_LEAD_S && d < 3000) {
+      if (!already && eta < leadS && d < 3000) {
         markAlerted(h.id);
-        beep();
-        vibrateAlert();
+        if (soundAlerts) beep();
+        if (vibrationAlerts) vibrateAlert();
         cbRef.current?.(HAZARD_LABELS[h.type], d);
 
       } else if (already && d > ALERT_RADIUS_M * 2) {
         clearAlert(h.id);
       }
     }
-  }, [position, speedKmh, hazards, route, alertedIds, markAlerted, clearAlert]);
+  }, [position, speedKmh, hazards, route, alertedIds, markAlerted, clearAlert, soundAlerts, vibrationAlerts, leadTime]);
 }
+

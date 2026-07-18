@@ -12,7 +12,9 @@ import type {
   OfficialRadar,
   Roadbook,
   RouteState,
+  UserPreferences,
 } from "@/types/vigla";
+
 
 export interface Position {
   lat: number;
@@ -43,6 +45,8 @@ interface ViglaState {
   roadbooks: Roadbook[];
   displayName: string;
   vibrationEnabled: boolean;
+  preferences: UserPreferences;
+
 
 
   setPosition: (p: Position, speedFromApi: number | null) => void;
@@ -69,7 +73,9 @@ interface ViglaState {
   setRoadbooks: (r: Roadbook[]) => void;
   setDisplayName: (n: string) => void;
   setVibrationEnabled: (v: boolean) => void;
+  setPreferences: (p: UserPreferences) => void;
 }
+
 
 
 const speedBuffer: number[] = [];
@@ -105,6 +111,17 @@ export const useVigla = create<ViglaState>((set) => ({
   roadbooks: [],
   displayName: savedName,
   vibrationEnabled: getVibrationEnabled(),
+  preferences: {
+    speed_unit: "kmh",
+    map_theme: "light",
+    auto_recenter: true,
+    voice_alerts: false,
+    sound_alerts: true,
+    vibration_alerts: true,
+    alert_lead_time: "normal",
+    moto_mode: false,
+  },
+
 
 
   setPosition: (p, speedFromApi) => {
@@ -190,5 +207,8 @@ export const useVigla = create<ViglaState>((set) => ({
     persistVibration(v);
     set({ vibrationEnabled: v });
   },
+  setPreferences: (p) => set({ preferences: p }),
+
+
 
 }));

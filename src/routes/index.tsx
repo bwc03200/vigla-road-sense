@@ -30,9 +30,12 @@ import { ConvoyReactionBar, ConvoyMessageBubbles } from "@/components/vigla/Conv
 import { EmergencyContactsScreen } from "@/components/vigla/EmergencyContactsScreen";
 import { RoadbookList } from "@/components/vigla/RoadbookList";
 import { HistoryList } from "@/components/vigla/HistoryList";
+import { SettingsScreen } from "@/components/vigla/SettingsScreen";
+import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, LogOut, Shield, Navigation } from "lucide-react";
+import { AlertTriangle, LogOut, Shield, Navigation, Settings as SettingsIcon } from "lucide-react";
 import { formatDistance } from "@/lib/geo";
+
 
 export const Route = createFileRoute("/")({
   ssr: false,
@@ -89,13 +92,16 @@ function Index() {
 function ViglaApp({ userId, email }: { userId: string; email: string }) {
   const [tab, setTab] = useState<Tab>("map");
   const [showRoute, setShowRoute] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   useGeolocation();
   useHazards();
   useOfficialRadars();
   useEmergencyContacts(userId);
+  usePreferences(userId);
   useRoadbooks(userId);
   useConvoy(userId);
   const tracker = useTripTracker(userId);
+
   const patchNavigation = useVigla((s) => s.patchNavigation);
   useAlerts((label, distance) => {
     tracker.incrementAlerts();
@@ -197,6 +203,14 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                 </div>
               </div>
               <Button
+                variant="outline"
+                className="mb-2 w-full h-11"
+                onClick={() => setShowSettings(true)}
+              >
+                <SettingsIcon className="mr-2 h-4 w-4" />
+                Voir les paramètres
+              </Button>
+              <Button
                 variant="secondary"
                 className="w-full h-11"
                 onClick={async () => {
@@ -218,9 +232,15 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
         )}
       </main>
       <BottomTabs value={tab} onChange={setTab} />
+      {showSettings && (
+        <div className="fixed inset-0 z-[900] bg-slate-50">
+          <SettingsScreen userId={userId} email={email} onBack={() => setShowSettings(false)} />
+        </div>
+      )}
     </div>
   );
 }
+
 
 function ResumeBanner({
   label,

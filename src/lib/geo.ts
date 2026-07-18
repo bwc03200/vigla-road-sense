@@ -20,9 +20,15 @@ export function formatDistance(m: number): string {
   return `${(m / 1000).toFixed(1)}km`;
 }
 
-export function formatSpeed(kmh: number): string {
-  return Math.round(kmh).toString();
+export function formatSpeed(kmh: number, unit: "kmh" | "mph" = "kmh"): string {
+  const v = unit === "mph" ? kmh * 0.621371 : kmh;
+  return Math.round(v).toString();
 }
+
+export function speedUnitLabel(unit: "kmh" | "mph"): string {
+  return unit === "mph" ? "mph" : "km/h";
+}
+
 
 // Minimum distance in meters from a point to a polyline (array of [lat,lng]).
 export function distanceToPolyline(
