@@ -115,7 +115,7 @@ export function useConvoy(userId: string | null) {
 
   async function createConvoy(name: string) {
     if (!userId) {
-      toast.error("Vous devez être connecté pour créer un convoi");
+      toast.error(t("convoy.loginRequiredCreate"));
       return;
     }
     const code = randomCode();
@@ -126,13 +126,9 @@ export function useConvoy(userId: string | null) {
         .select("*")
         .single();
       if (error || !data) {
-        // eslint-disable-next-line no-console
-        console.error("[useConvoy.createConvoy] insert convoys failed:", {
-          error,
-          payload: { name, code, owner_id: userId },
-        });
-        toast.error("Création du convoi impossible", {
-          description: error?.message ?? "Erreur inconnue côté base de données",
+        console.error("[useConvoy.createConvoy] insert convoys failed:", { error, payload: { name, code, owner_id: userId } });
+        toast.error(t("convoy.createFailed"), {
+          description: error?.message ?? t("convoy.dbUnknownError"),
         });
         return;
       }
@@ -140,30 +136,24 @@ export function useConvoy(userId: string | null) {
       const { error: memberError } = await db.from("convoy_members").insert({
         convoy_id: c.id,
         user_id: userId,
-        display_name: displayName || "Moi",
+        display_name: displayName || t("convoy.me"),
       });
       if (memberError) {
-        // eslint-disable-next-line no-console
         console.error("[useConvoy.createConvoy] insert convoy_members failed:", memberError);
-        toast.error("Convoi créé, mais impossible de vous y ajouter", {
-          description: memberError.message,
-        });
+        toast.error(t("convoy.createdButNotAdded"), { description: memberError.message });
         return;
       }
       setConvoy(c);
-      toast.success(`Convoi créé — code ${c.code}`);
+      toast.success(t("convoy.createdWithCode", { code: c.code }));
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error("[useConvoy.createConvoy] unexpected exception:", e);
-      toast.error("Création du convoi impossible", {
-        description: e instanceof Error ? e.message : String(e),
-      });
+      toast.error(t("convoy.createFailed"), { description: e instanceof Error ? e.message : String(e) });
     }
   }
 
   async function joinConvoy(code: string) {
     if (!userId) {
-      toast.error("Vous devez être connecté pour rejoindre un convoi");
+      toast.error(t("convoy.loginRequiredJoin"));
       return;
     }
     try {
@@ -173,13 +163,12 @@ export function useConvoy(userId: string | null) {
         .eq("code", code.trim().toUpperCase())
         .maybeSingle();
       if (error) {
-        // eslint-disable-next-line no-console
         console.error("[useConvoy.joinConvoy] select convoys failed:", error);
-        toast.error("Impossible de chercher ce convoi", { description: error.message });
+        toast.error(t("convoy.searchFailed"), { description: error.message });
         return;
       }
       if (!convoyRow) {
-        toast.error("Code de convoi introuvable");
+        toast.error(t("convoy.codeNotFound"));
         return;
       }
       const c = convoyRow as Convoy;
@@ -187,25 +176,21 @@ export function useConvoy(userId: string | null) {
         {
           convoy_id: c.id,
           user_id: userId,
-          display_name: displayName || "Moi",
+          display_name: displayName || t("convoy.me"),
           last_seen: new Date().toISOString(),
         },
         { onConflict: "convoy_id,user_id" },
       );
       if (upsertError) {
-        // eslint-disable-next-line no-console
         console.error("[useConvoy.joinConvoy] upsert convoy_members failed:", upsertError);
-        toast.error("Impossible de rejoindre le convoi", { description: upsertError.message });
+        toast.error(t("convoy.joinFailed"), { description: upsertError.message });
         return;
       }
       setConvoy(c);
-      toast.success(`Convoi rejoint : ${c.name}`);
+      toast.success(t("convoy.joined", { name: c.name }));
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error("[useConvoy.joinConvoy] unexpected exception:", e);
-      toast.error("Impossible de rejoindre le convoi", {
-        description: e instanceof Error ? e.message : String(e),
-      });
+      toast.error(t("convoy.joinFailed"), { description: e instanceof Error ? e.message : String(e) });
     }
   }
 
@@ -218,21 +203,18 @@ export function useConvoy(userId: string | null) {
         .eq("convoy_id", convoy.id)
         .eq("user_id", userId);
       if (error) {
-        // eslint-disable-next-line no-console
         console.error("[useConvoy.leaveConvoy] delete failed:", error);
-        toast.error("Impossible de quitter le convoi", { description: error.message });
+        toast.error(t("convoy.leaveFailed"), { description: error.message });
         return;
       }
       setConvoy(null);
-      toast("Convoi quitté");
+      toast(t("convoy.left"));
     } catch (e) {
-      // eslint-disable-next-line no-console
       console.error("[useConvoy.leaveConvoy] unexpected exception:", e);
-      toast.error("Impossible de quitter le convoi", {
-        description: e instanceof Error ? e.message : String(e),
-      });
+      toast.error(t("convoy.leaveFailed"), { description: e instanceof Error ? e.message : String(e) });
     }
   }
 
   return { createConvoy, joinConvoy, leaveConvoy };
 }
+
