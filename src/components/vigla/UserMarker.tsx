@@ -46,6 +46,7 @@ export function UserMarker({ lat, lng, heading }: Props) {
   const lastFixTsRef = useRef(0);
 
   const mountedRef = useRef(true);
+  const zoomingRef = useRef(false);
 
   // Create the Leaflet marker once.
   useEffect(() => {
@@ -64,12 +65,66 @@ export function UserMarker({ lat, lng, heading }: Props) {
     innerRef.current = (m.getElement()?.querySelector(
       ".vigla-user-inner",
     ) as HTMLDivElement) ?? null;
+
+    const onZoomStart = () => {
+      zoomingRef.current = true;
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+    const onZoomEnd = () => {
+      zoomingRef.current = false;
+      if (!mountedRef.current || !markerRef.current) return;
+      // Snap displayed position to the current interpolated value so Leaflet's
+      // internal pixel origin (post-zoom) and our marker stay in sync.
+      markerRef.current.setLatLng([curLatRef.current, curLngRef.current]);
+      const needsResume =
+        curLatRef.current !== toLatRef.current ||
+        curLngRef.current !== toLngRef.current ||
+        curHeadingRef.current !== toHeadingRef.current;
+      if (needsResume && rafRef.current == null) {
+        fromLatRef.current = curLatRef.current;
+        fromLngRef.current = curLngRef.current;
+        fromHeadingRef.current = curHeadingRef.current;
+        startTsRef.current = performance.now();
+        durationRef.current = Math.max(200, durationRef.current / 2);
+        const step = (ts: number) => {
+          if (!mountedRef.current || !markerRef.current || zoomingRef.current) {
+            rafRef.current = null;
+            return;
+          }
+          const t = Math.min(1, (ts - startTsRef.current) / durationRef.current);
+          const latNow =
+            fromLatRef.current + (toLatRef.current - fromLatRef.current) * t;
+          const lngNow =
+            fromLngRef.current + (toLngRef.current - fromLngRef.current) * t;
+          const hdNow =
+            fromHeadingRef.current +
+            (toHeadingRef.current - fromHeadingRef.current) * t;
+          curLatRef.current = latNow;
+          curLngRef.current = lngNow;
+          curHeadingRef.current = hdNow;
+          markerRef.current.setLatLng([latNow, lngNow]);
+          if (innerRef.current) {
+            innerRef.current.style.transform = `rotate(${hdNow}deg)`;
+          }
+          if (t < 1) {
+            rafRef.current = requestAnimationFrame(step);
+          } else {
+            rafRef.current = null;
+          }
+        };
+        rafRef.current = requestAnimationFrame(step);
+      }
+    };
+    map.on("zoomstart", onZoomStart);
+    map.on("zoomend", onZoomEnd);
+
     return () => {
-      // Cancel any pending animation BEFORE removing the marker, and flag the
-      // marker as gone so late rAF frames scheduled by the sibling effect
-      // (which may cleanup after this one on some React versions) don't touch
-      // a removed Leaflet layer and read `_leaflet_pos` on undefined.
       mountedRef.current = false;
+      map.off("zoomstart", onZoomStart);
+      map.off("zoomend", onZoomEnd);
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
