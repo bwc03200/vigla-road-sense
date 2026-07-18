@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Search, X, Loader2, Navigation, AlertTriangle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -7,7 +8,7 @@ import { useVigla } from "@/lib/vigla-store";
 import { formatDistance, haversine } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
 import { RouteGenerator } from "@/components/vigla/RouteGenerator";
-import { HAZARD_LABELS } from "@/types/vigla";
+import { hazardLabel } from "@/lib/i18n-helpers";
 
 interface NominatimResult {
   place_id: number;
@@ -19,6 +20,7 @@ interface NominatimResult {
 type Mode = "search" | "generate";
 
 export function RoutePlanner({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const position = useVigla((s) => s.position);
   const hazards = useVigla((s) => s.hazards);
   const route = useVigla((s) => s.route);
@@ -59,7 +61,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
         setResults(data);
       } catch (err) {
         if ((err as Error).name !== "AbortError") {
-          toast.error("Service d'itinéraire indisponible, réessaie dans un instant");
+          toast.error(t("route.serviceUnavailable"));
         }
       } finally {
         setSearching(false);
@@ -68,10 +70,10 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, position]);
+  }, [query, position, t]);
 
   async function selectDestination(r: NominatimResult) {
-    if (!position) return toast.error("Position GPS indisponible");
+    if (!position) return toast.error(t("hazard.report.gpsUnavailable"));
     const destLat = parseFloat(r.lat);
     const destLng = parseFloat(r.lon);
     setComputing(true);
@@ -85,12 +87,15 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
       );
       setRoute(state);
       setQuery("");
-      toast.success("Itinéraire calculé", {
-        description: `${(state.distanceM / 1000).toFixed(1)} km · ${state.hazardIds.length} zone(s) de danger`,
+      toast.success(t("route.computed"), {
+        description: t("route.computedDesc", {
+          km: (state.distanceM / 1000).toFixed(1),
+          n: state.hazardIds.length,
+        }),
       });
       onClose();
     } catch {
-      toast.error("Service d'itinéraire indisponible, réessaie dans un instant");
+      toast.error(t("route.serviceUnavailable"));
     } finally {
       setComputing(false);
     }
@@ -98,7 +103,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
 
   function cancelRoute() {
     setRoute(null);
-    toast("Itinéraire annulé");
+    toast(t("route.cancelled"));
   }
 
   const routeHazards = route
@@ -108,7 +113,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
           const start = route.coords[0];
           return {
             id: h.id,
-            label: HAZARD_LABELS[h.type],
+            label: hazardLabel(h.type),
             fromStart: haversine(start[0], start[1], h.latitude, h.longitude),
           };
         })
@@ -123,9 +128,9 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
               <Navigation className="h-4 w-4" />
             </div>
-            <h2 className="text-lg font-semibold text-slate-900">Itinéraire</h2>
+            <h2 className="text-lg font-semibold text-slate-900">{t("route.planner")}</h2>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Fermer">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("common.close")}>
             <X className="h-5 w-5" />
           </Button>
         </div>
@@ -133,18 +138,18 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
         {route ? (
           <div className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
             <div>
-              <div className="text-xs uppercase tracking-wide text-slate-500">Destination</div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">{t("route.destination")}</div>
               <div className="mt-1 text-sm font-medium text-slate-900">{route.destination.label}</div>
             </div>
             <div className="flex gap-4 text-sm text-slate-700">
               <span>{(route.distanceM / 1000).toFixed(1)} km</span>
-              <span>{Math.round(route.durationS / 60)} min</span>
+              <span>{Math.round(route.durationS / 60)} {t("common.min")}</span>
             </div>
             <div className="flex items-start gap-2 rounded-xl bg-orange-50 p-3 text-sm">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-[#FF6B35]" />
               <div>
                 <div className="font-semibold text-slate-900">
-                  {route.hazardIds.length} zone(s) de danger sur cet itinéraire
+                  {t("route.hazardsOnRoute", { n: route.hazardIds.length })}
                 </div>
                 {routeHazards.length > 0 && (
                   <ul className="mt-2 space-y-1 text-xs text-slate-600">
@@ -152,7 +157,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
                       <li key={h.id} className="flex justify-between gap-2">
                         <span>{h.label}</span>
                         <span className="tabular-nums text-slate-500">
-                          à {formatDistance(h.fromStart)}
+                          {t("route.at", { distance: formatDistance(h.fromStart) })}
                         </span>
                       </li>
                     ))}
@@ -161,7 +166,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
               </div>
             </div>
             <Button variant="secondary" className="w-full h-11" onClick={cancelRoute}>
-              Annuler l'itinéraire
+              {t("route.cancelRoute")}
             </Button>
           </div>
         ) : (
@@ -173,7 +178,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
                   mode === "search" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
                 }`}
               >
-                <Search className="h-4 w-4" /> Itinéraire précis
+                <Search className="h-4 w-4" /> {t("route.preciseTab")}
               </button>
               <button
                 onClick={() => setMode("generate")}
@@ -181,7 +186,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
                   mode === "generate" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500"
                 }`}
               >
-                <Sparkles className="h-4 w-4" /> Générer un trajet
+                <Sparkles className="h-4 w-4" /> {t("route.generateTab")}
               </button>
             </div>
 
@@ -193,7 +198,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
                     autoFocus
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
-                    placeholder="Adresse ou ville de destination"
+                    placeholder={t("route.searchPlaceholder")}
                     className="h-12 pl-10"
                   />
                   {(searching || computing) && (
@@ -216,9 +221,7 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
                   </ul>
                 )}
                 {!position && (
-                  <p className="text-xs text-slate-500">
-                    Position GPS requise pour calculer un itinéraire.
-                  </p>
+                  <p className="text-xs text-slate-500">{t("route.gpsRequired")}</p>
                 )}
               </>
             ) : (

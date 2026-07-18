@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Loader2, Route, Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,7 @@ import { suggestionsNear } from "@/lib/discovery";
 type Mode = "quick" | "discover";
 
 export function RouteGenerator({ onDone }: { onDone: () => void }) {
+  const { t } = useTranslation();
   const position = useVigla((s) => s.position);
   const hazards = useVigla((s) => s.hazards);
   const setRoute = useVigla((s) => s.setRoute);
@@ -19,38 +21,38 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
   const [busy, setBusy] = useState(false);
 
   async function runQuickRide() {
-    if (!position) return toast.error("Position GPS indisponible");
+    if (!position) return toast.error(t("hazard.report.gpsUnavailable"));
     setBusy(true);
     try {
       const result = await generateQuickRide(position.lat, position.lng, distance, direction);
       const state = buildRouteState(
-        { lat: position.lat, lng: position.lng, label: `Boucle ${distance} km` },
+        { lat: position.lat, lng: position.lng, label: t("generator.loopLabel", { km: distance }) },
         result,
         hazards,
       );
       setRoute(state);
-      toast.success("Trajet généré", {
+      toast.success(t("generator.generated"), {
         description: `${(state.distanceM / 1000).toFixed(0)} km`,
       });
       onDone();
     } catch {
-      toast.error("Impossible de générer un trajet dans cette direction");
+      toast.error(t("generator.generateFailed"));
     } finally {
       setBusy(false);
     }
   }
 
   async function runSuggestion(dest: { lat: number; lng: number; label: string }) {
-    if (!position) return toast.error("Position GPS indisponible");
+    if (!position) return toast.error(t("hazard.report.gpsUnavailable"));
     setBusy(true);
     try {
       const result = await fetchOsrmRoute(position.lat, position.lng, dest.lat, dest.lng);
       const state = buildRouteState(dest, result, hazards);
       setRoute(state);
-      toast.success("Itinéraire calculé");
+      toast.success(t("generator.computed"));
       onDone();
     } catch {
-      toast.error("Impossible de calculer l'itinéraire");
+      toast.error(t("generator.computeFailed"));
     } finally {
       setBusy(false);
     }
@@ -68,7 +70,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
           }`}
         >
           <Route className="mx-auto h-4 w-4" />
-          Quick Ride
+          {t("generator.quickRide")}
         </button>
         <button
           onClick={() => setMode("discover")}
@@ -77,7 +79,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
           }`}
         >
           <Compass className="mx-auto h-4 w-4" />
-          Découverte
+          {t("generator.discover")}
         </button>
       </div>
 
@@ -85,7 +87,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
         <div className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
           <div>
             <div className="mb-1 flex items-baseline justify-between">
-              <label className="text-xs uppercase tracking-widest text-slate-500">Distance</label>
+              <label className="text-xs uppercase tracking-widest text-slate-500">{t("generator.distance")}</label>
               <span className="text-lg font-semibold text-slate-900">{distance} km</span>
             </div>
             <input
@@ -101,7 +103,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
 
           <div>
             <label className="mb-2 block text-xs uppercase tracking-widest text-slate-500">
-              Direction
+              {t("generator.direction")}
             </label>
             <div className="grid grid-cols-3 gap-2">
               <button
@@ -112,7 +114,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
                     : "border-slate-200 text-slate-600"
                 }`}
               >
-                Toutes directions
+                {t("generator.allDirections")}
               </button>
               {COMPASS.map((c) => (
                 <button
@@ -124,7 +126,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
                       : "border-slate-200 text-slate-600"
                   }`}
                 >
-                  {c.label}
+                  {t(`generator.compass.${c.id}`)}
                 </button>
               ))}
             </div>
@@ -132,7 +134,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
 
           <Button className="h-12 w-full" onClick={runQuickRide} disabled={busy || !position}>
             {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-            Générer un trajet
+            {t("generator.generate")}
           </Button>
         </div>
       )}
@@ -140,7 +142,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
       {mode === "discover" && (
         <div className="space-y-2">
           {suggestions.length === 0 && (
-            <p className="text-sm text-slate-500">Position GPS requise pour proposer des sorties.</p>
+            <p className="text-sm text-slate-500">{t("generator.gpsRequiredDiscovery")}</p>
           )}
           {suggestions.map((s) => (
             <button
@@ -157,7 +159,7 @@ export function RouteGenerator({ onDone }: { onDone: () => void }) {
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold text-slate-900">{s.title}</div>
                 <div className="text-xs text-slate-500">
-                  {s.region} · {s.distanceKm} km · {s.durationMin} min
+                  {s.region} · {s.distanceKm} km · {s.durationMin} {t("common.min")}
                 </div>
                 <div className="mt-1 line-clamp-2 text-xs text-slate-600">{s.description}</div>
               </div>

@@ -1,13 +1,14 @@
+import { useTranslation } from "react-i18next";
 import { Map, AlertTriangle, BookOpen, Users, User } from "lucide-react";
 
 export type Tab = "map" | "report" | "roadbooks" | "convoy" | "profile";
 
-const TABS: { id: Tab; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "map", label: "Carte", icon: Map },
-  { id: "report", label: "Signaler", icon: AlertTriangle },
-  { id: "roadbooks", label: "Roadbooks", icon: BookOpen },
-  { id: "convoy", label: "Convoi", icon: Users },
-  { id: "profile", label: "Profil", icon: User },
+const TAB_ORDER: { id: Tab; icon: React.ComponentType<{ className?: string }>; key: string }[] = [
+  { id: "map", icon: Map, key: "map" },
+  { id: "report", icon: AlertTriangle, key: "report" },
+  { id: "roadbooks", icon: BookOpen, key: "roadbooks" },
+  { id: "convoy", icon: Users, key: "convoy" },
+  { id: "profile", icon: User, key: "profile" },
 ];
 
 export function BottomTabs({
@@ -17,10 +18,11 @@ export function BottomTabs({
   value: Tab;
   onChange: (t: Tab) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-[700] border-t border-border bg-card/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto flex max-w-lg items-stretch">
-        {TABS.map(({ id, label, icon: Icon }) => {
+        {TAB_ORDER.map(({ id, icon: Icon, key }) => {
           const active = value === id;
           return (
             <button
@@ -31,7 +33,7 @@ export function BottomTabs({
               }`}
             >
               <Icon className={`h-5 w-5 ${active ? "scale-110" : ""} transition`} />
-              <span className="text-[10px] font-medium">{label}</span>
+              <span className="text-[10px] font-medium">{t(`tabs.${key}`)}</span>
             </button>
           );
         })}

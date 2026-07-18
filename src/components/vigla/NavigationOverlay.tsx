@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Navigation, X, AlertTriangle, Loader2, SignalLow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TopBar } from "@/components/vigla/TopBar";
@@ -7,14 +8,14 @@ import { useNavigationEngine } from "@/hooks/useNavigationEngine";
 import { formatDistance } from "@/lib/geo";
 import type { ActiveNavigation } from "@/types/vigla";
 
-function formatDuration(s: number): string {
+function formatDuration(s: number, minLabel: string): string {
   const m = Math.max(0, Math.round(s / 60));
-  if (m < 60) return `${m} min`;
+  if (m < 60) return `${m} ${minLabel}`;
   return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, "0")}`;
 }
 
-/** Bottom sheet shown when a route is computed but nav not yet started. */
 export function StartTripBar() {
+  const { t } = useTranslation();
   const route = useVigla((s) => s.route);
   const navigation = useVigla((s) => s.navigation);
   const setRoute = useVigla((s) => s.setRoute);
@@ -56,26 +57,22 @@ export function StartTripBar() {
             </div>
             <div className="mt-0.5 text-xs text-slate-500">
               {(route.distanceM / 1000).toFixed(1)} km ·{" "}
-              {formatDuration(route.durationS)}
+              {formatDuration(route.durationS, t("common.min"))}
               {route.hazardIds.length > 0 &&
-                ` · ${route.hazardIds.length} zone(s) de danger`}
+                t("route.hazardsSuffix", { n: route.hazardIds.length })}
             </div>
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="ghost"
-            className="h-12 flex-1"
-            onClick={() => setRoute(null)}
-          >
-            Annuler
+          <Button variant="ghost" className="h-12 flex-1" onClick={() => setRoute(null)}>
+            {t("common.cancel")}
           </Button>
           <Button
             className="h-12 flex-[2] bg-primary text-primary-foreground"
             onClick={start}
           >
             <Navigation className="mr-2 h-4 w-4" />
-            Démarrer le trajet
+            {t("route.startTrip")}
           </Button>
         </div>
       </div>
@@ -83,16 +80,15 @@ export function StartTripBar() {
   );
 }
 
-/** Runs the engine + renders the top instruction bar & arrival screen. */
 export function NavigationOverlay() {
   useNavigationEngine();
+  const { t } = useTranslation();
   const navigation = useVigla((s) => s.navigation);
   const route = useVigla((s) => s.route);
   const position = useVigla((s) => s.position);
   const setNavigation = useVigla((s) => s.setNavigation);
   const setRoute = useVigla((s) => s.setRoute);
 
-  // Weak GPS detection.
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!navigation) return;
@@ -129,15 +125,15 @@ export function NavigationOverlay() {
           </div>
           <div className="min-w-0 flex-1">
             <div className="text-[10px] uppercase tracking-widest text-white/60">
-              Dans {formatDistance(navigation.distanceToNextManeuverM)}
+              {t("navigation.in", { distance: formatDistance(navigation.distanceToNextManeuverM) })}
             </div>
             <div className="mt-0.5 line-clamp-2 text-sm font-semibold leading-snug">
-              {step?.instruction ?? "Suivez la route"}
+              {step?.instruction ?? t("navigation.followRoad")}
             </div>
           </div>
           <button
             onClick={stop}
-            aria-label="Arrêter la navigation"
+            aria-label={t("navigation.stop")}
             className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
           >
             <X className="h-4 w-4" />
@@ -150,20 +146,20 @@ export function NavigationOverlay() {
             </span>
             <span className="mx-1 text-white/40">·</span>
             <span className="text-white/80">
-              {formatDuration(navigation.durationRemainingS)}
+              {formatDuration(navigation.durationRemainingS, t("common.min"))}
             </span>
           </div>
           <div className="flex items-center gap-2">
             {navigation.recalculating && (
               <span className="flex items-center gap-1 text-white/70">
                 <Loader2 className="h-3 w-3 animate-spin" />
-                Recalcul…
+                {t("navigation.recalculating")}
               </span>
             )}
             {gpsWeak && (
               <span className="flex items-center gap-1 text-amber-300">
                 <SignalLow className="h-3 w-3" />
-                GPS faible
+                {t("navigation.gpsWeak")}
               </span>
             )}
           </div>
@@ -174,8 +170,8 @@ export function NavigationOverlay() {
   );
 }
 
-
 function ArrivalScreen({ onClose }: { onClose: () => void }) {
+  const { t } = useTranslation();
   const navigation = useVigla((s) => s.navigation)!;
   const route = useVigla((s) => s.route);
 
@@ -188,32 +184,31 @@ function ArrivalScreen({ onClose }: { onClose: () => void }) {
   const durationMin = Math.max(1, Math.round(durationMs / 60000));
   const distanceKm = ((route?.distanceM ?? 0) / 1000).toFixed(1);
 
-
   return (
     <div className="absolute inset-0 z-[900] flex items-center justify-center bg-white/95 p-6 backdrop-blur">
       <div className="w-full max-w-sm rounded-3xl border border-slate-200 bg-white p-6 text-center shadow-2xl">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15 text-primary">
           <AlertTriangle className="h-7 w-7" />
         </div>
-        <h2 className="text-xl font-bold text-slate-900">Vous êtes arrivé</h2>
+        <h2 className="text-xl font-bold text-slate-900">{t("navigation.arrivedTitle")}</h2>
         <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
           <div>
             <div className="text-[11px] uppercase tracking-widest text-slate-500">
-              Durée
+              {t("navigation.duration")}
             </div>
             <div className="mt-1 font-semibold text-slate-900">
-              {durationMin} min
+              {durationMin} {t("common.min")}
             </div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-widest text-slate-500">
-              Distance
+              {t("navigation.distance")}
             </div>
             <div className="mt-1 font-semibold text-slate-900">{distanceKm} km</div>
           </div>
           <div>
             <div className="text-[11px] uppercase tracking-widest text-slate-500">
-              Alertes
+              {t("navigation.alerts")}
             </div>
             <div className="mt-1 font-semibold text-slate-900">
               {navigation.alertsReceived}
@@ -221,7 +216,7 @@ function ArrivalScreen({ onClose }: { onClose: () => void }) {
           </div>
         </div>
         <Button className="mt-6 h-12 w-full" onClick={onClose}>
-          Fermer
+          {t("common.close")}
         </Button>
       </div>
     </div>

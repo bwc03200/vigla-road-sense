@@ -1,8 +1,11 @@
 import { useEffect, useRef } from "react";
 import { toast } from "sonner";
+import i18n from "@/i18n/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { Convoy, ConvoyAlert, ConvoyMember } from "@/types/vigla";
+
+const t = (k: string, opts?: Record<string, unknown>) => i18n.t(k, opts);
 
 type AnyClient = { from: (t: string) => any };
 const db = supabase as unknown as AnyClient;
