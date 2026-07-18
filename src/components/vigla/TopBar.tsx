@@ -5,7 +5,7 @@ import { haversine, formatDistance, formatSpeed, speedUnitLabel } from "@/lib/ge
 import { HAZARD_LABELS } from "@/types/vigla";
 
 
-export function TopBar() {
+export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   const position = useVigla((s) => s.position);
   const speedKmh = useVigla((s) => s.speedKmh);
   const hazards = useVigla((s) => s.hazards);
@@ -13,6 +13,10 @@ export function TopBar() {
   const route = useVigla((s) => s.route);
   const navActive = useVigla((s) => Boolean(s.navigation && !s.navigation.arrived));
 
+  // When embedded inside NavigationOverlay's flex-col stack, skip our own
+  // absolute positioning so the parent controls layout and we cannot overlap
+  // the instruction banner above us.
+  if (navActive && !embedded) return null;
 
   const nextHazard = useMemo(() => {
     if (!position) return null;
@@ -28,10 +32,12 @@ export function TopBar() {
     return best;
   }, [hazards, position, route]);
 
+  const wrapperClass = embedded
+    ? ""
+    : "pointer-events-none absolute inset-x-0 top-0 z-[500] p-3";
+
   return (
-    <div
-      className={`pointer-events-none absolute inset-x-0 z-[500] p-3 transition-[top] duration-200 ${navActive ? "top-[120px]" : "top-0"}`}
-    >
+    <div className={wrapperClass}>
       <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-slate-200">
         <div className="flex flex-col items-center leading-none">
           <span
