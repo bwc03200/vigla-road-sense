@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Navigation, X, AlertTriangle, Loader2, SignalLow } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TopBar } from "@/components/vigla/TopBar";
 import { useVigla } from "@/lib/vigla-store";
 import { useNavigationEngine } from "@/hooks/useNavigationEngine";
 import { formatDistance } from "@/lib/geo";
