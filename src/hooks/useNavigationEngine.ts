@@ -162,34 +162,39 @@ export function useNavigationEngine() {
     ];
 
     const steps = Array.isArray(navigation.steps) ? navigation.steps : [];
-    // Advance current step based on distance traveled ALONG the polyline.
-    // step[i].distanceMeters is the length of step i; the next maneuver
-    // (step i+1) starts at the cumulative sum through step i.
+    // Advance the "upcoming maneuver" step index based on distance traveled
+    // ALONG the polyline. step[i].distanceMeters is the length of step i;
+    // step[i] STARTS at cumulative sum of step[0..i-1]. We want to show the
+    // next maneuver the driver hasn't yet reached.
     let stepIdx = Math.min(
       navigation.currentStepIndex,
       Math.max(0, steps.length - 1),
     );
     let distanceToNext = 0;
     if (steps.length > 0) {
+      // stepStartDistances[i] = distance along route at which step i begins.
+      const stepStartDistances: number[] = [0];
       let cumulative = 0;
-      // Compute cumulative distance at which each step ENDS (= where next begins).
-      const stepEndDistances: number[] = [];
-      for (const s of steps) {
-        cumulative += Number.isFinite(s?.distanceMeters) ? s.distanceMeters : 0;
-        stepEndDistances.push(cumulative);
+      for (let i = 0; i < steps.length - 1; i++) {
+        cumulative += Number.isFinite(steps[i]?.distanceMeters)
+          ? steps[i].distanceMeters
+          : 0;
+        stepStartDistances.push(cumulative);
       }
       const traveled = proj.distanceAlongM;
-      // Advance until the traveled distance is inside the current step's span,
-      // preferring the "next maneuver" (i.e. skip past the depart step quickly).
-      let idx = stepIdx;
-      while (idx < steps.length - 1 && traveled >= stepEndDistances[idx] - 5) {
+      // Find the first upcoming step whose start we haven't crossed yet.
+      // Never regress below the current index (protects against GPS jitter).
+      let idx = Math.max(1, stepIdx);
+      while (
+        idx < steps.length - 1 &&
+        traveled >= stepStartDistances[idx] - 5
+      ) {
         idx += 1;
       }
       stepIdx = idx;
-      // Distance until the maneuver at the END of the current step.
-      distanceToNext = Math.max(0, stepEndDistances[stepIdx] - traveled);
-      // Fallback: if step[stepIdx] has a valid maneuver location, prefer the
-      // straight-line distance (matches user expectation for short segments).
+      distanceToNext = Math.max(0, stepStartDistances[stepIdx] - traveled);
+      // Prefer straight-line distance to the maneuver point when available —
+      // matches driver expectation (the banner counts down to the intersection).
       const s = steps[stepIdx];
       if (
         s &&
@@ -204,7 +209,7 @@ export function useNavigationEngine() {
           s.location[0],
           s.location[1],
         );
-        if (Number.isFinite(d) && d > 0) distanceToNext = d;
+        if (Number.isFinite(d)) distanceToNext = d;
       }
     }
 
