@@ -141,7 +141,7 @@ export function ConvoyPanel({ userId }: { userId: string }) {
         />
         <Button className="mt-3 h-11 w-full" onClick={handleCreate} disabled={busy}>
           {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-          Créer
+          Créer le convoi
         </Button>
       </div>
 
