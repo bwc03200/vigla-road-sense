@@ -11,6 +11,7 @@ export function TopBar() {
   const hazards = useVigla((s) => s.hazards);
   const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const route = useVigla((s) => s.route);
+  const navActive = useVigla((s) => Boolean(s.navigation && !s.navigation.arrived));
 
 
   const nextHazard = useMemo(() => {
