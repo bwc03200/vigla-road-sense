@@ -161,7 +161,7 @@ export function UserMarker({ lat, lng, heading }: Props) {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
     const step = (ts: number) => {
-      if (!mountedRef.current || !markerRef.current) {
+      if (!mountedRef.current || !markerRef.current || zoomingRef.current) {
         rafRef.current = null;
         return;
       }
@@ -189,7 +189,11 @@ export function UserMarker({ lat, lng, heading }: Props) {
         rafRef.current = null;
       }
     };
-    rafRef.current = requestAnimationFrame(step);
+    // Don't fight Leaflet's zoom animation — it will repositions the marker
+    // itself via its own transform. Resume in the zoomend handler.
+    if (!zoomingRef.current) {
+      rafRef.current = requestAnimationFrame(step);
+    }
 
     return () => {
       if (rafRef.current) {
