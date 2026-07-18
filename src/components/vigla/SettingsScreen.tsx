@@ -8,6 +8,8 @@ import { useVigla } from "@/lib/vigla-store";
 import { savePreferences } from "@/hooks/usePreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMyAccount } from "@/lib/account.functions";
+import { InstallSettingsRow } from "@/components/vigla/InstallPWA";
+
 import { setLanguage, currentLang, type Lang } from "@/i18n/i18n";
 import type { AlertLeadTime, UserPreferences } from "@/types/vigla";
 
@@ -147,6 +149,10 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
           <div className="text-xs uppercase tracking-widest text-slate-500">{t("settings.email")}</div>
           <div className="mt-1 truncate text-sm font-medium text-slate-900">{email}</div>
         </div>
+        <div className="px-4 pb-3">
+          <InstallSettingsRow />
+        </div>
+
         <div className="px-4 pb-3">
           <Button
             variant="secondary"
