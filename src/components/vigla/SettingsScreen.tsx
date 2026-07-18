@@ -125,6 +125,9 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
           value={prefs.vibration_alerts}
           onChange={(v) => update("vibration_alerts", v)}
         />
+        <div className="px-4 py-3">
+          <PushNotificationsRow userId={userId} />
+        </div>
         <SegmentedRow
           label={t("settings.leadTime")}
           value={prefs.alert_lead_time}
