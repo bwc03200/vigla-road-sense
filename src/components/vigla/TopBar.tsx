@@ -9,7 +9,9 @@ export function TopBar() {
   const position = useVigla((s) => s.position);
   const speedKmh = useVigla((s) => s.speedKmh);
   const hazards = useVigla((s) => s.hazards);
+  const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const route = useVigla((s) => s.route);
+
 
   const nextHazard = useMemo(() => {
     if (!position) return null;
