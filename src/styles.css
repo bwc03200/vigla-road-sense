@@ -77,7 +77,21 @@ html { scroll-behavior: smooth; }
     -webkit-font-smoothing: antialiased;
   }
   .tabular-nums { font-variant-numeric: tabular-nums; }
+
+  /* Global keyboard focus indicator — visible ring for a11y. */
+  :focus-visible {
+    outline: 2px solid #FF6B35;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  /* Suppress the outline on elements that already draw their own ring. */
+  button:focus:not(:focus-visible),
+  a:focus:not(:focus-visible),
+  [role="button"]:focus:not(:focus-visible) {
+    outline: none;
+  }
 }
+
 
 /* Leaflet light tweaks */
 .leaflet-container {
