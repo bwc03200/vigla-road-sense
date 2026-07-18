@@ -42,7 +42,7 @@ export function useEmergencyContacts(userId: string | null) {
       .select("*")
       .single();
     if (error) {
-      toast.error("Ajout impossible");
+      toast.error(t("contacts.addFailed"));
       return;
     }
     const current = useVigla.getState().emergencyContacts;
@@ -52,7 +52,7 @@ export function useEmergencyContacts(userId: string | null) {
   async function remove(id: string) {
     const { error } = await db.from("emergency_contacts").delete().eq("id", id);
     if (error) {
-      toast.error("Suppression impossible");
+      toast.error(t("contacts.deleteFailed"));
       return;
     }
     const current = useVigla.getState().emergencyContacts;
