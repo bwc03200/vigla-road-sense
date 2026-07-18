@@ -119,15 +119,23 @@ export function MapView() {
   const autoRecenter = useVigla((s) => s.preferences.auto_recenter);
 
 
+  const hazardFilters = useVigla((s) => s.hazardFilters);
+
   const nearbyHazards = useMemo(() => {
-    if (!position) return hazards;
-    return hazards.filter((h) => haversine(position.lat, position.lng, h.latitude, h.longitude) < 8000);
-  }, [hazards, position]);
+    const filtered = hazards.filter((h) => {
+      if (h.type === "radar_fixe" || h.type === "radar_mobile") return hazardFilters.radars;
+      return hazardFilters[h.type] ?? true;
+    });
+    if (!position) return filtered;
+    return filtered.filter((h) => haversine(position.lat, position.lng, h.latitude, h.longitude) < 8000);
+  }, [hazards, position, hazardFilters]);
 
   const nearbyOfficial = useMemo(() => {
+    if (!hazardFilters.official) return [];
     if (!position) return officialRadars.slice(0, 500);
     return officialRadars.filter((r) => haversine(position.lat, position.lng, r.latitude, r.longitude) < 8000);
-  }, [officialRadars, position]);
+  }, [officialRadars, position, hazardFilters.official]);
+
 
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;

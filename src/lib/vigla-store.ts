@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { getVibrationEnabled, setVibrationEnabled as persistVibration } from "@/lib/haptics";
+import { DEFAULT_HAZARD_FILTERS } from "@/types/vigla";
 import type {
 
   ActiveNavigation,
@@ -8,12 +9,16 @@ import type {
   ConvoyMember,
   CrashState,
   EmergencyContact,
+  HazardFilterKey,
+  HazardFilters,
   HazardReport,
   OfficialRadar,
   Roadbook,
   RouteState,
   UserPreferences,
 } from "@/types/vigla";
+
+
 
 
 export interface Position {
@@ -46,6 +51,8 @@ interface ViglaState {
   displayName: string;
   vibrationEnabled: boolean;
   preferences: UserPreferences;
+  hazardFilters: HazardFilters;
+
 
 
 
@@ -74,7 +81,10 @@ interface ViglaState {
   setDisplayName: (n: string) => void;
   setVibrationEnabled: (v: boolean) => void;
   setPreferences: (p: UserPreferences) => void;
+  toggleHazardFilter: (k: HazardFilterKey) => void;
+  setAllHazardFilters: (v: boolean) => void;
 }
+
 
 
 
@@ -208,7 +218,22 @@ export const useVigla = create<ViglaState>((set) => ({
     set({ vibrationEnabled: v });
   },
   setPreferences: (p) => set({ preferences: p }),
+  hazardFilters: { ...DEFAULT_HAZARD_FILTERS },
+  toggleHazardFilter: (k) =>
+    set((s) => ({ hazardFilters: { ...s.hazardFilters, [k]: !s.hazardFilters[k] } })),
+  setAllHazardFilters: (v) =>
+    set(() => ({
+      hazardFilters: {
+        radars: v,
+        accident: v,
+        travaux: v,
+        obstacle: v,
+        ralentissement: v,
+        official: v,
+      },
+    })),
 
 
 
 }));
+

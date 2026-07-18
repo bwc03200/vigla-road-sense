@@ -63,6 +63,21 @@
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out"
   },
+  "filters": {
+    "button": "Filter hazards",
+    "groupLabel": "Hazard filters",
+    "title": "Filters",
+    "all": "All",
+    "keys": {
+      "radars": "Radars",
+      "accident": "Crashes",
+      "travaux": "Roadworks",
+      "obstacle": "Obstacles",
+      "ralentissement": "Slowdowns",
+      "official": "Official radars"
+    }
+
+  },
   "route": {
     "planner": "Route",
     "cta": "Route",

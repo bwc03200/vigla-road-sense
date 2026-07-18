@@ -63,6 +63,21 @@
     "zoomIn": "Zoomer",
     "zoomOut": "Dézoomer"
   },
+  "filters": {
+    "button": "Filtrer les zones de danger",
+    "groupLabel": "Filtres des zones de danger",
+    "title": "Filtres",
+    "all": "Tous",
+    "keys": {
+      "radars": "Radars",
+      "accident": "Accidents",
+      "travaux": "Travaux",
+      "obstacle": "Obstacles",
+      "ralentissement": "Ralentissements",
+      "official": "Radars officiels"
+    }
+
+  },
   "route": {
     "planner": "Itinéraire",
     "cta": "Itinéraire",

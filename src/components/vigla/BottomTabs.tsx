@@ -20,23 +20,34 @@ export function BottomTabs({
 }) {
   const { t } = useTranslation();
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-[700] border-t border-border bg-card/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]">
+    <nav
+      aria-label={t("tabs.map")}
+      className="fixed inset-x-0 bottom-0 z-[700] border-t border-border bg-card/95 backdrop-blur-xl pb-[env(safe-area-inset-bottom)]"
+    >
       <div className="mx-auto flex max-w-lg items-stretch">
         {TAB_ORDER.map(({ id, icon: Icon, key }) => {
           const active = value === id;
+          const label = t(`tabs.${key}`);
           return (
             <button
               key={id}
+              type="button"
               onClick={() => onChange(id)}
+              aria-label={label}
+              aria-current={active ? "page" : undefined}
               className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition ${
-                active ? "text-primary" : "text-muted-foreground"
+                active ? "text-slate-900" : "text-slate-500"
               }`}
             >
-              <Icon className={`h-5 w-5 ${active ? "scale-110" : ""} transition`} />
-              <span className="text-[10px] font-medium">{t(`tabs.${key}`)}</span>
+              <Icon
+                aria-hidden="true"
+                className={`h-5 w-5 ${active ? "text-[#FF6B35] scale-110" : ""} transition`}
+              />
+              <span className="text-[10px] font-semibold">{label}</span>
             </button>
           );
         })}
+
       </div>
     </nav>
   );

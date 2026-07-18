@@ -182,3 +182,32 @@ export interface UserPreferences {
   alert_lead_time: AlertLeadTime;
   moto_mode: boolean;
 }
+
+export type HazardFilterKey =
+  | "radars"
+  | "accident"
+  | "travaux"
+  | "obstacle"
+  | "ralentissement"
+  | "official";
+
+export type HazardFilters = Record<HazardFilterKey, boolean>;
+
+export const HAZARD_FILTER_KEYS: HazardFilterKey[] = [
+  "radars",
+  "accident",
+  "travaux",
+  "obstacle",
+  "ralentissement",
+  "official",
+];
+
+export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
+  radars: true,
+  accident: true,
+  travaux: true,
+  obstacle: true,
+  ralentissement: true,
+  official: true,
+};
+
