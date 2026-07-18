@@ -1,8 +1,9 @@
 import { useMemo } from "react";
 import { AlertTriangle, Signal } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
-import { haversine, formatDistance, formatSpeed } from "@/lib/geo";
+import { haversine, formatDistance, formatSpeed, speedUnitLabel } from "@/lib/geo";
 import { HAZARD_LABELS } from "@/types/vigla";
+
 
 export function TopBar() {
   const position = useVigla((s) => s.position);
