@@ -45,8 +45,11 @@ export function UserMarker({ lat, lng, heading }: Props) {
   const durationRef = useRef(1000);
   const lastFixTsRef = useRef(0);
 
+  const mountedRef = useRef(true);
+
   // Create the Leaflet marker once.
   useEffect(() => {
+    mountedRef.current = true;
     const icon = L.divIcon({
       className: "vigla-user-icon",
       html: `<div class="vigla-user-inner" style="transform: rotate(0deg);">
@@ -62,16 +65,25 @@ export function UserMarker({ lat, lng, heading }: Props) {
       ".vigla-user-inner",
     ) as HTMLDivElement) ?? null;
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      m.remove();
+      // Cancel any pending animation BEFORE removing the marker, and flag the
+      // marker as gone so late rAF frames scheduled by the sibling effect
+      // (which may cleanup after this one on some React versions) don't touch
+      // a removed Leaflet layer and read `_leaflet_pos` on undefined.
+      mountedRef.current = false;
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
       markerRef.current = null;
       innerRef.current = null;
+      m.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
   // Kick off a new interpolation whenever GPS gives us a new fix.
   useEffect(() => {
+    if (!mountedRef.current || !markerRef.current) return;
     const now = performance.now();
     const nextHeading = heading ?? curHeadingRef.current;
 
@@ -94,6 +106,10 @@ export function UserMarker({ lat, lng, heading }: Props) {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
 
     const step = (ts: number) => {
+      if (!mountedRef.current || !markerRef.current) {
+        rafRef.current = null;
+        return;
+      }
       const t = Math.min(1, (ts - startTsRef.current) / durationRef.current);
       const latNow =
         fromLatRef.current + (toLatRef.current - fromLatRef.current) * t;
@@ -107,7 +123,7 @@ export function UserMarker({ lat, lng, heading }: Props) {
       curLngRef.current = lngNow;
       curHeadingRef.current = hdNow;
 
-      markerRef.current?.setLatLng([latNow, lngNow]);
+      markerRef.current.setLatLng([latNow, lngNow]);
       if (innerRef.current) {
         innerRef.current.style.transform = `rotate(${hdNow}deg)`;
       }
@@ -121,7 +137,10 @@ export function UserMarker({ lat, lng, heading }: Props) {
     rafRef.current = requestAnimationFrame(step);
 
     return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (rafRef.current) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
   }, [lat, lng, heading]);
 

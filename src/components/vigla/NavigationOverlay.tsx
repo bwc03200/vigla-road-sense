@@ -101,7 +101,12 @@ export function NavigationOverlay() {
 
   if (!navigation || !route) return null;
 
-  const gpsWeak = position ? now - position.timestamp > 10000 : true;
+  const startedAtMs = navigation.startedAt
+    ? new Date(navigation.startedAt).getTime()
+    : now;
+  const navAgeMs = now - startedAtMs;
+  const gpsWeak =
+    navAgeMs > 10000 && (position ? now - position.timestamp > 10000 : true);
 
   function stop() {
     setNavigation(null);
