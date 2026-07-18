@@ -17,6 +17,8 @@ import { useWakeLock } from "@/hooks/useWakeLock";
 import { usePersistActiveNavigation, useResumePrompt } from "@/hooks/useNavigationResume";
 import { useVigla } from "@/lib/vigla-store";
 import { MapView } from "@/components/vigla/MapView";
+import { HazardFilters } from "@/components/vigla/HazardFilters";
+
 import { TopBar } from "@/components/vigla/TopBar";
 import { ReportGrid } from "@/components/vigla/ReportGrid";
 import { OfflineBadge } from "@/components/vigla/OfflineBadge";
