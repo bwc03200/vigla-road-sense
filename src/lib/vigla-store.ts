@@ -46,6 +46,8 @@ interface ViglaState {
   displayName: string;
   vibrationEnabled: boolean;
   preferences: UserPreferences;
+  hazardFilters: HazardFilters;
+
 
 
 
