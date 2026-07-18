@@ -202,8 +202,9 @@ export function MapView() {
       )}
 
       {nearbyHazards.map((h) => (
-        <Marker key={h.id} position={[h.latitude, h.longitude]} icon={hazardIcon(h.type)} />
+        <HazardMarker key={h.id} hazard={h} />
       ))}
+
       {nearbyOfficial.map((r) => (
         <Marker key={r.id} position={[r.latitude, r.longitude]} icon={officialRadarIcon()} />
       ))}
