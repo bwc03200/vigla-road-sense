@@ -76,7 +76,6 @@
       "ralentissement": "Slowdowns",
       "official": "Official radars"
     }
-
   },
   "route": {
     "planner": "Route",
@@ -521,5 +520,16 @@
     "installed": "VIGLA is installed on this device.",
     "iosTitle": "Add to Home Screen",
     "iosSteps": "Tap Safari's Share button, then choose “Add to Home Screen”."
+  },
+  "push": {
+    "title": "Push notifications",
+    "description": "Get convoy alerts even when the app is closed.",
+    "enabled": "Push notifications enabled.",
+    "disabled": "Push notifications disabled.",
+    "enableFailed": "Couldn't enable: {{msg}}",
+    "denied": "Permission denied by the browser.",
+    "deniedHint": "Allow notifications in your browser settings.",
+    "unsupported": "Push notifications aren't supported on this browser.",
+    "previewBlocked": "Not available in preview — try the published app."
   }
 }

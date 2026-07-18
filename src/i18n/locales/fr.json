@@ -76,7 +76,6 @@
       "ralentissement": "Ralentissements",
       "official": "Radars officiels"
     }
-
   },
   "route": {
     "planner": "Itinéraire",
@@ -521,5 +520,16 @@
     "installed": "VIGLA est installée sur cet appareil.",
     "iosTitle": "Ajouter à l'écran d'accueil",
     "iosSteps": "Appuie sur le bouton Partager de Safari, puis choisis « Sur l'écran d'accueil »."
+  },
+  "push": {
+    "title": "Notifications push",
+    "description": "Recevoir les alertes de convoi même quand l'app est fermée.",
+    "enabled": "Notifications push activées.",
+    "disabled": "Notifications push désactivées.",
+    "enableFailed": "Activation impossible : {{msg}}",
+    "denied": "Autorisation refusée par le navigateur.",
+    "deniedHint": "Autorise les notifications dans les réglages de ton navigateur.",
+    "unsupported": "Notifications push non prises en charge sur ce navigateur.",
+    "previewBlocked": "Indisponible en aperçu — teste sur l'app publiée."
   }
 }
