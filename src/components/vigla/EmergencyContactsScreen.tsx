@@ -23,6 +23,7 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [locallyRemoved, setLocallyRemoved] = useState<string[]>([]);
 
   async function submit() {
     if (!name.trim()) return;
@@ -31,6 +32,27 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
     setPhone("");
     setEmail("");
   }
+
+  function handleDelete(contact: EmergencyContact) {
+    const timeoutId = window.setTimeout(() => {
+      setLocallyRemoved((prev) => prev.filter((id) => id !== contact.id));
+      remove(contact.id);
+    }, 5000);
+
+    setLocallyRemoved((prev) => [...prev, contact.id]);
+
+    toast.success("Contact supprimé", {
+      action: {
+        label: "Annuler",
+        onClick: () => {
+          window.clearTimeout(timeoutId);
+          setLocallyRemoved((prev) => prev.filter((id) => id !== contact.id));
+        },
+      },
+      duration: 5000,
+    });
+  }
+
 
   return (
     <div className="space-y-6 p-4 pb-8">
