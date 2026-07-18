@@ -118,7 +118,6 @@ export function NavigationOverlay() {
   }
 
   const step = navigation.steps[navigation.currentStepIndex];
-  const nextStep = navigation.steps[navigation.currentStepIndex + 1];
 
   return (
     <>
