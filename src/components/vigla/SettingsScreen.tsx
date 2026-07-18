@@ -9,6 +9,7 @@ import { savePreferences } from "@/hooks/usePreferences";
 import { supabase } from "@/integrations/supabase/client";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { InstallSettingsRow } from "@/components/vigla/InstallPWA";
+import { PushNotificationsRow } from "@/components/vigla/PushNotificationsRow";
 
 import { setLanguage, currentLang, type Lang } from "@/i18n/i18n";
 import type { AlertLeadTime, UserPreferences } from "@/types/vigla";
@@ -124,6 +125,9 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
           value={prefs.vibration_alerts}
           onChange={(v) => update("vibration_alerts", v)}
         />
+        <div className="px-4 py-3">
+          <PushNotificationsRow userId={userId} />
+        </div>
         <SegmentedRow
           label={t("settings.leadTime")}
           value={prefs.alert_lead_time}

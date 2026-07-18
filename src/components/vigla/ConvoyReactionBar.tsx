@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import { vibrateConfirm } from "@/lib/haptics";
 import { reactionLabel, reactionText } from "@/lib/i18n-helpers";
+import { sendConvoyPush } from "@/lib/push.functions";
 import { type ConvoyReactionKind } from "@/types/vigla";
 
 type AnyClient = { from: (t: string) => any };
@@ -23,19 +25,34 @@ export function ConvoyReactionBar({ userId }: { userId: string }) {
   const { t } = useTranslation();
   const convoy = useVigla((s) => s.convoy);
   const displayName = useVigla((s) => s.displayName);
+  const pushFn = useServerFn(sendConvoyPush);
   if (!convoy) return null;
 
   async function send(kind: ConvoyReactionKind) {
     vibrateConfirm();
+    const text = reactionText(kind);
+    const name = displayName || t("convoy.reactions.message");
     const { error } = await db.from("convoy_alerts").insert({
       convoy_id: convoy!.id,
       user_id: userId,
-      display_name: displayName || t("convoy.reactions.message"),
+      display_name: name,
       kind,
-      payload: { text: reactionText(kind) },
+      payload: { text },
     });
-    if (error) toast.error(t("convoy.sendFailed"));
+    if (error) {
+      toast.error(t("convoy.sendFailed"));
+      return;
+    }
+    // Fire-and-forget push notification to other convoy members.
+    pushFn({
+      data: {
+        convoyId: convoy!.id,
+        title: `${convoy!.name} — ${name}`,
+        body: text,
+      },
+    }).catch((e) => console.warn("[push] send failed", e));
   }
+
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[700] flex justify-center px-3">
