@@ -1,10 +1,13 @@
 import { useState } from "react";
 import { Plus, Trash2, Phone, Mail, ShieldAlert, Vibrate } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
+import type { EmergencyContact } from "@/types/vigla";
+
 
 export function EmergencyContactsScreen({ userId }: { userId: string }) {
   const contacts = useVigla((s) => s.emergencyContacts);
@@ -20,6 +23,7 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [locallyRemoved, setLocallyRemoved] = useState<string[]>([]);
 
   async function submit() {
     if (!name.trim()) return;
@@ -28,6 +32,27 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
     setPhone("");
     setEmail("");
   }
+
+  function handleDelete(contact: EmergencyContact) {
+    const timeoutId = window.setTimeout(() => {
+      setLocallyRemoved((prev) => prev.filter((id) => id !== contact.id));
+      remove(contact.id);
+    }, 5000);
+
+    setLocallyRemoved((prev) => [...prev, contact.id]);
+
+    toast.success("Contact supprimé", {
+      action: {
+        label: "Annuler",
+        onClick: () => {
+          window.clearTimeout(timeoutId);
+          setLocallyRemoved((prev) => prev.filter((id) => id !== contact.id));
+        },
+      },
+      duration: 5000,
+    });
+  }
+
 
   return (
     <div className="space-y-6 p-4 pb-8">
@@ -103,39 +128,42 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
           <div className="text-xs text-slate-500">{contacts.length}/3</div>
         </div>
         <div className="space-y-2">
-          {contacts.map((c) => (
-            <div
-              key={c.id}
-              className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-[#FF6B35]">
-                {c.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-slate-900">{c.name}</div>
-                <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
-                  {c.phone && (
-                    <span className="flex items-center gap-1">
-                      <Phone className="h-3 w-3" /> {c.phone}
-                    </span>
-                  )}
-                  {c.email && (
-                    <span className="flex items-center gap-1 truncate">
-                      <Mail className="h-3 w-3" /> {c.email}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <button
-                onClick={() => remove(c.id)}
-                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-red-500"
-                aria-label="Supprimer"
+          {contacts
+            .filter((c) => !locallyRemoved.includes(c.id))
+            .map((c) => (
+              <div
+                key={c.id}
+                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3"
               >
-                <Trash2 className="h-4 w-4" />
-              </button>
-            </div>
-          ))}
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-[#FF6B35]">
+                  {c.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-semibold text-slate-900">{c.name}</div>
+                  <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
+                    {c.phone && (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {c.phone}
+                      </span>
+                    )}
+                    {c.email && (
+                      <span className="flex items-center gap-1 truncate">
+                        <Mail className="h-3 w-3" /> {c.email}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDelete(c)}
+                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-red-500"
+                  aria-label="Supprimer"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            ))}
         </div>
+
       </div>
 
       {contacts.length < 3 && (
