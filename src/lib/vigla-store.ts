@@ -45,6 +45,8 @@ interface ViglaState {
   roadbooks: Roadbook[];
   displayName: string;
   vibrationEnabled: boolean;
+  preferences: UserPreferences;
+
 
 
   setPosition: (p: Position, speedFromApi: number | null) => void;
