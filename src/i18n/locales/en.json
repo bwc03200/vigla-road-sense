@@ -512,5 +512,14 @@
     "goHome": "Go home",
     "notFound": "Page not found",
     "notFoundDesc": "The page you're looking for doesn't exist or has been moved."
+  },
+  "pwa": {
+    "installTitle": "Install VIGLA",
+    "installSubtitle": "Add VIGLA to your home screen for hands-free access.",
+    "installCta": "Install",
+    "installAction": "Install the app",
+    "installed": "VIGLA is installed on this device.",
+    "iosTitle": "Add to Home Screen",
+    "iosSteps": "Tap Safari's Share button, then choose “Add to Home Screen”."
   }
 }

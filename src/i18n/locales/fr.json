@@ -512,5 +512,14 @@
     "goHome": "Accueil",
     "notFound": "Page introuvable",
     "notFoundDesc": "La page que vous recherchez n'existe pas ou a été déplacée."
+  },
+  "pwa": {
+    "installTitle": "Installer VIGLA",
+    "installSubtitle": "Ajoute VIGLA à ton écran d'accueil pour un accès mains libres.",
+    "installCta": "Installer",
+    "installAction": "Installer l'application",
+    "installed": "VIGLA est installée sur cet appareil.",
+    "iosTitle": "Ajouter à l'écran d'accueil",
+    "iosSteps": "Appuie sur le bouton Partager de Safari, puis choisis « Sur l'écran d'accueil »."
   }
 }
