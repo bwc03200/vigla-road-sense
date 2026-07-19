@@ -123,6 +123,7 @@ export function useNavigationEngine() {
   const lastRecalcAt = useRef(0);
   const abortRef = useRef<AbortController | null>(null);
   const lastSegmentIdxRef = useRef(0);
+  const lastOfflineToastAt = useRef(0);
 
   useEffect(() => {
     const {
