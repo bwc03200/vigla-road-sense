@@ -102,6 +102,11 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   const [tab, setTab] = useState<Tab>("map");
   const [showRoute, setShowRoute] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  useEffect(() => {
+    installGlobalErrorLogging();
+    setLoggerUser(userId);
+    return () => setLoggerUser(null);
+  }, [userId]);
   useGeolocation();
   useServiceWorker();
   useOnlineStatus();
