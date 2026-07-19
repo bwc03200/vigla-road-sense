@@ -211,11 +211,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log("[import-official-radars] start");
     const dataset = await findDataset();
     if (!dataset) throw new Error("Dataset radars introuvable sur data.gouv.fr");
+    console.log("[import-official-radars] dataset:", dataset.id, dataset.title);
 
     const resource = await pickResource(dataset.id);
     if (!resource) throw new Error("Aucune ressource CSV/JSON exploitable");
+    console.log("[import-official-radars] resource:", resource.format, resource.url);
 
     const fileRes = await fetch(resource.url);
     if (!fileRes.ok)
@@ -247,6 +250,7 @@ Deno.serve(async (req) => {
       return true;
     });
 
+    console.log("[import-official-radars] parsed rows:", rows.length);
     if (rows.length === 0) throw new Error("Aucun radar exploitable");
 
     const supabase = createClient(SUPABASE_URL, SERVICE_KEY, {
@@ -265,9 +269,13 @@ Deno.serve(async (req) => {
       const { error } = await supabase
         .from("official_radars")
         .upsert(batch, { onConflict: "id" });
-      if (error) throw error;
+      if (error) {
+        console.error("[import-official-radars] upsert error at batch", i, error);
+        throw error;
+      }
       inserted += batch.length;
     }
+    console.log("[import-official-radars] upserted:", inserted);
 
     return new Response(
       JSON.stringify({
