@@ -112,7 +112,7 @@ function FeatureCard({
       )}
       <div
         className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${
-          isDark ? "bg-primary/20 text-primary-strong" : "bg-primary/10 text-primary-strong"
+          isDark ? "bg-primary/20 text-primary" : "bg-primary/10 text-primary-strong"
         }`}
       >
         <Icon className="h-5 w-5" />
