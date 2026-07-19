@@ -106,7 +106,7 @@ function FeatureCard({
       }
     >
       {exclusive && (
-        <span className="absolute -top-2 right-4 inline-flex items-center gap-1 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-strong-foreground shadow">
+        <span className="absolute -top-2 right-4 inline-flex items-center gap-1 rounded-full bg-primary-strong px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-widest text-primary-foreground shadow">
           <Sparkles className="h-3 w-3" /> Exclusif
         </span>
       )}
@@ -142,7 +142,7 @@ function LandingPage() {
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">
           <a href="#hero" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-strong-foreground">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-strong text-primary-foreground">
               <Radar className="h-4 w-4" />
             </div>
             <span className="text-lg font-black tracking-tight">VIGLA</span>
@@ -186,7 +186,7 @@ function LandingPage() {
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
                 to="/auth"
-                className="inline-flex h-12 items-center justify-center rounded-full bg-primary px-6 text-sm font-bold text-primary-strong-foreground shadow-lg shadow-primary/25 hover:brightness-105"
+                className="inline-flex h-12 items-center justify-center rounded-full bg-primary-strong px-6 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/25 hover:brightness-105"
               >
                 Essayer gratuitement
               </Link>
@@ -275,7 +275,7 @@ function LandingPage() {
           </div>
 
           <div className="rounded-3xl border border-primary/30 bg-gradient-to-br from-primary/10 to-white p-6">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-strong-foreground">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary-strong text-primary-foreground">
               <Bike className="h-6 w-6" />
             </div>
             <h3 className="text-xl font-bold text-slate-900">Motards</h3>
@@ -384,7 +384,7 @@ function LandingPage() {
         {/* MOTO FEATURES */}
         <div className="mt-16 rounded-3xl bg-slate-900 p-6 text-white sm:p-10">
           <div className="mb-8 flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-strong-foreground">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary-strong text-primary-foreground">
               <Bike className="h-6 w-6" />
             </div>
             <div>
@@ -555,7 +555,7 @@ function LandingPage() {
       <Section id="garantie">
         <div className="rounded-3xl bg-gradient-to-br from-primary/15 via-white to-white p-8 sm:p-12">
           <div className="flex flex-col items-start gap-6 md:flex-row md:items-center">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-strong-foreground">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-primary-strong text-primary-foreground">
               <ShieldCheck className="h-8 w-8" />
             </div>
             <div className="flex-1">
@@ -625,7 +625,7 @@ function LandingPage() {
             </p>
             <Link
               to="/auth"
-              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-primary px-8 text-sm font-bold text-primary-strong-foreground shadow-lg shadow-primary/30 hover:brightness-105"
+              className="mt-6 inline-flex h-12 items-center justify-center rounded-full bg-primary-strong px-8 text-sm font-bold text-primary-foreground shadow-lg shadow-primary/30 hover:brightness-105"
             >
               Créer mon compte gratuitement
             </Link>
@@ -637,7 +637,7 @@ function LandingPage() {
       <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary text-primary-strong-foreground">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-strong text-primary-foreground">
               <Radar className="h-3.5 w-3.5" />
             </div>
             <span className="font-bold text-slate-900">VIGLA</span>
@@ -682,7 +682,7 @@ function PriceCard({
       }
     >
       {highlighted && (
-        <div className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-strong-foreground">
+        <div className="absolute -top-3 left-6 rounded-full bg-primary-strong px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground">
           Recommandé
         </div>
       )}
@@ -709,7 +709,7 @@ function PriceCard({
         to="/auth"
         className={
           highlighted
-            ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-strong-foreground hover:brightness-105"
+            ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground hover:brightness-105"
             : "mt-6 inline-flex h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white text-sm font-semibold text-slate-900 hover:bg-slate-50"
         }
       >
