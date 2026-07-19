@@ -26,7 +26,21 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
   const prefs = useVigla((s) => s.preferences);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<0 | 1 | 2>(0);
+  const [refreshingRadars, setRefreshingRadars] = useState(false);
   const deleteFn = useServerFn(deleteMyAccount);
+
+  async function handleRefreshRadars() {
+    setRefreshingRadars(true);
+    try {
+      const { count } = await refreshOfficialRadars();
+      toast.success(t("settings.refreshRadarsOk", { count }));
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : t("common.unknownError");
+      toast.error(t("settings.refreshRadarsFail", { msg }));
+    } finally {
+      setRefreshingRadars(false);
+    }
+  }
 
   async function update<K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) {
     await savePreferences(userId, { [key]: value } as Partial<UserPreferences>);
