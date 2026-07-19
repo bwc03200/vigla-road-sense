@@ -102,6 +102,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   const [showRoute, setShowRoute] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   useGeolocation();
+  useOnlineStatus();
+  useOfflineHazardSync();
   useHazards();
   useOfficialRadars();
   useEmergencyContacts(userId);
