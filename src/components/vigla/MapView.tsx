@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Polyline, useMap } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
+
 
 
 
@@ -108,6 +109,48 @@ function FitRoute({ coords }: { coords: [number, number][] }) {
   return null;
 }
 
+type Viewport = { north: number; south: number; east: number; west: number; zoom: number };
+
+function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
+  const map = useMap();
+  useEffect(() => {
+    const emit = () => {
+      const b = map.getBounds();
+      onChange({
+        north: b.getNorth(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        west: b.getWest(),
+        zoom: map.getZoom(),
+      });
+    };
+    emit();
+  }, [map, onChange]);
+  useMapEvents({
+    moveend: (e) => {
+      const b = e.target.getBounds();
+      onChange({
+        north: b.getNorth(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        west: b.getWest(),
+        zoom: e.target.getZoom(),
+      });
+    },
+    zoomend: (e) => {
+      const b = e.target.getBounds();
+      onChange({
+        north: b.getNorth(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        west: b.getWest(),
+        zoom: e.target.getZoom(),
+      });
+    },
+  });
+  return null;
+}
+
 export function MapView() {
   const position = useVigla((s) => s.position);
   const hazards = useVigla((s) => s.hazards);
@@ -120,6 +163,7 @@ export function MapView() {
 
 
   const hazardFilters = useVigla((s) => s.hazardFilters);
+  const [viewport, setViewport] = useState<Viewport | null>(null);
 
   const nearbyHazards = useMemo(() => {
     const filtered = hazards.filter((h) => {
@@ -130,11 +174,67 @@ export function MapView() {
     return filtered.filter((h) => haversine(position.lat, position.lng, h.latitude, h.longitude) < 8000);
   }, [hazards, position, hazardFilters]);
 
+  const MIN_ZOOM_FOR_RADARS = 10;
+  const MAX_RADAR_MARKERS = 300;
+
   const nearbyOfficial = useMemo(() => {
     if (!hazardFilters.official) return [];
-    if (!position) return officialRadars.slice(0, 500);
-    return officialRadars.filter((r) => haversine(position.lat, position.lng, r.latitude, r.longitude) < 8000);
-  }, [officialRadars, position, hazardFilters.official]);
+    if (officialRadars.length === 0) return [];
+
+    // Radars along the active navigation route (always shown, regardless of viewport).
+    const routeSet = new Map<string, typeof officialRadars[number]>();
+    const navActiveLocal = !!navigation && !navigation.arrived;
+    if (navActiveLocal && navigation && navigation.remainingCoords.length > 1) {
+      const coords = navigation.remainingCoords;
+      // Sample every Nth coord to bound cost.
+      const step = Math.max(1, Math.floor(coords.length / 200));
+      for (const r of officialRadars) {
+        for (let i = 0; i < coords.length; i += step) {
+          const [la, ln] = coords[i];
+          if (haversine(la, ln, r.latitude, r.longitude) < 500) {
+            routeSet.set(r.id, r);
+            break;
+          }
+        }
+      }
+    }
+
+    if (!viewport) {
+      return Array.from(routeSet.values());
+    }
+    if (viewport.zoom < MIN_ZOOM_FOR_RADARS) {
+      return Array.from(routeSet.values());
+    }
+
+    // 15% margin around the visible bounds to avoid pop-in at edges.
+    const latSpan = viewport.north - viewport.south;
+    const lngSpan = viewport.east - viewport.west;
+    const latPad = latSpan * 0.15;
+    const lngPad = lngSpan * 0.15;
+    const north = viewport.north + latPad;
+    const south = viewport.south - latPad;
+    const east = viewport.east + lngPad;
+    const west = viewport.west - lngPad;
+
+    const inView: typeof officialRadars = [];
+    for (const r of officialRadars) {
+      if (
+        r.latitude <= north &&
+        r.latitude >= south &&
+        r.longitude <= east &&
+        r.longitude >= west
+      ) {
+        inView.push(r);
+        if (inView.length > MAX_RADAR_MARKERS + 1) break;
+      }
+    }
+
+    // Merge route radars + capped viewport radars, dedup by id.
+    const merged = new Map(routeSet);
+    const capped = inView.slice(0, MAX_RADAR_MARKERS);
+    for (const r of capped) merged.set(r.id, r);
+    return Array.from(merged.values());
+  }, [officialRadars, viewport, hazardFilters.official, navigation]);
 
 
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
@@ -142,6 +242,8 @@ export function MapView() {
 
   return (
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
+      <ViewportTracker onChange={setViewport} />
+
       <TileLayer
         key={mapTheme}
         url={
