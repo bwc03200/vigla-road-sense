@@ -35,6 +35,8 @@
       "title": "Signaler une zone",
       "subtitle": "Un appui envoie immédiatement le signalement à votre position GPS actuelle.",
       "sent": "Signalement envoyé",
+      "queued": "Signalement enregistré hors ligne",
+      "synced": "{{count}} signalement(s) synchronisé(s)",
       "failed": "Signalement échoué",
       "gpsUnavailable": "Position GPS indisponible",
       "loginRequired": "Connectez-vous pour signaler"
