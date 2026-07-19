@@ -35,6 +35,8 @@
       "title": "Report a hazard",
       "subtitle": "One tap immediately sends the report to your current GPS position.",
       "sent": "Report sent",
+      "queued": "Report saved offline",
+      "synced": "{{count}} report(s) synced",
       "failed": "Report failed",
       "gpsUnavailable": "GPS position unavailable",
       "loginRequired": "Sign in to report"
@@ -124,6 +126,7 @@
     "followRoad": "Follow the road",
     "stop": "Stop navigation",
     "recalculating": "Recalculating…",
+    "recalcOffline": "Recalculation unavailable offline — the original route is still active.",
     "gpsWeak": "Weak GPS",
     "arrivedTitle": "You have arrived",
     "duration": "Duration",
