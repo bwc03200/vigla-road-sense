@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
+import { logError, logEvent } from "@/lib/logger";
 import type { OfficialRadar } from "@/types/vigla";
 
 const CACHE_KEY = "vigla:official-radars-cache";
