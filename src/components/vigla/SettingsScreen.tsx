@@ -200,50 +200,40 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
         </div>
         <div className="border-t border-slate-200 px-4 py-4">
           <div className="text-xs uppercase tracking-widest text-red-600">{t("settings.dangerZone")}</div>
-          {confirmDelete === 0 && (
-            <Button
-              variant="outline"
-              className="mt-2 h-11 w-full border-red-200 text-red-600 hover:bg-red-50"
-              onClick={handleDelete}
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              {t("settings.deleteAccount")}
-            </Button>
-          )}
-          {confirmDelete === 1 && (
-            <div className="mt-2 space-y-2">
-              <p className="text-xs text-slate-600">{t("settings.deleteConfirm1")}</p>
-              <div className="flex gap-2">
-                <Button variant="ghost" className="h-11 flex-1" onClick={() => setConfirmDelete(0)}>
-                  {t("common.cancel")}
-                </Button>
-                <Button
-                  className="h-11 flex-1 bg-red-600 text-white hover:bg-red-700"
-                  onClick={handleDelete}
-                >
-                  {t("settings.deleteYes")}
-                </Button>
-              </div>
-            </div>
-          )}
-          {confirmDelete === 2 && (
-            <div className="mt-2 space-y-2">
-              <p className="text-xs text-red-600">{t("settings.deleteConfirm2")}</p>
-              <div className="flex gap-2">
-                <Button variant="ghost" className="h-11 flex-1" onClick={() => setConfirmDelete(0)} disabled={deleting}>
-                  {t("common.cancel")}
-                </Button>
-                <Button
-                  className="h-11 flex-1 bg-red-600 text-white hover:bg-red-700"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? t("settings.deleting") : t("settings.deleteFinal")}
-                </Button>
-              </div>
-            </div>
-          )}
+          <Button
+            variant="outline"
+            className="mt-2 h-11 w-full border-red-200 text-red-600 hover:bg-red-50"
+            onClick={() => setConfirmDelete(1)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {t("settings.deleteAccount")}
+          </Button>
         </div>
+
+        <DestructiveConfirmDialog
+          open={confirmDelete === 1}
+          onOpenChange={(open) => {
+            if (!open && !deleting) setConfirmDelete(0);
+          }}
+          title={t("settings.deleteAccount")}
+          description={t("settings.deleteConfirm1")}
+          confirmLabel={t("settings.deleteYes")}
+          cancelLabel={t("common.cancel")}
+          onConfirm={handleDelete}
+        />
+        <DestructiveConfirmDialog
+          open={confirmDelete === 2}
+          onOpenChange={(open) => {
+            if (!open && !deleting) setConfirmDelete(0);
+          }}
+          title={t("settings.deleteAccount")}
+          description={t("settings.deleteConfirm2")}
+          confirmLabel={deleting ? t("settings.deleting") : t("settings.deleteFinal")}
+          cancelLabel={t("common.cancel")}
+          disabled={deleting}
+          onConfirm={handleDelete}
+        />
+
       </Section>
     </div>
   );
