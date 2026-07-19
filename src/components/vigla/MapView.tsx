@@ -161,10 +161,7 @@ export function MapView() {
   const [viewport, setViewport] = useState<Viewport | null>(null);
 
   const nearbyHazards = useMemo(() => {
-    const filtered = hazards.filter((h) => {
-      if (h.type === "radar_fixe" || h.type === "radar_mobile") return hazardFilters.radars;
-      return hazardFilters[h.type] ?? true;
-    });
+    const filtered = hazards.filter((h) => hazardFilters[h.type] ?? true);
     if (!position) return filtered;
     return filtered.filter((h) => haversine(position.lat, position.lng, h.latitude, h.longitude) < 8000);
   }, [hazards, position, hazardFilters]);
@@ -173,8 +170,8 @@ export function MapView() {
   const MAX_RADAR_MARKERS = 300;
 
   const nearbyOfficial = useMemo(() => {
-    if (!hazardFilters.official) return [];
     if (officialRadars.length === 0) return [];
+
 
     // Radars along the active navigation route (always shown, regardless of viewport).
     const routeSet = new Map<string, typeof officialRadars[number]>();
@@ -229,7 +226,7 @@ export function MapView() {
     const capped = inView.slice(0, MAX_RADAR_MARKERS);
     for (const r of capped) merged.set(r.id, r);
     return Array.from(merged.values());
-  }, [officialRadars, viewport, hazardFilters.official, navigation]);
+  }, [officialRadars, viewport, navigation]);
 
 
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];

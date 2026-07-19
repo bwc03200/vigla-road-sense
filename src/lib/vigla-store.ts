@@ -1,6 +1,34 @@
 import { create } from "zustand";
 import { getVibrationEnabled, setVibrationEnabled as persistVibration } from "@/lib/haptics";
-import { DEFAULT_HAZARD_FILTERS } from "@/types/vigla";
+import { DEFAULT_HAZARD_FILTERS, HAZARD_FILTER_KEYS } from "@/types/vigla";
+
+const HAZARD_FILTERS_LS_KEY = "vigla:hazardFilters";
+
+function loadHazardFilters(): import("@/types/vigla").HazardFilters {
+  if (typeof window === "undefined") return { ...DEFAULT_HAZARD_FILTERS };
+  try {
+    const raw = window.localStorage.getItem(HAZARD_FILTERS_LS_KEY);
+    if (!raw) return { ...DEFAULT_HAZARD_FILTERS };
+    const parsed = JSON.parse(raw) as Partial<import("@/types/vigla").HazardFilters>;
+    const merged = { ...DEFAULT_HAZARD_FILTERS };
+    for (const k of HAZARD_FILTER_KEYS) {
+      if (typeof parsed[k] === "boolean") merged[k] = parsed[k] as boolean;
+    }
+    return merged;
+  } catch {
+    return { ...DEFAULT_HAZARD_FILTERS };
+  }
+}
+
+function persistHazardFilters(f: import("@/types/vigla").HazardFilters) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(HAZARD_FILTERS_LS_KEY, JSON.stringify(f));
+  } catch {
+    /* ignore */
+  }
+}
+
 import type {
 
   ActiveNavigation,
@@ -218,22 +246,26 @@ export const useVigla = create<ViglaState>((set) => ({
     set({ vibrationEnabled: v });
   },
   setPreferences: (p) => set({ preferences: p }),
-  hazardFilters: { ...DEFAULT_HAZARD_FILTERS },
+  hazardFilters: loadHazardFilters(),
   toggleHazardFilter: (k) =>
-    set((s) => ({ hazardFilters: { ...s.hazardFilters, [k]: !s.hazardFilters[k] } })),
+    set((s) => {
+      const next = { ...s.hazardFilters, [k]: !s.hazardFilters[k] };
+      persistHazardFilters(next);
+      return { hazardFilters: next };
+    }),
   setAllHazardFilters: (v) =>
-    set(() => ({
-      hazardFilters: {
-        radars: v,
+    set(() => {
+      const next: HazardFilters = {
+        radar_fixe: v,
+        radar_mobile: v,
         accident: v,
         travaux: v,
         obstacle: v,
         ralentissement: v,
-        official: v,
-      },
-    })),
-
-
-
+      };
+      persistHazardFilters(next);
+      return { hazardFilters: next };
+    }),
 }));
+
 

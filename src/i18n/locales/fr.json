@@ -70,15 +70,18 @@
     "groupLabel": "Filtres des zones de danger",
     "title": "Filtres",
     "all": "Tous",
+    "showAll": "Tout afficher",
+    "hideAll": "Tout masquer",
     "keys": {
-      "radars": "Radars",
+      "radar_fixe": "Radars fixes",
+      "radar_mobile": "Radars mobiles",
       "accident": "Accidents",
       "travaux": "Travaux",
       "obstacle": "Obstacles",
-      "ralentissement": "Ralentissements",
-      "official": "Radars officiels"
+      "ralentissement": "Ralentissements"
     }
   },
+
   "route": {
     "planner": "Itinéraire",
     "cta": "Itinéraire",

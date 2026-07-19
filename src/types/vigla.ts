@@ -183,31 +183,27 @@ export interface UserPreferences {
   moto_mode: boolean;
 }
 
-export type HazardFilterKey =
-  | "radars"
-  | "accident"
-  | "travaux"
-  | "obstacle"
-  | "ralentissement"
-  | "official";
+export type HazardFilterKey = HazardType;
 
 export type HazardFilters = Record<HazardFilterKey, boolean>;
 
 export const HAZARD_FILTER_KEYS: HazardFilterKey[] = [
-  "radars",
+  "radar_fixe",
+  "radar_mobile",
   "accident",
   "travaux",
   "obstacle",
   "ralentissement",
-  "official",
 ];
 
 export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
-  radars: true,
+  radar_fixe: true,
+  radar_mobile: true,
   accident: true,
   travaux: true,
   obstacle: true,
   ralentissement: true,
-  official: true,
 };
+
+
 

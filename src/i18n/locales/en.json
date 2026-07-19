@@ -70,15 +70,18 @@
     "groupLabel": "Hazard filters",
     "title": "Filters",
     "all": "All",
+    "showAll": "Show all",
+    "hideAll": "Hide all",
     "keys": {
-      "radars": "Radars",
+      "radar_fixe": "Fixed radars",
+      "radar_mobile": "Mobile radars",
       "accident": "Crashes",
       "travaux": "Roadworks",
       "obstacle": "Obstacles",
-      "ralentissement": "Slowdowns",
-      "official": "Official radars"
+      "ralentissement": "Slowdowns"
     }
   },
+
   "route": {
     "planner": "Route",
     "cta": "Route",
