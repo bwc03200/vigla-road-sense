@@ -255,6 +255,9 @@
     "deleted": "Contact deleted",
     "addFailed": "Couldn't add",
     "deleteFailed": "Couldn't delete",
+    "deleteTitle": "Remove {{name}}?",
+    "deleteDesc": "This person will no longer be alerted if a crash is detected.",
+    "deleteConfirm": "Remove",
     "toggleCrash": "Enable detection",
     "toggleVibration": "Enable vibrations"
   },

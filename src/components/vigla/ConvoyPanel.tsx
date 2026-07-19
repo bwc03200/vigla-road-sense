@@ -6,17 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useVigla } from "@/lib/vigla-store";
 import { useConvoy } from "@/hooks/useConvoy";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { DestructiveConfirmDialog } from "@/components/ui/destructive-confirm-dialog";
 
 export function ConvoyPanel({ userId }: { userId: string }) {
   const { t } = useTranslation();
@@ -113,33 +103,27 @@ export function ConvoyPanel({ userId }: { userId: string }) {
           </div>
         </div>
 
-        <AlertDialog open={leaveDialogOpen} onOpenChange={setLeaveDialogOpen}>
-          <AlertDialogTrigger asChild>
-            <Button variant="secondary" className="h-12 w-full">
-              <LogOut className="mr-2 h-4 w-4" />
-              {t("convoy.leaveBtn")}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t("convoy.leaveTitle")}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t("convoy.leaveDesc")}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setLeaveDialogOpen(false)}>
-                {t("common.cancel")}
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => { setLeaveDialogOpen(false); leaveConvoy(); }}
-                className="bg-[#FF6B35] text-white hover:bg-[#FF6B35]/90"
-              >
-                {t("convoy.leaveConfirm")}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <Button
+          variant="secondary"
+          className="h-12 w-full"
+          onClick={() => setLeaveDialogOpen(true)}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          {t("convoy.leaveBtn")}
+        </Button>
+        <DestructiveConfirmDialog
+          open={leaveDialogOpen}
+          onOpenChange={setLeaveDialogOpen}
+          title={t("convoy.leaveTitle")}
+          description={t("convoy.leaveDesc")}
+          confirmLabel={t("convoy.leaveConfirm")}
+          cancelLabel={t("common.cancel")}
+          onConfirm={() => {
+            setLeaveDialogOpen(false);
+            leaveConvoy();
+          }}
+        />
+
       </div>
     );
   }
