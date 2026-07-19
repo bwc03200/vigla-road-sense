@@ -47,6 +47,7 @@ export async function refreshOfficialRadars(): Promise<{ count: number }> {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
   } catch {}
+  logEvent("radars.import.success", "info", { count: rows.length, source: "manual" });
   return { count: (data as { count?: number })?.count ?? rows.length };
 }
 
