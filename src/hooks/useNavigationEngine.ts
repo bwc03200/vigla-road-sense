@@ -290,6 +290,21 @@ export function useNavigationEngine() {
       now - lastRecalcAt.current > RECALC_RETRY_MS;
 
     if (shouldRecalc) {
+      // No network → don't attempt OSRM, keep the cached route + inform the user.
+      const isOffline =
+        typeof navigator !== "undefined" && navigator.onLine === false;
+      if (isOffline) {
+        patchNavigationIfChanged(
+          navigation,
+          { recalculating: false },
+          patchNavigation,
+        );
+        if (now - lastOfflineToastAt.current > 30_000) {
+          lastOfflineToastAt.current = now;
+          toast.warning(i18n.t("navigation.recalcOffline"));
+        }
+        return;
+      }
       // Cancel any in-flight OSRM call and start a fresh one from current GPS.
       if (abortRef.current) abortRef.current.abort();
       const controller = new AbortController();
