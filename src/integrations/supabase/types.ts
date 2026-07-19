@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      client_error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          error_message: string
+          id: string
+          level: string
+          route: string | null
+          stack_trace: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          error_message: string
+          id?: string
+          level?: string
+          route?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          error_message?: string
+          id?: string
+          level?: string
+          route?: string | null
+          stack_trace?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       convoy_alerts: {
         Row: {
           convoy_id: string
@@ -363,6 +396,27 @@ export type Database = {
         }
         Relationships: []
       }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -370,12 +424,20 @@ export type Database = {
     Functions: {
       confirm_hazard: { Args: { hazard_id: string }; Returns: undefined }
       deny_hazard: { Args: { hazard_id: string }; Returns: undefined }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_convoy_member: {
         Args: { _convoy: string; _user: string }
         Returns: boolean
       }
     }
     Enums: {
+      app_role: "admin" | "moderator" | "user"
       hazard_type:
         | "radar_fixe"
         | "radar_mobile"
@@ -510,6 +572,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["admin", "moderator", "user"],
       hazard_type: [
         "radar_fixe",
         "radar_mobile",
