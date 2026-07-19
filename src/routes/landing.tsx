@@ -709,7 +709,7 @@ function PriceCard({
         to="/auth"
         className={
           highlighted
-            ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground hover:brightness-105"
+            ? "mt-6 inline-flex h-11 w-full items-center justify-center rounded-full bg-primary-strong text-sm font-bold text-primary-foreground hover:brightness-105"
             : "mt-6 inline-flex h-11 w-full items-center justify-center rounded-full border border-slate-300 bg-white text-sm font-semibold text-slate-900 hover:bg-slate-50"
         }
       >
