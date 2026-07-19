@@ -211,11 +211,14 @@ Deno.serve(async (req) => {
   }
 
   try {
+    console.log("[import-official-radars] start");
     const dataset = await findDataset();
     if (!dataset) throw new Error("Dataset radars introuvable sur data.gouv.fr");
+    console.log("[import-official-radars] dataset:", dataset.id, dataset.title);
 
     const resource = await pickResource(dataset.id);
     if (!resource) throw new Error("Aucune ressource CSV/JSON exploitable");
+    console.log("[import-official-radars] resource:", resource.format, resource.url);
 
     const fileRes = await fetch(resource.url);
     if (!fileRes.ok)
