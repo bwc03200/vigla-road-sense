@@ -6,18 +6,13 @@ import { haversine } from "@/lib/geo";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
+import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 
 
 
 
-function officialRadarIcon() {
-  return L.divIcon({
-    className: "vigla-official-radar-icon",
-    html: `<div style="width:32px;height:32px;border-radius:8px;background:#3B82F6;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 2px #ffffff;color:white;font-size:14px;font-weight:700;">R</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  });
-}
+// Radar icon builder is kept in OfficialRadarCluster (imperative cluster
+// layer). The React <Marker> variant is no longer needed here.
 
 
 
@@ -240,6 +235,13 @@ export function MapView() {
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
+  // Preload adjacent tiles (Leaflet native). Cut buffer down when the browser
+  // reports Save-Data / slow connection so we don't burn mobile data.
+  const saveData =
+    typeof navigator !== "undefined" &&
+    !!(navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData;
+  const tileKeepBuffer = saveData ? 1 : 4;
+
   return (
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <ViewportTracker onChange={setViewport} />
@@ -253,6 +255,8 @@ export function MapView() {
         }
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         subdomains={["a", "b", "c", "d"]}
+        keepBuffer={tileKeepBuffer}
+        updateWhenIdle={saveData}
         maxZoom={19}
       />
       <InvalidateOnResize />
@@ -293,9 +297,7 @@ export function MapView() {
         <HazardMarker key={h.id} hazard={h} />
       ))}
 
-      {nearbyOfficial.map((r) => (
-        <Marker key={r.id} position={[r.latitude, r.longitude]} icon={officialRadarIcon()} />
-      ))}
+      <OfficialRadarCluster radars={nearbyOfficial} />
       {convoyMembers
         .filter((m) => m.last_lat != null && m.last_lng != null)
         .map((m) => (

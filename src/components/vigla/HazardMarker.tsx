@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
@@ -57,7 +57,7 @@ function hazardIcon(type: HazardType) {
   });
 }
 
-export function HazardMarker({ hazard }: { hazard: HazardReport }) {
+function HazardMarkerImpl({ hazard }: { hazard: HazardReport }) {
   const { t } = useTranslation();
   const [pending, setPending] = useState<null | "confirm" | "deny">(null);
   const [voted, setVoted] = useState<"confirm" | "deny" | null>(
@@ -154,3 +154,21 @@ export function HazardMarker({ hazard }: { hazard: HazardReport }) {
     </Marker>
   );
 }
+
+/**
+ * Memoized: re-render only when the hazard identity or vote counts change.
+ * GPS position ticks on the parent MapView must NOT rebuild every hazard
+ * popup/icon.
+ */
+export const HazardMarker = memo(HazardMarkerImpl, (prev, next) => {
+  const a = prev.hazard;
+  const b = next.hazard;
+  return (
+    a.id === b.id &&
+    a.confirmed_count === b.confirmed_count &&
+    a.denied_count === b.denied_count &&
+    a.latitude === b.latitude &&
+    a.longitude === b.longitude &&
+    a.type === b.type
+  );
+});
