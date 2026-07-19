@@ -163,6 +163,21 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
         />
       </Section>
 
+      <Section title={t("settings.sectionData")}>
+        <div className="px-4 py-3">
+          <div className="text-sm font-semibold text-slate-900">{t("settings.refreshRadars")}</div>
+          <p className="mt-0.5 text-xs text-slate-500">{t("settings.refreshRadarsDesc")}</p>
+          <Button
+            variant="outline"
+            className="mt-2 h-10 w-full"
+            onClick={handleRefreshRadars}
+            disabled={refreshingRadars}
+          >
+            {refreshingRadars ? t("settings.refreshRadarsRefreshing") : t("settings.refreshRadarsBtn")}
+          </Button>
+        </div>
+      </Section>
+
       <Section title={t("settings.sectionAccount")}>
         <div className="px-4 py-3">
           <div className="text-xs uppercase tracking-widest text-slate-500">{t("settings.email")}</div>
