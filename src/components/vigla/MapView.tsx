@@ -226,7 +226,7 @@ export function MapView() {
     const capped = inView.slice(0, MAX_RADAR_MARKERS);
     for (const r of capped) merged.set(r.id, r);
     return Array.from(merged.values());
-  }, [officialRadars, viewport, hazardFilters.official, navigation]);
+  }, [officialRadars, viewport, navigation]);
 
 
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
