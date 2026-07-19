@@ -111,42 +111,53 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
           <div className="text-xs text-slate-500">{contacts.length}/3</div>
         </div>
         <div className="space-y-2">
-          {contacts
-            .filter((c) => !locallyRemoved.includes(c.id))
-            .map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3"
-              >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-[#FF6B35]">
-                  {c.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-semibold text-slate-900">{c.name}</div>
-                  <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
-                    {c.phone && (
-                      <span className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> {c.phone}
-                      </span>
-                    )}
-                    {c.email && (
-                      <span className="flex items-center gap-1 truncate">
-                        <Mail className="h-3 w-3" /> {c.email}
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleDelete(c)}
-                  className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-red-500"
-                  aria-label={t("common.delete")}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
+          {contacts.map((c) => (
+            <div
+              key={c.id}
+              className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3"
+            >
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-100 text-[#FF6B35]">
+                {c.name.charAt(0).toUpperCase()}
               </div>
-            ))}
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold text-slate-900">{c.name}</div>
+                <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
+                  {c.phone && (
+                    <span className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" /> {c.phone}
+                    </span>
+                  )}
+                  {c.email && (
+                    <span className="flex items-center gap-1 truncate">
+                      <Mail className="h-3 w-3" /> {c.email}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <button
+                onClick={() => setContactToDelete(c)}
+                className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 hover:text-red-500"
+                aria-label={t("common.delete")}
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
         </div>
       </div>
+
+      <DestructiveConfirmDialog
+        open={contactToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !deleting) setContactToDelete(null);
+        }}
+        title={contactToDelete ? t("contacts.deleteTitle", { name: contactToDelete.name }) : ""}
+        description={t("contacts.deleteDesc")}
+        confirmLabel={t("contacts.deleteConfirm")}
+        cancelLabel={t("common.cancel")}
+        disabled={deleting}
+        onConfirm={confirmDelete}
+      />
 
       {contacts.length < 3 && (
         <div className="space-y-2 rounded-2xl border border-slate-200 bg-white p-4">
