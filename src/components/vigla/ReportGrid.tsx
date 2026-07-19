@@ -5,6 +5,7 @@ import { Camera, Siren, Construction, TriangleAlert, Turtle, Radar } from "lucid
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import { hazardLabel } from "@/lib/i18n-helpers";
+import { enqueueHazard } from "@/lib/offline-hazard-queue";
 import type { HazardType } from "@/types/vigla";
 
 const OPTIONS: {
