@@ -6,18 +6,13 @@ import { haversine } from "@/lib/geo";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
+import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 
 
 
 
-function officialRadarIcon() {
-  return L.divIcon({
-    className: "vigla-official-radar-icon",
-    html: `<div style="width:32px;height:32px;border-radius:8px;background:#3B82F6;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 2px #ffffff;color:white;font-size:14px;font-weight:700;">R</div>`,
-    iconSize: [32, 32],
-    iconAnchor: [16, 16],
-  });
-}
+// Radar icon builder is kept in OfficialRadarCluster (imperative cluster
+// layer). The React <Marker> variant is no longer needed here.
 
 
 
