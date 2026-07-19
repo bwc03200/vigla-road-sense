@@ -218,22 +218,26 @@ export const useVigla = create<ViglaState>((set) => ({
     set({ vibrationEnabled: v });
   },
   setPreferences: (p) => set({ preferences: p }),
-  hazardFilters: { ...DEFAULT_HAZARD_FILTERS },
+  hazardFilters: loadHazardFilters(),
   toggleHazardFilter: (k) =>
-    set((s) => ({ hazardFilters: { ...s.hazardFilters, [k]: !s.hazardFilters[k] } })),
+    set((s) => {
+      const next = { ...s.hazardFilters, [k]: !s.hazardFilters[k] };
+      persistHazardFilters(next);
+      return { hazardFilters: next };
+    }),
   setAllHazardFilters: (v) =>
-    set(() => ({
-      hazardFilters: {
-        radars: v,
+    set(() => {
+      const next: HazardFilters = {
+        radar_fixe: v,
+        radar_mobile: v,
         accident: v,
         travaux: v,
         obstacle: v,
         ralentissement: v,
-        official: v,
-      },
-    })),
-
-
-
+      };
+      persistHazardFilters(next);
+      return { hazardFilters: next };
+    }),
 }));
+
 
