@@ -47,8 +47,10 @@ function urlBase64ToUint8Array(base64: string): Uint8Array {
 }
 
 async function registerSW(): Promise<ServiceWorkerRegistration> {
+  // The SW is registered app-wide by useServiceWorker(); reuse it here.
   const existing = await navigator.serviceWorker.getRegistration("/sw.js");
   if (existing) return existing;
+  // Fallback: if the root hook hasn't run yet (edge case), register now.
   return navigator.serviceWorker.register("/sw.js", { scope: "/" });
 }
 
