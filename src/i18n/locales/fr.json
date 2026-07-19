@@ -126,6 +126,7 @@
     "followRoad": "Suivez la route",
     "stop": "Arrêter la navigation",
     "recalculating": "Recalcul…",
+    "recalcOffline": "Recalcul indisponible hors ligne — l'itinéraire d'origine reste actif.",
     "gpsWeak": "GPS faible",
     "arrivedTitle": "Vous êtes arrivé",
     "duration": "Durée",
