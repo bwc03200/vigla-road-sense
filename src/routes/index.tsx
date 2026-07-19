@@ -16,6 +16,7 @@ import { useRoadbooks } from "@/hooks/useRoadbooks";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { useOfflineHazardSync } from "@/hooks/useOfflineHazardSync";
+import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { usePersistActiveNavigation, useResumePrompt } from "@/hooks/useNavigationResume";
 import { useVigla } from "@/lib/vigla-store";
 import { MapView } from "@/components/vigla/MapView";
