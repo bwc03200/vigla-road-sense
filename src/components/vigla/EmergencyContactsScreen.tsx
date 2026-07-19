@@ -24,7 +24,8 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
-  const [locallyRemoved, setLocallyRemoved] = useState<string[]>([]);
+  const [contactToDelete, setContactToDelete] = useState<EmergencyContact | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function submit() {
     if (!name.trim()) return;
@@ -32,24 +33,16 @@ export function EmergencyContactsScreen({ userId }: { userId: string }) {
     setName(""); setPhone(""); setEmail("");
   }
 
-  function handleDelete(contact: EmergencyContact) {
-    const timeoutId = window.setTimeout(() => {
-      setLocallyRemoved((prev) => prev.filter((id) => id !== contact.id));
-      remove(contact.id);
-    }, 5000);
-
-    setLocallyRemoved((prev) => [...prev, contact.id]);
-
-    toast.success(t("contacts.deleted"), {
-      action: {
-        label: t("common.cancel"),
-        onClick: () => {
-          window.clearTimeout(timeoutId);
-          setLocallyRemoved((prev) => prev.filter((id) => id !== contact.id));
-        },
-      },
-      duration: 5000,
-    });
+  async function confirmDelete() {
+    if (!contactToDelete) return;
+    setDeleting(true);
+    try {
+      await remove(contactToDelete.id);
+      toast.success(t("contacts.deleted"));
+      setContactToDelete(null);
+    } finally {
+      setDeleting(false);
+    }
   }
 
   return (
