@@ -103,6 +103,7 @@ export function useOfficialRadars() {
         refreshIfStale(rows.length);
       } catch (err) {
         console.error("[official-radars] load failed, falling back to cache", err);
+        logError(err, { source: "radars.load" }, "radars.load.fail");
         try {
           const cached = localStorage.getItem(CACHE_KEY);
           if (cached) setOfficialRadars(JSON.parse(cached) as OfficialRadar[]);
