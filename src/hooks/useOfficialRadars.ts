@@ -74,6 +74,7 @@ export function useOfficialRadars() {
         );
         if (error) {
           console.error("[official-radars] auto-refresh invoke error", error);
+          logError(error, { source: "radars.import.auto" }, "radars.import.auto.fail");
           return;
         }
         localStorage.setItem(REFRESH_KEY, String(Date.now()));
@@ -83,9 +84,11 @@ export function useOfficialRadars() {
           try {
             localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
           } catch {}
+          logEvent("radars.import.success", "info", { count: rows.length, source: "auto" });
         }
       } catch (err) {
         console.error("[official-radars] auto-refresh failed", err);
+        logError(err, { source: "radars.import.auto" }, "radars.import.auto.fail");
       }
     }
 
