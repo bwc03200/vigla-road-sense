@@ -8,7 +8,6 @@ const CACHE_KEY = "vigla:hazards-cache";
 export function useHazards() {
   const setHazards = useVigla((s) => s.setHazards);
   const upsertHazard = useVigla((s) => s.upsertHazard);
-  const setOnline = useVigla((s) => s.setOnline);
 
   useEffect(() => {
     let cancelled = false;
@@ -23,12 +22,12 @@ export function useHazards() {
         if (error) throw error;
         if (cancelled) return;
         setHazards(data as HazardReport[]);
-        setOnline(true);
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         } catch {}
       } catch {
-        setOnline(false);
+        // Offline / transient error: fall back to the last-known cached list
+        // so the map stays populated. Online status is tracked by useOnlineStatus.
         try {
           const cached = localStorage.getItem(CACHE_KEY);
           if (cached) setHazards(JSON.parse(cached) as HazardReport[]);
@@ -59,7 +58,7 @@ export function useHazards() {
       clearInterval(retry);
       supabase.removeChannel(channel);
     };
-  }, [setHazards, upsertHazard, setOnline]);
+  }, [setHazards, upsertHazard]);
 }
 
 /**
