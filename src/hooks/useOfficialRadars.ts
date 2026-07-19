@@ -8,6 +8,47 @@ const REFRESH_KEY = "vigla:official-radars-refresh";
 const SESSION_KEY = "vigla:official-radars-refresh-tried";
 const REFRESH_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
+async function fetchRadars(): Promise<OfficialRadar[]> {
+  const { data, error } = await supabase
+    .from("official_radars")
+    .select("*")
+    .limit(5000);
+  if (error) {
+    console.error("[official-radars] fetch error", error);
+    throw error;
+  }
+  return (data ?? []) as OfficialRadar[];
+}
+
+/**
+ * Manually trigger a refresh of the official radars dataset via the edge
+ * function. Bypasses throttles. Returns { count } on success.
+ */
+export async function refreshOfficialRadars(): Promise<{ count: number }> {
+  const { data, error } = await supabase.functions.invoke(
+    "import-official-radars",
+    { body: {} },
+  );
+  if (error) {
+    console.error("[official-radars] invoke error", error);
+    throw error;
+  }
+  if (data && typeof data === "object" && (data as { success?: boolean }).success === false) {
+    const msg = (data as { error?: string }).error ?? "Import failed";
+    console.error("[official-radars] import failed", data);
+    throw new Error(msg);
+  }
+  try {
+    localStorage.setItem(REFRESH_KEY, String(Date.now()));
+  } catch {}
+  const rows = await fetchRadars();
+  useVigla.getState().setOfficialRadars(rows);
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
+  } catch {}
+  return { count: (data as { count?: number })?.count ?? rows.length };
+}
+
 export function useOfficialRadars() {
   const setOfficialRadars = useVigla((s) => s.setOfficialRadars);
 
@@ -15,7 +56,6 @@ export function useOfficialRadars() {
     let cancelled = false;
 
     async function refreshIfStale(rowCount: number) {
-      // Only try once per session to avoid burning invocations.
       try {
         if (sessionStorage.getItem(SESSION_KEY)) return;
       } catch {}
@@ -30,35 +70,34 @@ export function useOfficialRadars() {
           "import-official-radars",
           { body: {} },
         );
-        if (error) return;
+        if (error) {
+          console.error("[official-radars] auto-refresh invoke error", error);
+          return;
+        }
         localStorage.setItem(REFRESH_KEY, String(Date.now()));
-        // Reload after import completes.
-        const { data } = await supabase.from("official_radars").select("*");
-        if (!cancelled && data) {
-          setOfficialRadars(data as OfficialRadar[]);
+        const rows = await fetchRadars();
+        if (!cancelled) {
+          setOfficialRadars(rows);
           try {
-            localStorage.setItem(CACHE_KEY, JSON.stringify(data));
+            localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
           } catch {}
         }
-      } catch {
-        /* noop */
+      } catch (err) {
+        console.error("[official-radars] auto-refresh failed", err);
       }
     }
 
     async function load() {
       try {
-        const { data, error } = await supabase
-          .from("official_radars")
-          .select("*");
-        if (error) throw error;
+        const rows = await fetchRadars();
         if (cancelled) return;
-        const rows = (data ?? []) as OfficialRadar[];
         setOfficialRadars(rows);
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
         } catch {}
         refreshIfStale(rows.length);
-      } catch {
+      } catch (err) {
+        console.error("[official-radars] load failed, falling back to cache", err);
         try {
           const cached = localStorage.getItem(CACHE_KEY);
           if (cached) setOfficialRadars(JSON.parse(cached) as OfficialRadar[]);
