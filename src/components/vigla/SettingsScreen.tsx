@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { deleteMyAccount } from "@/lib/account.functions";
 import { InstallSettingsRow } from "@/components/vigla/InstallPWA";
 import { PushNotificationsRow } from "@/components/vigla/PushNotificationsRow";
+import { refreshOfficialRadars } from "@/hooks/useOfficialRadars";
 
 import { setLanguage, currentLang, type Lang } from "@/i18n/i18n";
 import type { AlertLeadTime, UserPreferences } from "@/types/vigla";
