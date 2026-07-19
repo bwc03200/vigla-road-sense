@@ -235,6 +235,13 @@ export function MapView() {
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
+  // Preload adjacent tiles (Leaflet native). Cut buffer down when the browser
+  // reports Save-Data / slow connection so we don't burn mobile data.
+  const saveData =
+    typeof navigator !== "undefined" &&
+    !!(navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData;
+  const tileKeepBuffer = saveData ? 1 : 4;
+
   return (
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <ViewportTracker onChange={setViewport} />
@@ -248,6 +255,8 @@ export function MapView() {
         }
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
         subdomains={["a", "b", "c", "d"]}
+        keepBuffer={tileKeepBuffer}
+        updateWhenIdle={saveData}
         maxZoom={19}
       />
       <InvalidateOnResize />
