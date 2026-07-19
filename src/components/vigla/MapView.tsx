@@ -288,9 +288,7 @@ export function MapView() {
         <HazardMarker key={h.id} hazard={h} />
       ))}
 
-      {nearbyOfficial.map((r) => (
-        <Marker key={r.id} position={[r.latitude, r.longitude]} icon={officialRadarIcon()} />
-      ))}
+      <OfficialRadarCluster radars={nearbyOfficial} />
       {convoyMembers
         .filter((m) => m.last_lat != null && m.last_lng != null)
         .map((m) => (
