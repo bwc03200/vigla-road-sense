@@ -340,6 +340,9 @@ export function useNavigationEngine() {
             startedAt: navigation.startedAt,
             alertsReceived: navigation.alertsReceived,
           });
+          import("@/lib/logger").then((m) =>
+            m.logEvent("nav.recalc.success", "info", { distanceM: newRoute.distanceM }),
+          );
         })
         .catch((err) => {
           if (err?.name === "AbortError") return;
@@ -351,6 +354,9 @@ export function useNavigationEngine() {
               patchNavigation,
             );
           }
+          import("@/lib/logger").then((m) =>
+            m.logError(err, { source: "nav.recalc" }, "nav.recalc.fail"),
+          );
         })
         .finally(() => {
           if (abortRef.current === controller) abortRef.current = null;
