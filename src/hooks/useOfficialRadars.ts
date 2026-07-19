@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
+import { logError, logEvent } from "@/lib/logger";
 import type { OfficialRadar } from "@/types/vigla";
 
 const CACHE_KEY = "vigla:official-radars-cache";
@@ -46,6 +47,7 @@ export async function refreshOfficialRadars(): Promise<{ count: number }> {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
   } catch {}
+  logEvent("radars.import.success", "info", { count: rows.length, source: "manual" });
   return { count: (data as { count?: number })?.count ?? rows.length };
 }
 
@@ -72,6 +74,7 @@ export function useOfficialRadars() {
         );
         if (error) {
           console.error("[official-radars] auto-refresh invoke error", error);
+          logError(error, { source: "radars.import.auto" }, "radars.import.auto.fail");
           return;
         }
         localStorage.setItem(REFRESH_KEY, String(Date.now()));
@@ -81,9 +84,11 @@ export function useOfficialRadars() {
           try {
             localStorage.setItem(CACHE_KEY, JSON.stringify(rows));
           } catch {}
+          logEvent("radars.import.success", "info", { count: rows.length, source: "auto" });
         }
       } catch (err) {
         console.error("[official-radars] auto-refresh failed", err);
+        logError(err, { source: "radars.import.auto" }, "radars.import.auto.fail");
       }
     }
 
@@ -98,6 +103,7 @@ export function useOfficialRadars() {
         refreshIfStale(rows.length);
       } catch (err) {
         console.error("[official-radars] load failed, falling back to cache", err);
+        logError(err, { source: "radars.load" }, "radars.load.fail");
         try {
           const cached = localStorage.getItem(CACHE_KEY);
           if (cached) setOfficialRadars(JSON.parse(cached) as OfficialRadar[]);
