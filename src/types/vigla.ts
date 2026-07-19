@@ -205,6 +205,5 @@ export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
   ralentissement: true,
 };
 
-  official: true,
-};
+
 
