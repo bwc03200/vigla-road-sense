@@ -48,6 +48,8 @@
   --popover-foreground: oklch(0.20 0.03 250);
   --primary: oklch(0.72 0.19 45);              /* #FF6B35 */
   --primary-foreground: oklch(1 0 0);
+  --primary-strong: oklch(0.55 0.18 40);       /* darker orange, AA on white */
+
   --secondary: oklch(0.95 0.01 250);
   --secondary-foreground: oklch(0.20 0.03 250);
   --muted: oklch(0.95 0.01 250);
