@@ -24,6 +24,7 @@ const OPTIONS: {
 export function ReportGrid({ onReported }: { onReported?: () => void }) {
   const { t } = useTranslation();
   const position = useVigla((s) => s.position);
+  const online = useVigla((s) => s.online);
   const [pending, setPending] = useState<HazardType | null>(null);
 
   async function report(type: HazardType) {
@@ -32,13 +33,28 @@ export function ReportGrid({ onReported }: { onReported?: () => void }) {
       return;
     }
     setPending(type);
-    const { data: userData } = await supabase.auth.getUser();
-    const uid = userData.user?.id;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const uid = sessionData.session?.user?.id;
     if (!uid) {
       toast.error(t("hazard.report.loginRequired"));
       setPending(null);
       return;
     }
+
+    // Offline: queue for later sync + optimistic local render.
+    if (!online || (typeof navigator !== "undefined" && !navigator.onLine)) {
+      enqueueHazard({
+        type,
+        latitude: position.lat,
+        longitude: position.lng,
+        reported_by: uid,
+      });
+      setPending(null);
+      toast.success(t("hazard.report.queued"), { description: hazardLabel(type) });
+      onReported?.();
+      return;
+    }
+
     const { error } = await supabase.from("hazard_reports").insert({
       type,
       latitude: position.lat,
@@ -48,10 +64,15 @@ export function ReportGrid({ onReported }: { onReported?: () => void }) {
     });
     setPending(null);
     if (error) {
-      toast.error(t("hazard.report.failed"), {
-        description: error.message,
-        action: { label: t("common.retry"), onClick: () => report(type) },
+      // Network failed unexpectedly — fall back to queue instead of losing the report.
+      enqueueHazard({
+        type,
+        latitude: position.lat,
+        longitude: position.lng,
+        reported_by: uid,
       });
+      toast.success(t("hazard.report.queued"), { description: hazardLabel(type) });
+      onReported?.();
       return;
     }
     toast.success(t("hazard.report.sent"), {
