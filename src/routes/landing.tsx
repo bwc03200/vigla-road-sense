@@ -388,7 +388,7 @@ function LandingPage() {
               <Bike className="h-6 w-6" />
             </div>
             <div>
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-primary-strong">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/20 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-primary">
                 Exclusif motards
               </div>
               <h3 className="text-2xl font-black tracking-tight sm:text-3xl">
