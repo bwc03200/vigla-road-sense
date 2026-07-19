@@ -255,6 +255,9 @@
     "deleted": "Contact supprimé",
     "addFailed": "Ajout impossible",
     "deleteFailed": "Suppression impossible",
+    "deleteTitle": "Supprimer {{name}} ?",
+    "deleteDesc": "Cette personne ne sera plus alertée en cas de détection de chute.",
+    "deleteConfirm": "Supprimer",
     "toggleCrash": "Activer la détection",
     "toggleVibration": "Activer les vibrations"
   },
