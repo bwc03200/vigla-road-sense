@@ -29,7 +29,11 @@
       "accident": "Accident",
       "travaux": "Roadwork",
       "obstacle": "Obstacle",
-      "ralentissement": "Traffic jam"
+      "ralentissement": "Traffic jam",
+      "gravillons": "Loose gravel",
+      "chute_huile": "Oil / fuel spill",
+      "animal_sauvage": "Wildlife",
+      "chaussee_deformee": "Damaged road"
     },
     "report": {
       "title": "Report a hazard",
