@@ -4,7 +4,22 @@ export type HazardType =
   | "accident"
   | "travaux"
   | "obstacle"
-  | "ralentissement";
+  | "ralentissement"
+  | "gravillons"
+  | "chute_huile"
+  | "animal_sauvage"
+  | "chaussee_deformee";
+
+export const MOTO_HAZARD_TYPES: HazardType[] = [
+  "gravillons",
+  "chute_huile",
+  "animal_sauvage",
+  "chaussee_deformee",
+];
+
+export function isMotoHazardType(t: HazardType): boolean {
+  return MOTO_HAZARD_TYPES.includes(t);
+}
 
 export interface HazardReport {
   id: string;
