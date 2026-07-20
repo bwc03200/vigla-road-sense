@@ -36,7 +36,10 @@ export function ReportGrid({ onReported }: { onReported?: () => void }) {
   const { t } = useTranslation();
   const position = useVigla((s) => s.position);
   const online = useVigla((s) => s.online);
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
   const [pending, setPending] = useState<HazardType | null>(null);
+  const options = motoMode ? [...BASE_OPTIONS, ...MOTO_OPTIONS] : BASE_OPTIONS;
+  void MOTO_HAZARD_TYPES;
 
   async function report(type: HazardType) {
     if (!position) {
