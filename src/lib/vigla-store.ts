@@ -255,14 +255,10 @@ export const useVigla = create<ViglaState>((set) => ({
     }),
   setAllHazardFilters: (v) =>
     set(() => {
-      const next: HazardFilters = {
-        radar_fixe: v,
-        radar_mobile: v,
-        accident: v,
-        travaux: v,
-        obstacle: v,
-        ralentissement: v,
-      };
+      const next = HAZARD_FILTER_KEYS.reduce((acc, k) => {
+        acc[k] = v;
+        return acc;
+      }, {} as HazardFilters);
       persistHazardFilters(next);
       return { hazardFilters: next };
     }),
