@@ -167,8 +167,10 @@ function LandingPage() {
         </div>
       </header>
 
+      <main>
       {/* HERO */}
       <Section id="hero" className="pt-10 sm:pt-16">
+
         <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-primary-strong">
@@ -633,8 +635,11 @@ function LandingPage() {
         </div>
       </Section>
 
+      </main>
+
       {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-white">
+
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-strong text-primary-foreground">

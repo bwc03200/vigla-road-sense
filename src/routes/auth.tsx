@@ -52,7 +52,7 @@ function AuthPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+    <main className="flex min-h-screen items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center justify-center gap-2">
           <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
@@ -102,6 +102,7 @@ function AuthPage() {
           </button>
         </div>
       </div>
-    </div>
+    </main>
+
   );
 }

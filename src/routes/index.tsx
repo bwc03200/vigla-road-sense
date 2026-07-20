@@ -143,6 +143,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
       <Toaster position="top-center" theme="light" richColors closeButton />
       <CrashAlertOverlay />
       <main className="fixed inset-x-0 top-0 bottom-16" style={{ height: "calc(100dvh - 4rem)" }}>
+        <h1 className="sr-only">VIGLA</h1>
+
         {tab === "map" && (
           <div className="relative h-full w-full">
             <MapView />
