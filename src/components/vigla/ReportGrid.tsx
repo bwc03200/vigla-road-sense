@@ -97,7 +97,7 @@ export function ReportGrid({ onReported }: { onReported?: () => void }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 p-4">
-      {OPTIONS.map(({ type, icon: Icon, color }) => (
+      {options.map(({ type, icon: Icon, color }) => (
         <button
           key={type}
           onClick={() => report(type)}
