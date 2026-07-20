@@ -82,7 +82,11 @@
       "accident": "Accidents",
       "travaux": "Travaux",
       "obstacle": "Obstacles",
-      "ralentissement": "Ralentissements"
+      "ralentissement": "Ralentissements",
+      "gravillons": "Gravillons",
+      "chute_huile": "Huile / carburant",
+      "animal_sauvage": "Animaux",
+      "chaussee_deformee": "Chaussée déformée"
     }
   },
 
