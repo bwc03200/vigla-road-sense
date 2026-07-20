@@ -635,8 +635,11 @@ function LandingPage() {
         </div>
       </Section>
 
+      </main>
+
       {/* FOOTER */}
       <footer className="border-t border-slate-200 bg-white">
+
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-strong text-primary-foreground">
