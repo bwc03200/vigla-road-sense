@@ -82,7 +82,11 @@
       "accident": "Crashes",
       "travaux": "Roadworks",
       "obstacle": "Obstacles",
-      "ralentissement": "Slowdowns"
+      "ralentissement": "Slowdowns",
+      "gravillons": "Loose gravel",
+      "chute_huile": "Oil / fuel",
+      "animal_sauvage": "Wildlife",
+      "chaussee_deformee": "Damaged road"
     }
   },
 
