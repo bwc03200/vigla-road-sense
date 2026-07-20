@@ -96,6 +96,10 @@ export const HAZARD_LABELS: Record<HazardType, string> = {
   travaux: "Travaux",
   obstacle: "Obstacle",
   ralentissement: "Ralentissement",
+  gravillons: "Gravillons",
+  chute_huile: "Huile / carburant",
+  animal_sauvage: "Animal sauvage",
+  chaussee_deformee: "Chaussée déformée",
 };
 
 export interface EmergencyContact {
