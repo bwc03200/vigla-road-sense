@@ -213,6 +213,10 @@ export const HAZARD_FILTER_KEYS: HazardFilterKey[] = [
   "travaux",
   "obstacle",
   "ralentissement",
+  "gravillons",
+  "chute_huile",
+  "animal_sauvage",
+  "chaussee_deformee",
 ];
 
 export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
@@ -222,7 +226,12 @@ export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
   travaux: true,
   obstacle: true,
   ralentissement: true,
+  gravillons: true,
+  chute_huile: true,
+  animal_sauvage: true,
+  chaussee_deformee: true,
 };
+
 
 
 
