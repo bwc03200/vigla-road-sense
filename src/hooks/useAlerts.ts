@@ -3,6 +3,7 @@ import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import { vibrateAlert } from "@/lib/haptics";
 import { hazardLabel } from "@/lib/i18n-helpers";
+import { isMotoHazardType } from "@/types/vigla";
 
 
 const ALERT_RADIUS_M = 400;
@@ -11,6 +12,7 @@ const LEAD_TIME_S: Record<"short" | "normal" | "long", number> = {
   normal: 30,
   long: 50,
 };
+const MOTO_LEAD_MULTIPLIER = 1.3;
 
 
 function beep() {
@@ -49,6 +51,7 @@ export function useAlerts(
   const soundAlerts = useVigla((s) => s.preferences.sound_alerts);
   const vibrationAlerts = useVigla((s) => s.preferences.vibration_alerts);
   const leadTime = useVigla((s) => s.preferences.alert_lead_time);
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
   const cbRef = useRef(onAlert);
   cbRef.current = onAlert;
 
@@ -56,13 +59,17 @@ export function useAlerts(
     if (!position) return;
     const speedMs = Math.max((speedKmh * 1000) / 3600, 3);
     const allowed = route ? new Set(route.hazardIds) : null;
-    const leadS = LEAD_TIME_S[leadTime] ?? LEAD_TIME_S.normal;
+    const baseLeadS = LEAD_TIME_S[leadTime] ?? LEAD_TIME_S.normal;
 
     for (const h of hazards) {
       if (allowed && !allowed.has(h.id)) continue;
       const d = haversine(position.lat, position.lng, h.latitude, h.longitude);
       const eta = d / speedMs;
       const already = alertedIds.has(h.id);
+      const leadS =
+        motoMode && isMotoHazardType(h.type)
+          ? baseLeadS * MOTO_LEAD_MULTIPLIER
+          : baseLeadS;
 
       if (!already && eta < leadS && d < 3000) {
         markAlerted(h.id);
@@ -74,6 +81,7 @@ export function useAlerts(
         clearAlert(h.id);
       }
     }
-  }, [position, speedKmh, hazards, route, alertedIds, markAlerted, clearAlert, soundAlerts, vibrationAlerts, leadTime]);
+  }, [position, speedKmh, hazards, route, alertedIds, markAlerted, clearAlert, soundAlerts, vibrationAlerts, leadTime, motoMode]);
 }
+
 

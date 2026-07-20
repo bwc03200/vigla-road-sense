@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Camera, Siren, Construction, TriangleAlert, Turtle, Radar } from "lucide-react";
+import { Camera, Siren, Construction, TriangleAlert, Turtle, Radar, CircleDot, Droplet, PawPrint, AlertOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import { hazardLabel } from "@/lib/i18n-helpers";
 import { enqueueHazard } from "@/lib/offline-hazard-queue";
-import type { HazardType } from "@/types/vigla";
+import { MOTO_HAZARD_TYPES, type HazardType } from "@/types/vigla";
 
-const OPTIONS: {
+const BASE_OPTIONS: {
   type: HazardType;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
@@ -21,11 +21,25 @@ const OPTIONS: {
   { type: "ralentissement", icon: Turtle, color: "bg-info" },
 ];
 
+const MOTO_OPTIONS: {
+  type: HazardType;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+}[] = [
+  { type: "gravillons", icon: CircleDot, color: "bg-yellow-700" },
+  { type: "chute_huile", icon: Droplet, color: "bg-indigo-600" },
+  { type: "animal_sauvage", icon: PawPrint, color: "bg-green-600" },
+  { type: "chaussee_deformee", icon: AlertOctagon, color: "bg-red-700" },
+];
+
 export function ReportGrid({ onReported }: { onReported?: () => void }) {
   const { t } = useTranslation();
   const position = useVigla((s) => s.position);
   const online = useVigla((s) => s.online);
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
   const [pending, setPending] = useState<HazardType | null>(null);
+  const options = motoMode ? [...BASE_OPTIONS, ...MOTO_OPTIONS] : BASE_OPTIONS;
+  void MOTO_HAZARD_TYPES;
 
   async function report(type: HazardType) {
     if (!position) {
@@ -83,7 +97,7 @@ export function ReportGrid({ onReported }: { onReported?: () => void }) {
 
   return (
     <div className="grid grid-cols-2 gap-3 p-4">
-      {OPTIONS.map(({ type, icon: Icon, color }) => (
+      {options.map(({ type, icon: Icon, color }) => (
         <button
           key={type}
           onClick={() => report(type)}

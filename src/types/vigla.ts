@@ -4,7 +4,22 @@ export type HazardType =
   | "accident"
   | "travaux"
   | "obstacle"
-  | "ralentissement";
+  | "ralentissement"
+  | "gravillons"
+  | "chute_huile"
+  | "animal_sauvage"
+  | "chaussee_deformee";
+
+export const MOTO_HAZARD_TYPES: HazardType[] = [
+  "gravillons",
+  "chute_huile",
+  "animal_sauvage",
+  "chaussee_deformee",
+];
+
+export function isMotoHazardType(t: HazardType): boolean {
+  return MOTO_HAZARD_TYPES.includes(t);
+}
 
 export interface HazardReport {
   id: string;
@@ -81,6 +96,10 @@ export const HAZARD_LABELS: Record<HazardType, string> = {
   travaux: "Travaux",
   obstacle: "Obstacle",
   ralentissement: "Ralentissement",
+  gravillons: "Gravillons",
+  chute_huile: "Huile / carburant",
+  animal_sauvage: "Animal sauvage",
+  chaussee_deformee: "Chaussée déformée",
 };
 
 export interface EmergencyContact {
@@ -194,6 +213,10 @@ export const HAZARD_FILTER_KEYS: HazardFilterKey[] = [
   "travaux",
   "obstacle",
   "ralentissement",
+  "gravillons",
+  "chute_huile",
+  "animal_sauvage",
+  "chaussee_deformee",
 ];
 
 export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
@@ -203,7 +226,12 @@ export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
   travaux: true,
   obstacle: true,
   ralentissement: true,
+  gravillons: true,
+  chute_huile: true,
+  animal_sauvage: true,
+  chaussee_deformee: true,
 };
+
 
 
 

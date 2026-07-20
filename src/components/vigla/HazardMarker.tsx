@@ -15,6 +15,10 @@ const HAZARD_COLORS: Record<HazardType, string> = {
   travaux: "#F59E0B",
   obstacle: "#EAB308",
   ralentissement: "#0EA5E9",
+  gravillons: "#A16207",
+  chute_huile: "#4F46E5",
+  animal_sauvage: "#16A34A",
+  chaussee_deformee: "#B91C1C",
 };
 
 const HAZARD_EMOJI: Record<HazardType, string> = {
@@ -24,6 +28,10 @@ const HAZARD_EMOJI: Record<HazardType, string> = {
   travaux: "🚧",
   obstacle: "⚠️",
   ralentissement: "🐌",
+  gravillons: "🪨",
+  chute_huile: "🛢️",
+  animal_sauvage: "🦌",
+  chaussee_deformee: "🕳️",
 };
 
 const VOTES_KEY = "vigla:hazard-votes";

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Filter, X, Camera, Radar, Siren, Construction, TriangleAlert, Turtle, Eye, EyeOff } from "lucide-react";
+import { Filter, X, Camera, Radar, Siren, Construction, TriangleAlert, Turtle, Eye, EyeOff, CircleDot, Droplet, PawPrint, AlertOctagon } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { HAZARD_FILTER_KEYS, type HazardFilterKey } from "@/types/vigla";
 
@@ -11,6 +11,10 @@ const ICONS: Record<HazardFilterKey, React.ComponentType<{ className?: string }>
   travaux: Construction,
   obstacle: TriangleAlert,
   ralentissement: Turtle,
+  gravillons: CircleDot,
+  chute_huile: Droplet,
+  animal_sauvage: PawPrint,
+  chaussee_deformee: AlertOctagon,
 };
 
 export function HazardFilters() {

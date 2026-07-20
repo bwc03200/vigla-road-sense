@@ -159,8 +159,6 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
           description={t("settings.motoModeDesc")}
           value={prefs.moto_mode}
           onChange={(v) => update("moto_mode", v)}
-          disabled
-          badge={t("settings.comingSoon")}
         />
       </Section>
 
