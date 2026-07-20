@@ -167,8 +167,10 @@ function LandingPage() {
         </div>
       </header>
 
+      <main>
       {/* HERO */}
       <Section id="hero" className="pt-10 sm:pt-16">
+
         <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr]">
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-widest text-primary-strong">
