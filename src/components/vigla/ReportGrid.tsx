@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Camera, Siren, Construction, TriangleAlert, Turtle, Radar } from "lucide-react";
+import { Camera, Siren, Construction, TriangleAlert, Turtle, Radar, CircleDot, Droplet, PawPrint, AlertOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import { hazardLabel } from "@/lib/i18n-helpers";
 import { enqueueHazard } from "@/lib/offline-hazard-queue";
-import type { HazardType } from "@/types/vigla";
+import { MOTO_HAZARD_TYPES, type HazardType } from "@/types/vigla";
 
-const OPTIONS: {
+const BASE_OPTIONS: {
   type: HazardType;
   icon: React.ComponentType<{ className?: string }>;
   color: string;
@@ -19,6 +19,17 @@ const OPTIONS: {
   { type: "travaux", icon: Construction, color: "bg-amber-500" },
   { type: "obstacle", icon: TriangleAlert, color: "bg-yellow-500" },
   { type: "ralentissement", icon: Turtle, color: "bg-info" },
+];
+
+const MOTO_OPTIONS: {
+  type: HazardType;
+  icon: React.ComponentType<{ className?: string }>;
+  color: string;
+}[] = [
+  { type: "gravillons", icon: CircleDot, color: "bg-yellow-700" },
+  { type: "chute_huile", icon: Droplet, color: "bg-indigo-600" },
+  { type: "animal_sauvage", icon: PawPrint, color: "bg-green-600" },
+  { type: "chaussee_deformee", icon: AlertOctagon, color: "bg-red-700" },
 ];
 
 export function ReportGrid({ onReported }: { onReported?: () => void }) {
