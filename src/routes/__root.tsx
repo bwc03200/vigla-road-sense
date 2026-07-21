@@ -78,14 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       {
         name: "description",
         content:
-          "PWA d'alerte de zones de danger routières (radars, travaux, accidents, obstacles) inspirée de Waze.",
+          "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord.",
       },
       { name: "author", content: "VIGLA" },
       { property: "og:title", content: "VIGLA — Alertes routières temps réel" },
       {
         property: "og:description",
         content:
-          "Signalez et évitez les zones de danger sur la route en temps réel.",
+          "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -96,9 +96,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "apple-mobile-web-app-title", content: "VIGLA" },
 
       { name: "twitter:title", content: "VIGLA — Alertes routières temps réel" },
-      { name: "description", content: "VIGLA — application communautaire d'alerte de zones de danger routières : radars, accidents, travaux, obstacles. Temps réel, mobile et tableau de bord." },
-      { property: "og:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières : radars, accidents, travaux, obstacles. Temps réel, mobile et tableau de bord." },
-      { name: "twitter:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières : radars, accidents, travaux, obstacles. Temps réel, mobile et tableau de bord." },
+      { name: "description", content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord." },
+      { property: "og:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord." },
+      { name: "twitter:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord." },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3030c30-946d-446b-9961-53a859594fad/id-preview-906fec6a--067a541a-e668-45e9-bd24-a7b365c91b4d.lovable.app-1783142455787.png" },
       { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3030c30-946d-446b-9961-53a859594fad/id-preview-906fec6a--067a541a-e668-45e9-bd24-a7b365c91b4d.lovable.app-1783142455787.png" },
     ],
@@ -108,7 +108,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "icon", href: "/icons/icon-192.png", type: "image/png", sizes: "192x192" },
+      { rel: "icon", href: "/favicon.ico", type: "image/x-icon", sizes: "192x192" },
       { rel: "manifest", href: "/manifest.json" },
       { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
       {

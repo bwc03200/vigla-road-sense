@@ -53,12 +53,12 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "VIGLA — application communautaire d'alerte de zones de danger routières : radars, accidents, travaux, obstacles. Temps réel, mobile et tableau de bord.",
+          "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord.",
       },
       { property: "og:title", content: "VIGLA — Alertes routières temps réel" },
       {
         property: "og:description",
-        content: "Signalez et évitez les radars, accidents, travaux et obstacles en temps réel.",
+        content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord.",
       },
     ],
   }),
