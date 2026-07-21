@@ -1,1 +1,4 @@
 project_id = "ssomnhvzmzqvhlfqjqug"
+
+[functions.import-official-radars]
+verify_jwt = false
