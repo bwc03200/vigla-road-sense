@@ -222,6 +222,38 @@ export type Database = {
         }
         Relationships: []
       }
+      hazard_votes: {
+        Row: {
+          created_at: string
+          hazard_id: string
+          id: string
+          user_id: string
+          vote_type: string
+        }
+        Insert: {
+          created_at?: string
+          hazard_id: string
+          id?: string
+          user_id: string
+          vote_type: string
+        }
+        Update: {
+          created_at?: string
+          hazard_id?: string
+          id?: string
+          user_id?: string
+          vote_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hazard_votes_hazard_id_fkey"
+            columns: ["hazard_id"]
+            isOneToOne: false
+            referencedRelation: "hazard_reports"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       official_radars: {
         Row: {
           date_installation: string | null
