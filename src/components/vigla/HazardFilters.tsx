@@ -123,7 +123,7 @@ function FilterChip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-1 ${
+      className={`inline-flex min-h-11 items-center gap-2 rounded-full border px-4 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-1 ${
         active
           ? "border-[#FF6B35] bg-[#FF6B35] text-white shadow-sm"
           : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"

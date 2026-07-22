@@ -133,9 +133,10 @@ html { scroll-behavior: smooth; }
   filter: drop-shadow(0 2px 4px rgba(15, 23, 42, 0.35));
 }
 
-/* Hazard markers pop in gently instead of appearing abruptly. */
+/* Hazard markers pop in gently instead of appearing abruptly. Unified
+   motion tokens: 200ms ease-out for all micro-interactions. */
 @keyframes vigla-hazard-pop {
-  from { opacity: 0; transform: scale(0.8); }
+  from { opacity: 0; transform: scale(0.92); }
   to   { opacity: 1; transform: scale(1); }
 }
 .vigla-hazard-icon > div,
@@ -150,13 +151,33 @@ html { scroll-behavior: smooth; }
   to   { opacity: 1; transform: translateY(0); }
 }
 .vigla-topbar-alert {
-  animation: vigla-topbar-slide 250ms ease-out both;
+  animation: vigla-topbar-slide 200ms ease-out both;
 }
 
 /* Convoy bubble expiring fade-out. */
 .vigla-bubble-expiring {
   opacity: 0;
   transform: translateY(-4px);
-  transition: opacity 400ms ease-in, transform 400ms ease-in;
+  transition: opacity 200ms ease-out, transform 200ms ease-out;
+}
+
+/* Respect user motion preferences everywhere — including Radix/shadcn
+   transitions and Leaflet marker pop-ins. Position interpolation on the
+   user arrow is JS-driven (rAF), so this rule doesn't affect map tracking. */
+@media (prefers-reduced-motion: reduce) {
+  .vigla-hazard-icon > div,
+  .vigla-official-radar-icon > div,
+  .vigla-convoy-icon > div,
+  .vigla-topbar-alert,
+  .vigla-bubble-expiring {
+    animation: none !important;
+    transition: none !important;
+  }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 

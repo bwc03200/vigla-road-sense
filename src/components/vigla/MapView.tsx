@@ -28,9 +28,11 @@ function destinationIcon() {
 
 function convoyMemberIcon(name: string) {
   const letter = (name.charAt(0) || "?").toUpperCase();
+  // Rounded-square shape (border-radius 25%) so convoy members are visually
+  // distinguishable from circular hazards even for colorblind users.
   return L.divIcon({
     className: "vigla-convoy-icon",
-    html: `<div style="width:34px;height:34px;border-radius:50%;background:#7C3AED;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-weight:700;font-size:14px;">${letter}</div>`,
+    html: `<div style="width:34px;height:34px;border-radius:9px;background:#7C3AED;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-weight:700;font-size:14px;">${letter}</div>`,
     iconSize: [34, 34],
     iconAnchor: [17, 17],
   });
