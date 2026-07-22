@@ -39,16 +39,16 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
       <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-slate-200">
         <div className="flex flex-col items-center leading-none">
           <span
-            className="tabular-nums text-[32px] font-bold text-slate-900"
+            className={`tabular-nums font-bold text-slate-900 ${embedded ? "text-[20px]" : "text-[32px]"}`}
             style={{ fontFeatureSettings: '"tnum"' }}
           >
             {formatSpeed(speedKmh, speedUnit)}
           </span>
-          <span className="text-[10px] uppercase tracking-widest text-slate-500">
+          <span className={`uppercase tracking-widest text-slate-500 ${embedded ? "text-[9px]" : "text-[10px]"}`}>
             {speedUnitLabel(speedUnit)}
           </span>
         </div>
-        <div className="h-10 w-px bg-slate-200" />
+        <div className={`w-px bg-slate-200 ${embedded ? "h-7" : "h-10"}`} />
         <div className="min-w-0 flex-1">
           {nextHazard ? (
             <div key={nextHazard.label} className="vigla-topbar-alert flex items-center gap-2">
