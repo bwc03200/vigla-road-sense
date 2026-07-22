@@ -272,7 +272,7 @@ function ToggleRow({
       <button
         disabled={disabled}
         onClick={() => onChange(!value)}
-        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition ${
+        className={`relative mt-0.5 h-6 w-11 shrink-0 rounded-full transition before:absolute before:-inset-x-0 before:-inset-y-2.5 before:content-[''] ${
           value ? "bg-[#FF6B35]" : "bg-slate-300"
         } ${disabled ? "cursor-not-allowed" : ""}`}
         aria-label={label}
