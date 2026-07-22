@@ -79,15 +79,47 @@ function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; hea
 function InvalidateOnResize() {
   const map = useMap();
   useEffect(() => {
-    const invalidate = () => map.invalidateSize();
-    // Handle layout settling after mount (bottom tabs, dvh changes).
+    const container = map.getContainer();
+    let raf1 = 0;
+    let raf2 = 0;
+    const invalidate = () => {
+      // Double-rAF: wait for the CSS/layout change to settle before
+      // asking Leaflet to recompute pixel bounds. { pan: false } so we
+      // never fight the navigation follow logic — that hook re-centers
+      // on the next GPS tick using the freshly-corrected size.
+      if (raf1) cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          try {
+            map.invalidateSize({ pan: false });
+          } catch {
+            /* map torn down */
+          }
+        });
+      });
+    };
+
+    // Initial settle after mount (bottom tabs, dvh changes).
     const t = window.setTimeout(invalidate, 200);
     window.addEventListener("resize", invalidate);
     window.addEventListener("orientationchange", invalidate);
+
+    // Generic safety net: any container size change triggers invalidate,
+    // covering panels/toasts/banners that grow or shrink during navigation.
+    let ro: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => invalidate());
+      ro.observe(container);
+    }
+
     return () => {
       window.clearTimeout(t);
       window.removeEventListener("resize", invalidate);
       window.removeEventListener("orientationchange", invalidate);
+      if (ro) ro.disconnect();
+      if (raf1) cancelAnimationFrame(raf1);
+      if (raf2) cancelAnimationFrame(raf2);
     };
   }, [map]);
   return null;
