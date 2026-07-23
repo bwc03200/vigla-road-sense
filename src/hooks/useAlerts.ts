@@ -76,15 +76,23 @@ export function useAlerts(
 
       if (!already && eta < leadS && d < 3000) {
         markAlerted(h.id);
-        if (soundAlerts) beep();
+        const label = hazardLabel(h.type);
+        if (voiceAlerts) {
+          speak(
+            i18n.t("voice.hazardAhead", { label, distance: Math.round(d) }),
+            "low",
+          );
+        } else if (soundAlerts) {
+          beep();
+        }
         if (vibrationAlerts) vibrateAlert();
-        cbRef.current?.(hazardLabel(h.type), d);
+        cbRef.current?.(label, d);
 
       } else if (already && d > ALERT_RADIUS_M * 2) {
         clearAlert(h.id);
       }
     }
-  }, [position, speedKmh, hazards, route, alertedIds, markAlerted, clearAlert, soundAlerts, vibrationAlerts, leadTime, motoMode]);
+  }, [position, speedKmh, hazards, route, alertedIds, markAlerted, clearAlert, soundAlerts, vibrationAlerts, voiceAlerts, leadTime, motoMode]);
 }
 
 
