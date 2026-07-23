@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react";
+import i18n from "@/i18n/i18n";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import { vibrateAlert } from "@/lib/haptics";
 import { hazardLabel } from "@/lib/i18n-helpers";
+import { speak } from "@/lib/speech";
 import { isMotoHazardType } from "@/types/vigla";
 
 
