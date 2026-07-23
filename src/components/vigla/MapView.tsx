@@ -296,7 +296,27 @@ export function MapView() {
         <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
       )}
 
-      {position && <UserMarker lat={position.lat} lng={position.lng} heading={position.heading} />}
+      {position && (() => {
+        // Light map-matching: while a route is active, snap the arrow to
+        // the nearest point on the polyline as long as the raw fix is
+        // within ~28m of the route. Beyond that we show the true position
+        // so an actual deviation isn't hidden.
+        let dispLat = position.lat;
+        let dispLng = position.lng;
+        if (navActive && navigation && navigation.remainingCoords.length > 1) {
+          const proj = projectOnPolyline(
+            position.lat,
+            position.lng,
+            navigation.remainingCoords,
+          );
+          if (proj.distanceToRouteM <= 28) {
+            dispLat = proj.point[0];
+            dispLng = proj.point[1];
+          }
+        }
+        return <UserMarker lat={dispLat} lng={dispLng} heading={position.heading} />;
+      })()}
+
       <ZoomControls />
 
       {route && !navActive && (
