@@ -163,9 +163,15 @@ export const useVigla = create<ViglaState>((set) => ({
 
 
   setPosition: (p, speedFromApi) => {
+    // Prefer native Doppler-based speed from the GPS chipset when the
+    // platform provides it — it's accurate at low speed, has no delta lag,
+    // and doesn't need smoothing. Fall back to a delta computation only
+    // when coords.speed is unavailable (some desktop browsers / older iOS).
+    const hasNative =
+      speedFromApi != null && !Number.isNaN(speedFromApi) && speedFromApi >= 0;
     let instant = 0;
-    if (speedFromApi != null && !Number.isNaN(speedFromApi) && speedFromApi >= 0) {
-      instant = speedFromApi * 3.6;
+    if (hasNative) {
+      instant = (speedFromApi as number) * 3.6;
     } else if (lastPos) {
       const dt = (p.timestamp - lastPos.timestamp) / 1000;
       if (dt > 0.2) {
@@ -181,13 +187,31 @@ export const useVigla = create<ViglaState>((set) => ({
         instant = (d / dt) * 3.6;
       }
     }
-    speedBuffer.push(instant);
-    if (speedBuffer.length > 3) speedBuffer.shift();
-    const smoothed =
-      speedBuffer.reduce((s, v) => s + v, 0) / speedBuffer.length;
+
+    let display: number;
+    if (hasNative) {
+      // Native speed: trust it directly, no smoothing lag.
+      // Snap to 0 below 3 km/h so the readout doesn't linger at ~1-2 km/h
+      // after a real stop, and reset the delta buffer.
+      display = instant < 3 ? 0 : instant;
+      speedBuffer.length = 0;
+    } else {
+      // Delta fallback: keep a short moving average to fight GPS jitter,
+      // but snap to 0 quickly when instant is below the stop threshold.
+      if (instant < 3) {
+        speedBuffer.length = 0;
+        display = 0;
+      } else {
+        speedBuffer.push(instant);
+        if (speedBuffer.length > 2) speedBuffer.shift();
+        display = speedBuffer.reduce((s, v) => s + v, 0) / speedBuffer.length;
+      }
+    }
+
     lastPos = p;
-    set({ position: p, speedKmh: smoothed });
+    set({ position: p, speedKmh: display });
   },
+
 
   setHazards: (h) => set({ hazards: h }),
   upsertHazard: (h) =>

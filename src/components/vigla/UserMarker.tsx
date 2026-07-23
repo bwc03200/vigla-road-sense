@@ -132,9 +132,12 @@ export function UserMarker({ lat, lng, heading }: Props) {
     toHeadingRef.current =
       curHeadingRef.current + shortestDelta(curHeadingRef.current, nextHeading);
 
-    const dt = lastFixTsRef.current === 0 ? 800 : now - lastFixTsRef.current;
-    // Clamp to a realistic GPS cadence so a stale fix doesn't freeze motion.
-    durationRef.current = Math.min(2500, Math.max(400, dt));
+    const dt = lastFixTsRef.current === 0 ? 500 : now - lastFixTsRef.current;
+    // Tighter clamps than before: nav-active GPS ticks every ~1s in
+    // high-accuracy mode, and long durations feel laggy. Cap at 1.2s so
+    // the marker never trails the vehicle by more than one GPS cycle.
+    durationRef.current = Math.min(1200, Math.max(250, dt));
+
     startTsRef.current = now;
     lastFixTsRef.current = now;
 
