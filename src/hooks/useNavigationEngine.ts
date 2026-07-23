@@ -422,6 +422,9 @@ export function useNavigationEngine() {
         abortRef.current = null;
       }
       recalcInFlight.current = false;
+      announcedStepRef.current = { idx: -1, far: false, near: false };
+      arrivalAnnouncedRef.current = false;
+      cancelSpeech();
     }
   }, [navigationActive]);
 }
