@@ -241,6 +241,10 @@ export function useNavigationEngine() {
     );
     const nearDest = Math.min(destD, lastCoordD) < ARRIVAL_M;
     if (nearDest && distanceRemainingM < 100) {
+      if (useVigla.getState().preferences.voice_alerts && !arrivalAnnouncedRef.current) {
+        arrivalAnnouncedRef.current = true;
+        speak(i18n.t("navigation.instructions.arrive"), "high");
+      }
       patchNavigationIfChanged(
         navigation,
         {
@@ -258,6 +262,34 @@ export function useNavigationEngine() {
       );
       return;
     }
+
+    // Voice announcements for the upcoming maneuver.
+    if (useVigla.getState().preferences.voice_alerts && steps.length > 0) {
+      const currentStep = steps[stepIdx];
+      const instr = currentStep?.instruction;
+      const ann = announcedStepRef.current;
+      if (ann.idx !== stepIdx) {
+        ann.idx = stepIdx;
+        ann.far = false;
+        ann.near = false;
+      }
+      if (instr) {
+        if (!ann.far && distanceToNext > 150 && distanceToNext < 350) {
+          ann.far = true;
+          speak(
+            i18n.t("voice.turnIn", {
+              distance: Math.round(distanceToNext / 10) * 10,
+              instruction: instr,
+            }),
+            "low",
+          );
+        } else if (!ann.near && distanceToNext <= 60) {
+          ann.near = true;
+          speak(i18n.t("voice.turnNow", { instruction: instr }), "high");
+        }
+      }
+    }
+
 
     // Off-route detection.
     let offRouteSince = navigation.offRouteSince;
