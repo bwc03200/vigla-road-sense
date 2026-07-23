@@ -52,6 +52,7 @@ export function useAlerts(
   const clearAlert = useVigla((s) => s.clearAlert);
   const soundAlerts = useVigla((s) => s.preferences.sound_alerts);
   const vibrationAlerts = useVigla((s) => s.preferences.vibration_alerts);
+  const voiceAlerts = useVigla((s) => s.preferences.voice_alerts);
   const leadTime = useVigla((s) => s.preferences.alert_lead_time);
   const motoMode = useVigla((s) => s.preferences.moto_mode);
   const cbRef = useRef(onAlert);
