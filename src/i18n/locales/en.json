@@ -555,5 +555,10 @@
     "deniedHint": "Allow notifications in your browser settings.",
     "unsupported": "Push notifications aren't supported on this browser.",
     "previewBlocked": "Not available in preview — try the published app."
+  },
+  "voice": {
+    "hazardAhead": "{{label}} reported in {{distance}} meters",
+    "turnIn": "In {{distance}} meters, {{instruction}}",
+    "turnNow": "Now, {{instruction}}"
   }
 }

@@ -8,6 +8,7 @@ import {
   projectOnPolyline,
 } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import { speak, cancelSpeech } from "@/lib/speech";
 import type { ActiveNavigation } from "@/types/vigla";
 
 const OFF_ROUTE_M = 50;
@@ -124,6 +125,12 @@ export function useNavigationEngine() {
   const abortRef = useRef<AbortController | null>(null);
   const lastSegmentIdxRef = useRef(0);
   const lastOfflineToastAt = useRef(0);
+  const announcedStepRef = useRef<{ idx: number; far: boolean; near: boolean }>({
+    idx: -1,
+    far: false,
+    near: false,
+  });
+  const arrivalAnnouncedRef = useRef(false);
 
   useEffect(() => {
     const {
@@ -234,6 +241,10 @@ export function useNavigationEngine() {
     );
     const nearDest = Math.min(destD, lastCoordD) < ARRIVAL_M;
     if (nearDest && distanceRemainingM < 100) {
+      if (useVigla.getState().preferences.voice_alerts && !arrivalAnnouncedRef.current) {
+        arrivalAnnouncedRef.current = true;
+        speak(i18n.t("navigation.instructions.arrive"), "high");
+      }
       patchNavigationIfChanged(
         navigation,
         {
@@ -251,6 +262,34 @@ export function useNavigationEngine() {
       );
       return;
     }
+
+    // Voice announcements for the upcoming maneuver.
+    if (useVigla.getState().preferences.voice_alerts && steps.length > 0) {
+      const currentStep = steps[stepIdx];
+      const instr = currentStep?.instruction;
+      const ann = announcedStepRef.current;
+      if (ann.idx !== stepIdx) {
+        ann.idx = stepIdx;
+        ann.far = false;
+        ann.near = false;
+      }
+      if (instr) {
+        if (!ann.far && distanceToNext > 150 && distanceToNext < 350) {
+          ann.far = true;
+          speak(
+            i18n.t("voice.turnIn", {
+              distance: Math.round(distanceToNext / 10) * 10,
+              instruction: instr,
+            }),
+            "low",
+          );
+        } else if (!ann.near && distanceToNext <= 60) {
+          ann.near = true;
+          speak(i18n.t("voice.turnNow", { instruction: instr }), "high");
+        }
+      }
+    }
+
 
     // Off-route detection.
     let offRouteSince = navigation.offRouteSince;
@@ -383,6 +422,9 @@ export function useNavigationEngine() {
         abortRef.current = null;
       }
       recalcInFlight.current = false;
+      announcedStepRef.current = { idx: -1, far: false, near: false };
+      arrivalAnnouncedRef.current = false;
+      cancelSpeech();
     }
   }, [navigationActive]);
 }

@@ -126,8 +126,6 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
           description={t("settings.voiceAlertsDesc")}
           value={prefs.voice_alerts}
           onChange={(v) => update("voice_alerts", v)}
-          disabled
-          badge={t("settings.comingSoon")}
         />
         <ToggleRow
           label={t("settings.soundAlerts")}
