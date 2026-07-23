@@ -555,5 +555,10 @@
     "deniedHint": "Autorise les notifications dans les réglages de ton navigateur.",
     "unsupported": "Notifications push non prises en charge sur ce navigateur.",
     "previewBlocked": "Indisponible en aperçu — teste sur l'app publiée."
+  },
+  "voice": {
+    "hazardAhead": "{{label}} signalé dans {{distance}} mètres",
+    "turnIn": "Dans {{distance}} mètres, {{instruction}}",
+    "turnNow": "Maintenant, {{instruction}}"
   }
 }
