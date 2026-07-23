@@ -125,6 +125,12 @@ export function useNavigationEngine() {
   const abortRef = useRef<AbortController | null>(null);
   const lastSegmentIdxRef = useRef(0);
   const lastOfflineToastAt = useRef(0);
+  const announcedStepRef = useRef<{ idx: number; far: boolean; near: boolean }>({
+    idx: -1,
+    far: false,
+    near: false,
+  });
+  const arrivalAnnouncedRef = useRef(false);
 
   useEffect(() => {
     const {
