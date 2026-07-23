@@ -8,6 +8,7 @@ import {
   projectOnPolyline,
 } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import { speak, cancelSpeech } from "@/lib/speech";
 import type { ActiveNavigation } from "@/types/vigla";
 
 const OFF_ROUTE_M = 50;
