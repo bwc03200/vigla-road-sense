@@ -258,6 +258,15 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   );
 }
 
+function MapTabContainer({ children }: { children: React.ReactNode }) {
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
+  return (
+    <div className={`relative h-full w-full vigla-map-root${motoMode ? " vigla-moto-mode" : ""}`}>
+      {children}
+    </div>
+  );
+
+
 function ResumeBanner({
   label, onResume, onDismiss,
 }: { label: string; onResume: () => void; onDismiss: () => void }) {
