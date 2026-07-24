@@ -146,7 +146,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
         <h1 className="sr-only">VIGLA</h1>
 
         {tab === "map" && (
-          <div className="relative h-full w-full">
+          <MapTabContainer>
             <MapView />
             <TopBar />
             <HazardFilters />
@@ -186,7 +186,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                 onDismiss={resumePrompt.dismiss}
               />
             )}
-          </div>
+          </MapTabContainer>
+
         )}
 
         {tab === "report" && (
@@ -256,6 +257,17 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
     </div>
   );
 }
+
+function MapTabContainer({ children }: { children: React.ReactNode }) {
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
+  return (
+    <div className={`relative h-full w-full vigla-map-root${motoMode ? " vigla-moto-mode" : ""}`}>
+      {children}
+    </div>
+  );
+}
+
+
 
 function ResumeBanner({
   label, onResume, onDismiss,
