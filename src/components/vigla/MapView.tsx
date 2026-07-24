@@ -353,6 +353,7 @@ export function MapView() {
           <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
+          <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
         </>
       )}
       {navigation && navActive && route && (
