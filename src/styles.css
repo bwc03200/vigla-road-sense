@@ -181,3 +181,68 @@ html { scroll-behavior: smooth; }
   }
 }
 
+/* =========================================================================
+   Moto Mode — visual overrides scoped to the Map screen only.
+   Additive: applied only when `.vigla-moto-mode` is present on the map root.
+   Reversible instantly: removing the class restores the default appearance.
+   Does not touch global tokens, business logic, or non-map screens.
+   ========================================================================= */
+
+.vigla-map-root :is(button, a) {
+  transition: width 200ms ease-out, height 200ms ease-out,
+    background-color 200ms ease-out, color 200ms ease-out,
+    box-shadow 200ms ease-out;
+}
+
+/* Enlarge floating map buttons (zoom, fit-route, filter) from 44px → 56px
+   for glove-friendly touch targets. Icons scale proportionally. */
+.vigla-moto-mode .vigla-zoom-btn,
+.vigla-moto-mode #vigla-hazard-filters-panel ~ *,
+.vigla-moto-mode > div > button.h-11.w-11,
+.vigla-moto-mode button.vigla-zoom-btn {
+  height: 56px !important;
+  width: 56px !important;
+}
+.vigla-moto-mode .vigla-zoom-btn svg,
+.vigla-moto-mode button.h-11.w-11 svg {
+  height: 1.625rem !important;
+  width: 1.625rem !important;
+}
+/* Filter toggle (top-left) and any other 44px round floating control. */
+.vigla-moto-mode button[aria-controls="vigla-hazard-filters-panel"] {
+  height: 56px !important;
+  width: 56px !important;
+}
+.vigla-moto-mode button[aria-controls="vigla-hazard-filters-panel"] svg {
+  height: 1.625rem !important;
+  width: 1.625rem !important;
+}
+
+/* Enlarge the "Plan a route" CTA button when idle. */
+.vigla-moto-mode button.rounded-full.bg-primary {
+  padding: 1rem 1.5rem;
+  font-size: 1rem;
+}
+
+/* Contrast reinforcement on the TopBar (speed + next-hazard readout):
+   deeper text color, stronger ring, heavier shadow — still WCAG-AA on white. */
+.vigla-moto-mode .vigla-topbar-alert .text-slate-500,
+.vigla-moto-mode .vigla-topbar-alert .text-slate-900 {
+  color: #0F172A !important;
+}
+.vigla-moto-mode .vigla-topbar-alert svg {
+  color: #C2410C !important; /* orange-700, AA on white */
+}
+/* Speed widget — darker, higher-weight numerals. */
+.vigla-moto-mode .tabular-nums {
+  color: #0F172A !important;
+  font-weight: 800 !important;
+}
+
+/* Reduce visual noise: fade decorative badges (install banner, protection
+   badge) so essentials dominate. They stay clickable, just less loud. */
+.vigla-moto-mode .vigla-topbar-alert .text-slate-500 {
+  font-size: 0.8125rem;
+}
+
+
