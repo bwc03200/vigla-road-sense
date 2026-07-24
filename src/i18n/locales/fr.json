@@ -67,7 +67,8 @@
     "in": "dans {{distance}}",
     "offline": "Mode hors ligne",
     "zoomIn": "Zoomer",
-    "zoomOut": "Dézoomer"
+    "zoomOut": "Dézoomer",
+    "fitRoute": "Recentrer sur le trajet"
   },
   "filters": {
     "button": "Filtrer les zones de danger",
