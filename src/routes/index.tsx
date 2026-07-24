@@ -186,7 +186,8 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
                 onDismiss={resumePrompt.dismiss}
               />
             )}
-          </div>
+          </MapTabContainer>
+
         )}
 
         {tab === "report" && (
