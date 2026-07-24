@@ -209,6 +209,7 @@ function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
 }
 
 export function MapView() {
+  const { t } = useTranslation();
   const position = useVigla((s) => s.position);
   const hazards = useVigla((s) => s.hazards);
   const officialRadars = useVigla((s) => s.officialRadars);
