@@ -138,6 +138,33 @@ function FitRoute({ coords }: { coords: [number, number][] }) {
   return null;
 }
 
+function FitRouteButton({ coords, label }: { coords: [number, number][]; label: string }) {
+  const map = useMap();
+  if (coords.length < 2) return null;
+  return (
+    <div className="pointer-events-none absolute bottom-44 right-3 z-[600]">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() => {
+          const bounds = L.latLngBounds(coords.map(([la, ln]) => L.latLng(la, ln)));
+          map.fitBounds(bounds, { padding: [60, 60], animate: true });
+        }}
+        className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
+          <path d="M3 8V5a2 2 0 0 1 2-2h3" />
+          <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+          <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+          <path d="M21 16v3a2 2 0 0 1-2 2h-3" />
+          <circle cx="12" cy="12" r="2" />
+        </svg>
+      </button>
+    </div>
+  );
+}
+
+
 type Viewport = { north: number; south: number; east: number; west: number; zoom: number };
 
 function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
