@@ -67,7 +67,8 @@
     "in": "in {{distance}}",
     "offline": "Offline mode",
     "zoomIn": "Zoom in",
-    "zoomOut": "Zoom out"
+    "zoomOut": "Zoom out",
+    "fitRoute": "Recenter on route"
   },
   "filters": {
     "button": "Filter hazards",
