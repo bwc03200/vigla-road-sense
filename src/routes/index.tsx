@@ -146,8 +146,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
         <h1 className="sr-only">VIGLA</h1>
 
         {tab === "map" && (
-          <div className={`vigla-map-root relative h-full w-full ${useVigla.getState().preferences.moto_mode ? "" : ""}`.trim()}>
-            <MotoModeClass />
+          <MapTabContainer>
             <MapView />
             <TopBar />
             <HazardFilters />
