@@ -265,6 +265,8 @@ function MapTabContainer({ children }: { children: React.ReactNode }) {
       {children}
     </div>
   );
+}
+
 
 
 function ResumeBanner({
