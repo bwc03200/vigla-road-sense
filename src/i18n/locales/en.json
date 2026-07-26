@@ -68,7 +68,10 @@
     "offline": "Offline mode",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "fitRoute": "Recenter on route"
+    "fitRoute": "Recenter on route",
+    "recenter": "My location",
+    "pickedPoint": "Selected point",
+    "setAsDestination": "Set as destination"
   },
   "filters": {
     "button": "Filter hazards",

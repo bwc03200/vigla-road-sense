@@ -68,7 +68,10 @@
     "offline": "Mode hors ligne",
     "zoomIn": "Zoomer",
     "zoomOut": "Dézoomer",
-    "fitRoute": "Recentrer sur le trajet"
+    "fitRoute": "Recentrer sur le trajet",
+    "recenter": "Ma position",
+    "pickedPoint": "Point sélectionné",
+    "setAsDestination": "Définir comme destination"
   },
   "filters": {
     "button": "Filtrer les zones de danger",
