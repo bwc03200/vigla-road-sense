@@ -88,7 +88,7 @@ export function InstallBanner() {
   }
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[650] flex justify-center px-4">
+    <div className="vigla-install-banner pointer-events-none absolute inset-x-0 bottom-24 z-[650] flex justify-center px-4">
       <div className="pointer-events-auto flex w-full max-w-md items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 p-3 shadow-[0_10px_30px_rgba(15,23,42,0.18)] backdrop-blur">
         <div className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-primary/10 text-primary">
           <Smartphone className="h-5 w-5" />
