@@ -80,6 +80,7 @@ interface ViglaState {
   vibrationEnabled: boolean;
   preferences: UserPreferences;
   hazardFilters: HazardFilters;
+  mapFollowsUser: boolean;
 
 
 
@@ -111,6 +112,7 @@ interface ViglaState {
   setPreferences: (p: UserPreferences) => void;
   toggleHazardFilter: (k: HazardFilterKey) => void;
   setAllHazardFilters: (v: boolean) => void;
+  setMapFollowsUser: (v: boolean) => void;
 }
 
 
@@ -286,6 +288,8 @@ export const useVigla = create<ViglaState>((set) => ({
       persistHazardFilters(next);
       return { hazardFilters: next };
     }),
+  mapFollowsUser: true,
+  setMapFollowsUser: (v) => set({ mapFollowsUser: v }),
 }));
 
 
