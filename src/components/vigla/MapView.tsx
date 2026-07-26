@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
+import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, projectOnPolyline } from "@/lib/geo";
+import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
@@ -39,18 +42,46 @@ function convoyMemberIcon(name: string) {
   });
 }
 
-function Recenter({ lat, lng }: { lat: number; lng: number }) {
+function FollowUser({ lat, lng, follow, recenterKey }: { lat: number; lng: number; follow: boolean; recenterKey: number }) {
   const map = useMap();
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
       map.setView([lat, lng], 15);
       first.current = false;
-    } else {
-      // Preserve the user's current zoom — never override with a fixed value.
+      return;
+    }
+    if (follow) {
       map.panTo([lat, lng], { animate: true, duration: 0.5 });
     }
-  }, [lat, lng, map]);
+  }, [lat, lng, follow, map]);
+  // Explicit recenter tap: pan to current position regardless of follow flag.
+  useEffect(() => {
+    if (recenterKey === 0) return;
+    map.panTo([lat, lng], { animate: true, duration: 0.5 });
+    // Intentionally exclude lat/lng: only trigger on tap.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterKey]);
+  return null;
+}
+
+function InteractionTracker() {
+  const map = useMap();
+  const setFollow = useVigla((s) => s.setMapFollowsUser);
+  useMapEvents({
+    dragstart: () => setFollow(false),
+  });
+  useEffect(() => {
+    const el = map.getContainer();
+    const off = () => setFollow(false);
+    const onTouch = (e: TouchEvent) => { if (e.touches.length >= 2) setFollow(false); };
+    el.addEventListener("wheel", off, { passive: true });
+    el.addEventListener("touchstart", onTouch, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", off);
+      el.removeEventListener("touchstart", onTouch);
+    };
+  }, [map, setFollow]);
   return null;
 }
 
@@ -167,6 +198,47 @@ function FitRouteButton({ coords, label }: { coords: [number, number][]; label: 
 
 
 type Viewport = { north: number; south: number; east: number; west: number; zoom: number };
+type PendingPick = { lat: number; lng: number; label: string | null };
+
+function pendingIcon() {
+  return L.divIcon({
+    className: "vigla-pending-icon",
+    html: `<div style="width:30px;height:30px;border-radius:50%;background:#FF6B35;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-size:14px;">📍</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+  });
+}
+
+function MyLocationButton({ lat, lng, label, onRecenter }: { lat: number; lng: number; label: string; onRecenter: () => void }) {
+  const map = useMap();
+  return (
+    <div className="pointer-events-none absolute bottom-56 right-3 z-[600]">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() => {
+          map.panTo([lat, lng], { animate: true, duration: 0.5 });
+          onRecenter();
+        }}
+        className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95"
+      >
+        <LocateFixed className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
+function TapToDestination({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (e) => {
+      // Leaflet only fires `click` on the map itself: marker/popup clicks
+      // don't propagate here, and a drag suppresses the click entirely.
+      onPick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
 
 function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
   const map = useMap();
@@ -218,10 +290,17 @@ export function MapView() {
   const convoyMembers = useVigla((s) => s.convoyMembers);
   const mapTheme = useVigla((s) => s.preferences.map_theme);
   const autoRecenter = useVigla((s) => s.preferences.auto_recenter);
+  const mapFollowsUser = useVigla((s) => s.mapFollowsUser);
+  const setMapFollowsUser = useVigla((s) => s.setMapFollowsUser);
+  const setRoute = useVigla((s) => s.setRoute);
 
 
   const hazardFilters = useVigla((s) => s.hazardFilters);
   const [viewport, setViewport] = useState<Viewport | null>(null);
+  const [recenterKey, setRecenterKey] = useState(0);
+  const [pending, setPending] = useState<PendingPick | null>(null);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [routeComputing, setRouteComputing] = useState(false);
 
   const nearbyHazards = useMemo(() => {
     const filtered = hazards.filter((h) => hazardFilters[h.type] ?? true);
@@ -302,9 +381,64 @@ export function MapView() {
     !!(navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData;
   const tileKeepBuffer = saveData ? 1 : 4;
 
+  const handleMapPick = useCallback(async (lat: number, lng: number) => {
+    setPending({ lat, lng, label: null });
+    setPendingLoading(true);
+    try {
+      const url = new URL("https://nominatim.openstreetmap.org/reverse");
+      url.searchParams.set("format", "json");
+      url.searchParams.set("lat", String(lat));
+      url.searchParams.set("lon", String(lng));
+      url.searchParams.set("zoom", "18");
+      const res = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+      if (res.ok) {
+        const data = (await res.json()) as { display_name?: string };
+        setPending((p) => (p && p.lat === lat && p.lng === lng ? { ...p, label: data.display_name ?? null } : p));
+      }
+    } catch {
+      /* offline / rate-limited: fall back to coords */
+    } finally {
+      setPendingLoading(false);
+    }
+  }, []);
+
+  const confirmPendingDestination = useCallback(async () => {
+    if (!pending) return;
+    if (!position) {
+      toast.error(t("hazard.report.gpsUnavailable"));
+      return;
+    }
+    setRouteComputing(true);
+    try {
+      const result = await fetchOsrmRoute(position.lat, position.lng, pending.lat, pending.lng);
+      const label =
+        pending.label ??
+        `${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)}`;
+      const state = buildRouteState(
+        { lat: pending.lat, lng: pending.lng, label },
+        result,
+        hazards,
+      );
+      setRoute(state);
+      setPending(null);
+      toast.success(t("route.computed"), {
+        description: t("route.computedDesc", {
+          km: (state.distanceM / 1000).toFixed(1),
+          n: state.hazardIds.length,
+        }),
+      });
+    } catch {
+      toast.error(t("route.serviceUnavailable"));
+    } finally {
+      setRouteComputing(false);
+    }
+  }, [pending, position, hazards, setRoute, t]);
+
   return (
+    <>
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <ViewportTracker onChange={setViewport} />
+      <InteractionTracker />
 
       <TileLayer
         key={mapTheme}
@@ -320,7 +454,14 @@ export function MapView() {
         maxZoom={19}
       />
       <InvalidateOnResize />
-      {position && autoRecenter && !route && !navActive && <Recenter lat={position.lat} lng={position.lng} />}
+      {position && !route && !navActive && (
+        <FollowUser
+          lat={position.lat}
+          lng={position.lng}
+          follow={autoRecenter && mapFollowsUser}
+          recenterKey={recenterKey}
+        />
+      )}
       {position && autoRecenter && navActive && (
         <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
       )}
@@ -347,6 +488,21 @@ export function MapView() {
       })()}
 
       <ZoomControls />
+      {position && !navActive && (
+        <MyLocationButton
+          lat={position.lat}
+          lng={position.lng}
+          label={t("map.recenter")}
+          onRecenter={() => {
+            setMapFollowsUser(true);
+            setRecenterKey((k) => k + 1);
+          }}
+        />
+      )}
+      {!route && !navActive && <TapToDestination onPick={handleMapPick} />}
+      {pending && (
+        <Marker position={[pending.lat, pending.lng]} icon={pendingIcon()} />
+      )}
 
       {route && !navActive && (
         <>
@@ -389,5 +545,53 @@ export function MapView() {
           />
         ))}
     </MapContainer>
+    {pending && (
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[860] flex justify-center px-4">
+        <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]/10 text-[#FF6B35]">
+              <MapPin className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs uppercase tracking-wide text-slate-500">
+                {t("map.pickedPoint")}
+              </div>
+              <div className="mt-0.5 line-clamp-2 text-sm font-medium text-slate-900">
+                {pendingLoading && !pending.label ? (
+                  <span className="inline-flex items-center gap-2 text-slate-500">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {t("common.loading")}
+                  </span>
+                ) : (
+                  pending.label ?? `${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)}`
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              aria-label={t("common.close")}
+              onClick={() => setPending(null)}
+              className="rounded-lg p-1 text-slate-500 hover:bg-slate-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            disabled={routeComputing || !position}
+            onClick={confirmPendingDestination}
+            className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(255,107,53,0.35)] transition active:scale-[0.98] disabled:opacity-60"
+          >
+            {routeComputing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Navigation className="h-4 w-4" />
+            )}
+            {t("map.setAsDestination")}
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
