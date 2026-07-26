@@ -42,18 +42,46 @@ function convoyMemberIcon(name: string) {
   });
 }
 
-function Recenter({ lat, lng }: { lat: number; lng: number }) {
+function FollowUser({ lat, lng, follow, recenterKey }: { lat: number; lng: number; follow: boolean; recenterKey: number }) {
   const map = useMap();
   const first = useRef(true);
   useEffect(() => {
     if (first.current) {
       map.setView([lat, lng], 15);
       first.current = false;
-    } else {
-      // Preserve the user's current zoom — never override with a fixed value.
+      return;
+    }
+    if (follow) {
       map.panTo([lat, lng], { animate: true, duration: 0.5 });
     }
-  }, [lat, lng, map]);
+  }, [lat, lng, follow, map]);
+  // Explicit recenter tap: pan to current position regardless of follow flag.
+  useEffect(() => {
+    if (recenterKey === 0) return;
+    map.panTo([lat, lng], { animate: true, duration: 0.5 });
+    // Intentionally exclude lat/lng: only trigger on tap.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recenterKey]);
+  return null;
+}
+
+function InteractionTracker() {
+  const map = useMap();
+  const setFollow = useVigla((s) => s.setMapFollowsUser);
+  useMapEvents({
+    dragstart: () => setFollow(false),
+  });
+  useEffect(() => {
+    const el = map.getContainer();
+    const off = () => setFollow(false);
+    const onTouch = (e: TouchEvent) => { if (e.touches.length >= 2) setFollow(false); };
+    el.addEventListener("wheel", off, { passive: true });
+    el.addEventListener("touchstart", onTouch, { passive: true });
+    return () => {
+      el.removeEventListener("wheel", off);
+      el.removeEventListener("touchstart", onTouch);
+    };
+  }, [map, setFollow]);
   return null;
 }
 
