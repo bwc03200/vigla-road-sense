@@ -191,58 +191,66 @@ html { scroll-behavior: smooth; }
 .vigla-map-root :is(button, a) {
   transition: width 200ms ease-out, height 200ms ease-out,
     background-color 200ms ease-out, color 200ms ease-out,
-    box-shadow 200ms ease-out;
+    box-shadow 200ms ease-out, border-color 200ms ease-out;
 }
 
-/* Enlarge floating map buttons (zoom, fit-route, filter) from 44px → 56px
-   for glove-friendly touch targets. Icons scale proportionally. */
+/* Enlarge every floating round map control (zoom, fit-route, filter toggle)
+   from 44px → 60px for glove-friendly touch targets, and reinforce their
+   surface so they clearly stand out against the map background. */
 .vigla-moto-mode .vigla-zoom-btn,
-.vigla-moto-mode #vigla-hazard-filters-panel ~ *,
-.vigla-moto-mode > div > button.h-11.w-11,
-.vigla-moto-mode button.vigla-zoom-btn {
-  height: 56px !important;
-  width: 56px !important;
+.vigla-moto-mode button.h-11.w-11 {
+  height: 60px !important;
+  width: 60px !important;
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35) !important;
+  border: 2px solid #FF6B35 !important;
 }
 .vigla-moto-mode .vigla-zoom-btn svg,
 .vigla-moto-mode button.h-11.w-11 svg {
-  height: 1.625rem !important;
-  width: 1.625rem !important;
-}
-/* Filter toggle (top-left) and any other 44px round floating control. */
-.vigla-moto-mode button[aria-controls="vigla-hazard-filters-panel"] {
-  height: 56px !important;
-  width: 56px !important;
-}
-.vigla-moto-mode button[aria-controls="vigla-hazard-filters-panel"] svg {
-  height: 1.625rem !important;
-  width: 1.625rem !important;
+  height: 1.75rem !important;
+  width: 1.75rem !important;
+  stroke-width: 2.5 !important;
 }
 
 /* Enlarge the "Plan a route" CTA button when idle. */
 .vigla-moto-mode button.rounded-full.bg-primary {
-  padding: 1rem 1.5rem;
-  font-size: 1rem;
+  padding: 1.125rem 1.75rem !important;
+  font-size: 1.0625rem !important;
+  box-shadow: 0 12px 28px rgba(255, 107, 53, 0.55) !important;
 }
 
-/* Contrast reinforcement on the TopBar (speed + next-hazard readout):
-   deeper text color, stronger ring, heavier shadow — still WCAG-AA on white. */
+/* TopBar — the single most-important HUD readout. Solid surface, heavy
+   orange ring, boosted numerals for glanceability at speed. */
+.vigla-moto-mode .vigla-topbar-alert {
+  background-color: #FFFFFF !important;
+  border: 2px solid #FF6B35 !important;
+  border-radius: 1rem;
+  padding: 0.5rem 0.875rem;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+}
 .vigla-moto-mode .vigla-topbar-alert .text-slate-500,
 .vigla-moto-mode .vigla-topbar-alert .text-slate-900 {
   color: #0F172A !important;
+  font-weight: 700 !important;
 }
 .vigla-moto-mode .vigla-topbar-alert svg {
-  color: #C2410C !important; /* orange-700, AA on white */
+  color: #C2410C !important;
+  height: 1.375rem !important;
+  width: 1.375rem !important;
 }
-/* Speed widget — darker, higher-weight numerals. */
 .vigla-moto-mode .tabular-nums {
   color: #0F172A !important;
   font-weight: 800 !important;
+  letter-spacing: -0.01em;
 }
 
-/* Reduce visual noise: fade decorative badges (install banner, protection
-   badge) so essentials dominate. They stay clickable, just less loud. */
-.vigla-moto-mode .vigla-topbar-alert .text-slate-500 {
-  font-size: 0.8125rem;
+/* Reduce visual noise: hide decorative badges (install prompt, protection
+   badge, offline chip) so essentials dominate the HUD. */
+.vigla-moto-mode .vigla-install-banner,
+.vigla-moto-mode .vigla-protection-badge,
+.vigla-moto-mode .vigla-offline-badge {
+  display: none !important;
 }
 
 

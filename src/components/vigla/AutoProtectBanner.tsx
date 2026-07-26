@@ -67,7 +67,7 @@ export function ProtectionBadge() {
   if (!navigation?.protectionOnly || navigation.arrived) return null;
   const durMin = Math.max(1, Math.round((Date.now() - new Date(navigation.startedAt).getTime()) / 60000));
   return (
-    <div className="pointer-events-none absolute inset-x-0 top-3 z-[500] flex justify-center px-3">
+    <div className="vigla-protection-badge pointer-events-none absolute inset-x-0 top-3 z-[500] flex justify-center px-3">
       <div className="pointer-events-auto flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-white shadow-[0_8px_24px_rgba(15,23,42,0.25)]">
         <Shield className="h-4 w-4 text-[#FF6B35]" />
         <span className="text-xs font-semibold uppercase tracking-widest">{t("autoProtect.badge")}</span>
