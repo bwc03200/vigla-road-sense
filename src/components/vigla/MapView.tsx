@@ -198,6 +198,47 @@ function FitRouteButton({ coords, label }: { coords: [number, number][]; label: 
 
 
 type Viewport = { north: number; south: number; east: number; west: number; zoom: number };
+type PendingPick = { lat: number; lng: number; label: string | null };
+
+function pendingIcon() {
+  return L.divIcon({
+    className: "vigla-pending-icon",
+    html: `<div style="width:30px;height:30px;border-radius:50%;background:#FF6B35;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-size:14px;">📍</div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+  });
+}
+
+function MyLocationButton({ lat, lng, label, onRecenter }: { lat: number; lng: number; label: string; onRecenter: () => void }) {
+  const map = useMap();
+  return (
+    <div className="pointer-events-none absolute bottom-56 right-3 z-[600]">
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() => {
+          map.panTo([lat, lng], { animate: true, duration: 0.5 });
+          onRecenter();
+        }}
+        className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95"
+      >
+        <LocateFixed className="h-5 w-5" />
+      </button>
+    </div>
+  );
+}
+
+function TapToDestination({ onPick }: { onPick: (lat: number, lng: number) => void }) {
+  useMapEvents({
+    click: (e) => {
+      // Leaflet only fires `click` on the map itself: marker/popup clicks
+      // don't propagate here, and a drag suppresses the click entirely.
+      onPick(e.latlng.lat, e.latlng.lng);
+    },
+  });
+  return null;
+}
+
 
 function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
   const map = useMap();
