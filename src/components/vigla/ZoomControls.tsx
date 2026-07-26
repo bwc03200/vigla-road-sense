@@ -3,10 +3,12 @@ import { useMap } from "react-leaflet";
 import { useTranslation } from "react-i18next";
 import { ZoomIn, ZoomOut } from "lucide-react";
 import { vibrateTap } from "@/lib/haptics";
+import { useVigla } from "@/lib/vigla-store";
 
 export function ZoomControls() {
   const { t } = useTranslation();
   const map = useMap();
+  const setFollow = useVigla((s) => s.setMapFollowsUser);
   const [zoom, setZoom] = useState(() => map.getZoom());
   const min = map.getMinZoom();
   const max = map.getMaxZoom();
@@ -28,7 +30,7 @@ export function ZoomControls() {
         type="button"
         aria-label={t("map.zoomIn")}
         disabled={atMax}
-        onClick={() => { vibrateTap(); map.zoomIn(); }}
+        onClick={() => { vibrateTap(); setFollow(false); map.zoomIn(); }}
         className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95 disabled:pointer-events-none disabled:opacity-40"
       >
         <ZoomIn className="h-5 w-5" />
@@ -37,7 +39,7 @@ export function ZoomControls() {
         type="button"
         aria-label={t("map.zoomOut")}
         disabled={atMin}
-        onClick={() => { vibrateTap(); map.zoomOut(); }}
+        onClick={() => { vibrateTap(); setFollow(false); map.zoomOut(); }}
         className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95 disabled:pointer-events-none disabled:opacity-40"
       >
         <ZoomOut className="h-5 w-5" />
