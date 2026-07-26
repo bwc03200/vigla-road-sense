@@ -249,10 +249,17 @@ export function MapView() {
   const convoyMembers = useVigla((s) => s.convoyMembers);
   const mapTheme = useVigla((s) => s.preferences.map_theme);
   const autoRecenter = useVigla((s) => s.preferences.auto_recenter);
+  const mapFollowsUser = useVigla((s) => s.mapFollowsUser);
+  const setMapFollowsUser = useVigla((s) => s.setMapFollowsUser);
+  const setRoute = useVigla((s) => s.setRoute);
 
 
   const hazardFilters = useVigla((s) => s.hazardFilters);
   const [viewport, setViewport] = useState<Viewport | null>(null);
+  const [recenterKey, setRecenterKey] = useState(0);
+  const [pending, setPending] = useState<PendingPick | null>(null);
+  const [pendingLoading, setPendingLoading] = useState(false);
+  const [routeComputing, setRouteComputing] = useState(false);
 
   const nearbyHazards = useMemo(() => {
     const filtered = hazards.filter((h) => hazardFilters[h.type] ?? true);
