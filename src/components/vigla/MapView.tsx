@@ -381,9 +381,64 @@ export function MapView() {
     !!(navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData;
   const tileKeepBuffer = saveData ? 1 : 4;
 
+  const handleMapPick = useCallback(async (lat: number, lng: number) => {
+    setPending({ lat, lng, label: null });
+    setPendingLoading(true);
+    try {
+      const url = new URL("https://nominatim.openstreetmap.org/reverse");
+      url.searchParams.set("format", "json");
+      url.searchParams.set("lat", String(lat));
+      url.searchParams.set("lon", String(lng));
+      url.searchParams.set("zoom", "18");
+      const res = await fetch(url.toString(), { headers: { Accept: "application/json" } });
+      if (res.ok) {
+        const data = (await res.json()) as { display_name?: string };
+        setPending((p) => (p && p.lat === lat && p.lng === lng ? { ...p, label: data.display_name ?? null } : p));
+      }
+    } catch {
+      /* offline / rate-limited: fall back to coords */
+    } finally {
+      setPendingLoading(false);
+    }
+  }, []);
+
+  const confirmPendingDestination = useCallback(async () => {
+    if (!pending) return;
+    if (!position) {
+      toast.error(t("hazard.report.gpsUnavailable"));
+      return;
+    }
+    setRouteComputing(true);
+    try {
+      const result = await fetchOsrmRoute(position.lat, position.lng, pending.lat, pending.lng);
+      const label =
+        pending.label ??
+        `${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)}`;
+      const state = buildRouteState(
+        { lat: pending.lat, lng: pending.lng, label },
+        result,
+        hazards,
+      );
+      setRoute(state);
+      setPending(null);
+      toast.success(t("route.computed"), {
+        description: t("route.computedDesc", {
+          km: (state.distanceM / 1000).toFixed(1),
+          n: state.hazardIds.length,
+        }),
+      });
+    } catch {
+      toast.error(t("route.serviceUnavailable"));
+    } finally {
+      setRouteComputing(false);
+    }
+  }, [pending, position, hazards, setRoute, t]);
+
   return (
+    <>
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <ViewportTracker onChange={setViewport} />
+      <InteractionTracker />
 
       <TileLayer
         key={mapTheme}
@@ -399,7 +454,14 @@ export function MapView() {
         maxZoom={19}
       />
       <InvalidateOnResize />
-      {position && autoRecenter && !route && !navActive && <Recenter lat={position.lat} lng={position.lng} />}
+      {position && !route && !navActive && (
+        <FollowUser
+          lat={position.lat}
+          lng={position.lng}
+          follow={autoRecenter && mapFollowsUser}
+          recenterKey={recenterKey}
+        />
+      )}
       {position && autoRecenter && navActive && (
         <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
       )}
@@ -426,6 +488,21 @@ export function MapView() {
       })()}
 
       <ZoomControls />
+      {position && !navActive && (
+        <MyLocationButton
+          lat={position.lat}
+          lng={position.lng}
+          label={t("map.recenter")}
+          onRecenter={() => {
+            setMapFollowsUser(true);
+            setRecenterKey((k) => k + 1);
+          }}
+        />
+      )}
+      {!route && !navActive && <TapToDestination onPick={handleMapPick} />}
+      {pending && (
+        <Marker position={[pending.lat, pending.lng]} icon={pendingIcon()} />
+      )}
 
       {route && !navActive && (
         <>
@@ -468,5 +545,53 @@ export function MapView() {
           />
         ))}
     </MapContainer>
+    {pending && (
+      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[860] flex justify-center px-4">
+        <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]/10 text-[#FF6B35]">
+              <MapPin className="h-5 w-5" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="text-xs uppercase tracking-wide text-slate-500">
+                {t("map.pickedPoint")}
+              </div>
+              <div className="mt-0.5 line-clamp-2 text-sm font-medium text-slate-900">
+                {pendingLoading && !pending.label ? (
+                  <span className="inline-flex items-center gap-2 text-slate-500">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {t("common.loading")}
+                  </span>
+                ) : (
+                  pending.label ?? `${pending.lat.toFixed(5)}, ${pending.lng.toFixed(5)}`
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
+              aria-label={t("common.close")}
+              onClick={() => setPending(null)}
+              className="rounded-lg p-1 text-slate-500 hover:bg-slate-100"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <button
+            type="button"
+            disabled={routeComputing || !position}
+            onClick={confirmPendingDestination}
+            className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-semibold text-primary-foreground shadow-[0_8px_24px_rgba(255,107,53,0.35)] transition active:scale-[0.98] disabled:opacity-60"
+          >
+            {routeComputing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Navigation className="h-4 w-4" />
+            )}
+            {t("map.setAsDestination")}
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
