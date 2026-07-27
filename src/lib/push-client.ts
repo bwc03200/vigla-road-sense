@@ -1,4 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logEvent } from "@/lib/logger";
+
+const logWarn = (event: string, ctx?: Record<string, unknown>) => logEvent(event, "warning", ctx);
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
@@ -97,7 +100,9 @@ export async function disablePush(userId: string): Promise<void> {
       const endpoint = sub.endpoint;
       try {
         await sub.unsubscribe();
-      } catch {}
+      } catch (err) {
+        logWarn("push.unsubscribe.fail", { message: err instanceof Error ? err.message : String(err) });
+      }
       const db = supabase as unknown as { from: (t: string) => any };
       await db.from("push_subscriptions").delete().eq("endpoint", endpoint).eq("user_id", userId);
     }

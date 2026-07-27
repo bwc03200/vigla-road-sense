@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { HazardReport, HazardType } from "@/types/vigla";
+import { logError } from "@/lib/logger";
 
 const QUEUE_KEY = "vigla:offline-hazard-queue";
 
@@ -89,7 +90,8 @@ export async function syncQueuedHazards(): Promise<number> {
         // Drop optimistic pending row; realtime/next fetch will bring the real one.
         useVigla.getState().removeHazard(item.tempId);
       }
-    } catch {
+    } catch (err) {
+      logError(err, { source: "offline.hazard.sync", tempId: item.tempId }, "offline.hazard.sync.fail");
       remaining.push(item);
     }
   }
