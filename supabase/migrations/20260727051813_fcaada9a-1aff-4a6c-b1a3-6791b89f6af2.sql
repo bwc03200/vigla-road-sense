@@ -1,0 +1,1 @@
+SELECT cron.unschedule('weekly-official-radars-import');
