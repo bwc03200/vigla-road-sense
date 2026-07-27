@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { HazardReport, HazardType } from "@/types/vigla";
+import { logError } from "@/lib/logger";
 
 const QUEUE_KEY = "vigla:offline-hazard-queue";
 

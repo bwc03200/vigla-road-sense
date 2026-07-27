@@ -1,4 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
+import { logEvent } from "@/lib/logger";
+
+const logWarn = (event: string, ctx?: Record<string, unknown>) => logEvent(event, "warning", ctx);
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
