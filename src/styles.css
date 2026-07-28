@@ -191,20 +191,22 @@ html { scroll-behavior: smooth; }
 .vigla-map-root :is(button, a) {
   transition: width 200ms ease-out, height 200ms ease-out,
     background-color 200ms ease-out, color 200ms ease-out,
-    box-shadow 200ms ease-out, border-color 200ms ease-out;
+    box-shadow 200ms ease-out, border-color 200ms ease-out, border-radius 200ms ease-out;
 }
 
-/* Enlarge every floating round map control (zoom, fit-route, filter toggle)
-   from 44px → 60px for glove-friendly touch targets, and reinforce their
-   surface so they clearly stand out against the map background. */
+/* Enlarge every floating map control (zoom, fit-route, my-location) for
+   glove-friendly touch targets. Square shape with rounded corners, solid
+   dark surface, no thick orange border — orange is reserved for primary
+   actions and alerts. */
 .vigla-moto-mode .vigla-zoom-btn,
 .vigla-moto-mode button.h-11.w-11 {
   height: 60px !important;
   width: 60px !important;
-  background-color: #0F172A !important;
-  color: #FFFFFF !important;
+  border-radius: 16px !important;
+  background-color: var(--foreground) !important;
+  color: var(--card) !important;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35) !important;
-  border: 2px solid #FF6B35 !important;
+  border: none !important;
 }
 .vigla-moto-mode .vigla-zoom-btn svg,
 .vigla-moto-mode button.h-11.w-11 svg {
@@ -220,33 +222,34 @@ html { scroll-behavior: smooth; }
   box-shadow: 0 12px 28px rgba(255, 107, 53, 0.55) !important;
 }
 
-/* TopBar — the single most-important HUD readout. Solid surface, heavy
-   orange ring, boosted numerals for glanceability at speed. */
+/* TopBar — the single most-important HUD readout. Solid light surface,
+   rounded corners, boosted numerals for glanceability at speed. No heavy
+   orange ring around the whole block; orange stays on the hazard icon. */
 .vigla-moto-mode .vigla-topbar-alert {
-  background-color: #FFFFFF !important;
-  border: 2px solid #FF6B35 !important;
+  background-color: var(--card) !important;
+  border: none !important;
   border-radius: 1rem;
   padding: 0.5rem 0.875rem;
   box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
 }
 .vigla-moto-mode .vigla-topbar-alert .text-slate-500,
 .vigla-moto-mode .vigla-topbar-alert .text-slate-900 {
-  color: #0F172A !important;
+  color: var(--foreground) !important;
   font-weight: 700 !important;
 }
 .vigla-moto-mode .vigla-topbar-alert svg {
-  color: #C2410C !important;
+  color: var(--primary) !important;
   height: 1.375rem !important;
   width: 1.375rem !important;
 }
 .vigla-moto-mode .tabular-nums {
-  color: #0F172A !important;
+  color: var(--foreground) !important;
   font-weight: 800 !important;
   letter-spacing: -0.01em;
 }
 
 /* Reduce visual noise: hide decorative badges (install prompt, protection
-   badge, offline chip) so essentials dominate the HUD. */
+    badge, offline chip) so essentials dominate the HUD. */
 .vigla-moto-mode .vigla-install-banner,
 .vigla-moto-mode .vigla-protection-badge,
 .vigla-moto-mode .vigla-offline-badge {
