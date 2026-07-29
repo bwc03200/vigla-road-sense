@@ -491,7 +491,7 @@ export function MapView() {
       })()}
 
       <ZoomControls />
-      {position && !navActive && (
+      {position && (!navActive || motoMode) && (
         <MyLocationButton
           lat={position.lat}
           lng={position.lng}
