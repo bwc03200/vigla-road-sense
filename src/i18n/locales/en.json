@@ -201,6 +201,17 @@
     "saved": "Roadbook saved",
     "removeFailed": "Couldn't delete"
   },
+  "motoNav": {
+    "etaLabel": "ARRIVAL",
+    "gpsStrong": "GPS strong",
+    "gpsFair": "GPS fair",
+    "gpsWeak": "GPS weak",
+    "gpsNone": "No GPS",
+    "radars": "{{n}} radars",
+    "saverOn": "Data saver on",
+    "saverOff": "Data saver off",
+    "reportHazard": "Report a hazard"
+  },
   "convoy": {
     "title": "Convoy",
     "activeConvoy": "Active convoy",
