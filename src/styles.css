@@ -183,77 +183,128 @@ html { scroll-behavior: smooth; }
 
 /* =========================================================================
    Moto Mode — visual overrides scoped to the Map screen only.
-   Additive: applied only when `.vigla-moto-mode` is present on the map root.
-   Reversible instantly: removing the class restores the default appearance.
-   Does not touch global tokens, business logic, or non-map screens.
+   Applied only when `.vigla-moto-mode` is on the map root. Reversible
+   instantly. Does not touch global tokens, business logic, or other screens.
    ========================================================================= */
 
-.vigla-map-root :is(button, a) {
-  transition: width 200ms ease-out, height 200ms ease-out,
-    background-color 200ms ease-out, color 200ms ease-out,
-    box-shadow 200ms ease-out, border-color 200ms ease-out, border-radius 200ms ease-out;
+.vigla-moto-mode {
+  --moto-bg: #0b0d10;
+  --moto-panel: #14171b;
+  --moto-orange: #ff6a1a;
+  --moto-orange-strong: #ff8a3d;
+  --moto-text: #eef1f4;
+  --moto-text-dim: #8b9299;
+  --moto-line: #242830;
+  background-color: var(--moto-bg);
 }
 
-/* Enlarge every floating map control (zoom, fit-route, my-location) for
-   glove-friendly touch targets. Square shape with rounded corners, solid
-   dark surface, no thick orange border — orange is reserved for primary
-   actions and alerts. */
+.vigla-map-root :is(button, a),
+.vigla-map-root .leaflet-container {
+  transition: background-color 200ms ease-out, color 200ms ease-out,
+    box-shadow 200ms ease-out, border-color 200ms ease-out,
+    border-radius 200ms ease-out, width 200ms ease-out, height 200ms ease-out;
+}
+
+/* Floating map controls: square, dark panel, subtle border, no orange ring. */
 .vigla-moto-mode .vigla-zoom-btn,
 .vigla-moto-mode button.h-11.w-11 {
-  height: 60px !important;
-  width: 60px !important;
+  height: 56px !important;
+  width: 56px !important;
   border-radius: 16px !important;
-  background-color: var(--foreground) !important;
-  color: var(--card) !important;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.35) !important;
-  border: none !important;
+  background-color: var(--moto-panel) !important;
+  color: var(--moto-text) !important;
+  border: 1px solid var(--moto-line) !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+  ring-color: transparent !important;
 }
 .vigla-moto-mode .vigla-zoom-btn svg,
 .vigla-moto-mode button.h-11.w-11 svg {
-  height: 1.75rem !important;
-  width: 1.75rem !important;
-  stroke-width: 2.5 !important;
+  height: 1.6rem !important;
+  width: 1.6rem !important;
+  color: var(--moto-text) !important;
+  stroke-width: 2.25 !important;
 }
 
-/* Enlarge the "Plan a route" CTA button when idle. */
-.vigla-moto-mode button.rounded-full.bg-primary {
-  padding: 1.125rem 1.75rem !important;
-  font-size: 1.0625rem !important;
-  box-shadow: 0 12px 28px rgba(255, 107, 53, 0.55) !important;
-}
-
-/* TopBar — the single most-important HUD readout. Solid light surface,
-   rounded corners, boosted numerals for glanceability at speed. No heavy
-   orange ring around the whole block; orange stays on the hazard icon. */
-.vigla-moto-mode .vigla-topbar-alert {
-  background-color: var(--card) !important;
+/* Primary action button (Plan a route / Report) — the ONLY solid orange. */
+.vigla-moto-mode button.rounded-full.bg-primary,
+.vigla-moto-mode .vigla-primary-action {
+  background-color: var(--moto-orange) !important;
+  color: #ffffff !important;
+  border-radius: 18px !important;
+  font-weight: 700 !important;
   border: none !important;
-  border-radius: 1rem;
-  padding: 0.5rem 0.875rem;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 8px 22px rgba(255, 106, 26, 0.45) !important;
 }
-.vigla-moto-mode .vigla-topbar-alert .text-slate-500,
+
+/* HUD TopBar — speed + status readout. Dark panel, generous rounding. */
+.vigla-moto-mode .vigla-topbar-alert {
+  background-color: var(--moto-panel) !important;
+  border: 1px solid var(--moto-line) !important;
+  border-radius: 18px !important;
+  padding: 0.625rem 1rem !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
+  color: var(--moto-text) !important;
+}
+.vigla-moto-mode .vigla-topbar-alert .text-slate-500 {
+  color: var(--moto-text-dim) !important;
+  text-transform: uppercase;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.06em;
+  font-weight: 600 !important;
+}
 .vigla-moto-mode .vigla-topbar-alert .text-slate-900 {
-  color: var(--foreground) !important;
+  color: var(--moto-text) !important;
   font-weight: 700 !important;
 }
 .vigla-moto-mode .vigla-topbar-alert svg {
-  color: var(--primary) !important;
+  color: var(--moto-orange-strong) !important;
   height: 1.375rem !important;
   width: 1.375rem !important;
 }
+.vigla-moto-mode .vigla-topbar-alert .tabular-nums,
 .vigla-moto-mode .tabular-nums {
-  color: var(--foreground) !important;
-  font-weight: 800 !important;
-  letter-spacing: -0.01em;
+  color: var(--moto-orange-strong) !important;
+  font-weight: 700 !important;
+  font-size: 2.75rem !important;
+  line-height: 1 !important;
+  letter-spacing: -0.02em;
 }
 
-/* Reduce visual noise: hide decorative badges (install prompt, protection
-    badge, offline chip) so essentials dominate the HUD. */
+/* Navigation instruction panel (bottom) */
+.vigla-moto-mode .vigla-nav-overlay,
+.vigla-moto-mode .vigla-nav-panel {
+  background-color: var(--moto-panel) !important;
+  border-top: 1px solid var(--moto-line) !important;
+  color: var(--moto-text) !important;
+}
+.vigla-moto-mode .vigla-nav-panel svg {
+  color: var(--moto-orange-strong) !important;
+  height: 2.4rem !important;
+  width: 2.4rem !important;
+}
+.vigla-moto-mode .vigla-nav-instruction {
+  color: var(--moto-text) !important;
+  font-weight: 700 !important;
+  font-size: 1.5rem !important;
+}
+.vigla-moto-mode .vigla-nav-distance {
+  color: var(--moto-text-dim) !important;
+  font-size: 0.85rem !important;
+}
+
+/* Marker halos: brighter ring for readability on dark tiles. */
+.vigla-moto-mode .vigla-destination-icon > div,
+.vigla-moto-mode .vigla-pending-icon > div,
+.vigla-moto-mode .vigla-convoy-icon > div {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6), 0 0 0 3px var(--moto-text) !important;
+}
+
+/* Reduce visual noise */
 .vigla-moto-mode .vigla-install-banner,
 .vigla-moto-mode .vigla-protection-badge,
 .vigla-moto-mode .vigla-offline-badge {
   display: none !important;
 }
+
 
 
