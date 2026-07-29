@@ -201,6 +201,17 @@
     "saved": "Roadbook enregistré",
     "removeFailed": "Suppression impossible"
   },
+  "motoNav": {
+    "etaLabel": "ARRIVÉE",
+    "gpsStrong": "GPS bon",
+    "gpsFair": "GPS moyen",
+    "gpsWeak": "GPS faible",
+    "gpsNone": "Pas de GPS",
+    "radars": "{{n}} radars",
+    "saverOn": "Éco données activée",
+    "saverOff": "Éco données inactive",
+    "reportHazard": "Signaler un danger"
+  },
   "convoy": {
     "title": "Convoi",
     "activeConvoy": "Convoi actif",
