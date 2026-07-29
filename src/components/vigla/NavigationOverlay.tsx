@@ -120,15 +120,6 @@ export function NavigationOverlay() {
   const gpsWeak =
     navAgeMs > 10000 && (position ? now - position.timestamp > 10000 : true);
 
-  function stop() {
-    setNavigation(null);
-    setRoute(null);
-  }
-
-  if (navigation.arrived) {
-    return <ArrivalScreen onClose={stop} />;
-  }
-
   const step = navigation.steps[navigation.currentStepIndex];
 
   return (
@@ -147,7 +138,7 @@ export function NavigationOverlay() {
             </div>
           </div>
           <button
-            onClick={stop}
+            onClick={stopMoto}
             aria-label={t("navigation.stop")}
             className="rounded-lg p-1.5 text-white/70 hover:bg-white/10 hover:text-white"
           >
