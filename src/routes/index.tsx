@@ -31,6 +31,7 @@ import { InstallBanner } from "@/components/vigla/InstallPWA";
 import { BottomTabs, type Tab } from "@/components/vigla/BottomTabs";
 import { RoutePlanner } from "@/components/vigla/RoutePlanner";
 import { NavigationOverlay, StartTripBar } from "@/components/vigla/NavigationOverlay";
+import { MotoNavigationOverlay } from "@/components/vigla/MotoNavigationOverlay";
 import { NavigationErrorBoundary } from "@/components/vigla/NavigationErrorBoundary";
 import { CrashAlertOverlay } from "@/components/vigla/CrashAlertOverlay";
 import { AutoProtectBanner, ProtectionBadge } from "@/components/vigla/AutoProtectBanner";
@@ -175,6 +176,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
             >
               <StartTripBar />
               <NavigationOverlay />
+              <MotoNavGate onReport={() => setTab("report")} />
             </NavigationErrorBoundary>
             {navActive && convoy && <ConvoyReactionBar userId={userId} />}
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
@@ -266,6 +268,15 @@ function MapTabContainer({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+
+function MotoNavGate({ onReport }: { onReport: () => void }) {
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
+  const navigation = useVigla((s) => s.navigation);
+  const navActive = !!navigation && !navigation.arrived;
+  if (!motoMode || !navActive) return null;
+  return <MotoNavigationOverlay onReport={onReport} />;
+}
+
 
 
 

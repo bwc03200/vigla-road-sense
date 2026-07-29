@@ -308,3 +308,16 @@ html { scroll-behavior: smooth; }
 
 
 
+
+/* Moto Mode: user position marker becomes an orange pin with a thick white
+   halo, replacing the default blue triangle arrow while the mode is active. */
+.vigla-moto-mode .vigla-user-arrow {
+  border: none !important;
+  width: 22px !important;
+  height: 22px !important;
+  background: var(--moto-orange) !important;
+  border-radius: 50% !important;
+  box-shadow:
+    0 0 0 4px #ffffff,
+    0 4px 12px rgba(0, 0, 0, 0.6) !important;
+}
