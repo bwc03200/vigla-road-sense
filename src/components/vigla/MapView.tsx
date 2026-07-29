@@ -289,6 +289,7 @@ export function MapView() {
   const navigation = useVigla((s) => s.navigation);
   const convoyMembers = useVigla((s) => s.convoyMembers);
   const mapTheme = useVigla((s) => s.preferences.map_theme);
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
   const autoRecenter = useVigla((s) => s.preferences.auto_recenter);
   const mapFollowsUser = useVigla((s) => s.mapFollowsUser);
   const setMapFollowsUser = useVigla((s) => s.setMapFollowsUser);
