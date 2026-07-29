@@ -269,6 +269,15 @@ function MapTabContainer({ children }: { children: React.ReactNode }) {
   );
 }
 
+function MotoNavGate({ onReport }: { onReport: () => void }) {
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
+  const navigation = useVigla((s) => s.navigation);
+  const navActive = !!navigation && !navigation.arrived;
+  if (!motoMode || !navActive) return null;
+  return <MotoNavigationOverlay onReport={onReport} />;
+}
+
+
 
 
 function ResumeBanner({
