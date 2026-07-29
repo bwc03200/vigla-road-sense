@@ -176,6 +176,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
             >
               <StartTripBar />
               <NavigationOverlay />
+              <MotoNavGate onReport={() => setTab("report")} />
             </NavigationErrorBoundary>
             {navActive && convoy && <ConvoyReactionBar userId={userId} />}
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
