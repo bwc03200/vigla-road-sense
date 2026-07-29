@@ -88,6 +88,7 @@ export function NavigationOverlay() {
   const position = useVigla((s) => s.position);
   const setNavigation = useVigla((s) => s.setNavigation);
   const setRoute = useVigla((s) => s.setRoute);
+  const motoMode = useVigla((s) => s.preferences.moto_mode);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -97,6 +98,20 @@ export function NavigationOverlay() {
   }, [navigation]);
 
   if (!navigation || !route) return null;
+
+  function stopMoto() {
+    setNavigation(null);
+    setRoute(null);
+  }
+
+  if (navigation.arrived) {
+    return <ArrivalScreen onClose={stopMoto} />;
+  }
+
+  // In Moto Mode the dedicated MotoNavigationOverlay renders the HUD/chips/
+  // instruction panel. We still needed to run useNavigationEngine above and
+  // handle arrival — but skip the standard dark instruction card + TopBar.
+  if (motoMode) return null;
 
   const startedAtMs = navigation.startedAt
     ? new Date(navigation.startedAt).getTime()
