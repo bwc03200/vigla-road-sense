@@ -442,9 +442,11 @@ export function MapView() {
       <InteractionTracker />
 
       <TileLayer
-        key={mapTheme}
+        key={motoMode ? "moto-dark" : mapTheme}
         url={
-          mapTheme === "dark"
+          motoMode
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : mapTheme === "dark"
             ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
             : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
         }
