@@ -386,6 +386,36 @@ export type Database = {
         }
         Relationships: []
       }
+      trip_summaries: {
+        Row: {
+          avg_speed: number
+          created_at: string
+          distance_km: number
+          duration_seconds: number
+          hazards_count: number
+          id: string
+          user_id: string
+        }
+        Insert: {
+          avg_speed?: number
+          created_at?: string
+          distance_km?: number
+          duration_seconds?: number
+          hazards_count?: number
+          id?: string
+          user_id: string
+        }
+        Update: {
+          avg_speed?: number
+          created_at?: string
+          distance_km?: number
+          duration_seconds?: number
+          hazards_count?: number
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_preferences: {
         Row: {
           alert_lead_time: string
