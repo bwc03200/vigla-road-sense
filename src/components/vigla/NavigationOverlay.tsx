@@ -1,12 +1,35 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigation, X, AlertTriangle, Loader2, SignalLow } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TopBar } from "@/components/vigla/TopBar";
+import {
+  TripSummaryScreen,
+  type TripSummaryData,
+} from "@/components/vigla/TripSummaryScreen";
+import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import { useNavigationEngine } from "@/hooks/useNavigationEngine";
 import { formatDistance } from "@/lib/geo";
 import type { ActiveNavigation } from "@/types/vigla";
+
+async function persistTripSummary(data: TripSummaryData) {
+  try {
+    const { data: auth } = await supabase.auth.getUser();
+    const userId = auth.user?.id;
+    if (!userId) return;
+    await supabase.from("trip_summaries").insert({
+      user_id: userId,
+      distance_km: +data.distanceKm.toFixed(3),
+      duration_seconds: data.durationSeconds,
+      avg_speed: +data.avgSpeed.toFixed(1),
+      hazards_count: data.hazardsCount,
+    });
+  } catch {
+    // Non-blocking: a failed summary write must never break navigation teardown.
+  }
+}
+
 
 function formatDuration(s: number, minLabel: string): string {
   const m = Math.max(0, Math.round(s / 60));
