@@ -149,13 +149,6 @@ export function NavigationOverlay() {
     setRoute(null);
   }, [setNavigation, setRoute]);
 
-  // Auto-close the arrival screen into the summary after a short delay.
-  useEffect(() => {
-    if (!navigation?.arrived) return;
-    const id = window.setTimeout(endTrip, 8000);
-    return () => window.clearTimeout(id);
-  }, [navigation?.arrived, endTrip]);
-
   if (summary) {
     return <TripSummaryScreen summary={summary} onClose={() => setSummary(null)} />;
   }

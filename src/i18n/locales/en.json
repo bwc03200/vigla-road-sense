@@ -137,6 +137,9 @@
     }
   },
   "navigation": {
+    "tripSummaryTitle": "Trip summary",
+    "avgSpeed": "Avg. speed",
+    "hazardsCrossed": "Hazards",
     "in": "In {{distance}}",
     "followRoad": "Follow the road",
     "stop": "Stop navigation",
