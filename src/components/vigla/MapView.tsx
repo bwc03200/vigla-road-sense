@@ -85,7 +85,7 @@ function InteractionTracker() {
   return null;
 }
 
-function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; heading: number | null }) {
+function NavigationFollow({ lat, lng }: { lat: number; lng: number; heading?: number | null }) {
   const map = useMap();
   const firstFollow = useRef(true);
   useEffect(() => {
@@ -98,17 +98,15 @@ function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; hea
       map.setView([lat, lng], map.getZoom(), { animate: true });
     }
   }, [lat, lng, map]);
+  // The map is always north-up. Heading is shown only by the UserMarker icon.
   useEffect(() => {
     const el = map.getContainer();
-    const h = heading ?? 0;
-    el.style.transition = "transform 400ms ease-out";
-    el.style.transform = `rotate(${-h}deg)`;
-    return () => {
-      el.style.transform = "";
-    };
-  }, [heading, map]);
+    el.style.transform = "";
+    el.style.transition = "";
+  }, [map]);
   return null;
 }
+
 
 function InvalidateOnResize() {
   const map = useMap();
