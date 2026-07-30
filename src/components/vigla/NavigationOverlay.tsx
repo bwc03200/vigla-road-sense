@@ -89,6 +89,7 @@ export function NavigationOverlay() {
   const setNavigation = useVigla((s) => s.setNavigation);
   const setRoute = useVigla((s) => s.setRoute);
   const motoMode = useVigla((s) => s.preferences.moto_mode);
+  const [summary, setSummary] = useState<TripSummaryData | null>(null);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -97,21 +98,60 @@ export function NavigationOverlay() {
     return () => window.clearInterval(id);
   }, [navigation]);
 
+  const endTrip = useCallback(() => {
+    const { navigation: nav, route: rt } = useVigla.getState();
+    if (nav && rt) {
+      const traveledM = Math.max(
+        0,
+        (rt.distanceM ?? 0) - (nav.arrived ? 0 : nav.distanceRemainingM),
+      );
+      const durationSeconds = Math.max(
+        0,
+        Math.round((Date.now() - new Date(nav.startedAt).getTime()) / 1000),
+      );
+      if (traveledM >= 500 && durationSeconds >= 120) {
+        const distanceKm = traveledM / 1000;
+        const avgSpeed = durationSeconds > 0 ? (distanceKm / durationSeconds) * 3600 : 0;
+        const data: TripSummaryData = {
+          distanceKm,
+          durationSeconds,
+          avgSpeed,
+          hazardsCount: nav.alertsReceived ?? 0,
+        };
+        setSummary(data);
+        void persistTripSummary(data);
+      }
+    }
+    setNavigation(null);
+    setRoute(null);
+  }, [setNavigation, setRoute]);
+
+  // Auto-close the arrival screen into the summary after a short delay.
+  useEffect(() => {
+    if (!navigation?.arrived) return;
+    const id = window.setTimeout(endTrip, 8000);
+    return () => window.clearTimeout(id);
+  }, [navigation?.arrived, endTrip]);
+
+  if (summary) {
+    return <TripSummaryScreen summary={summary} onClose={() => setSummary(null)} />;
+  }
+
   if (!navigation || !route) return null;
 
   function stopMoto() {
-    setNavigation(null);
-    setRoute(null);
+    endTrip();
   }
 
   if (navigation.arrived) {
-    return <ArrivalScreen onClose={stopMoto} />;
+    return <ArrivalScreen onClose={endTrip} />;
   }
 
   // In Moto Mode the dedicated MotoNavigationOverlay renders the HUD/chips/
   // instruction panel. We still needed to run useNavigationEngine above and
   // handle arrival — but skip the standard dark instruction card + TopBar.
   if (motoMode) return null;
+
 
   const startedAtMs = navigation.startedAt
     ? new Date(navigation.startedAt).getTime()
