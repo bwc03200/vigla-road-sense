@@ -137,6 +137,9 @@
     }
   },
   "navigation": {
+    "tripSummaryTitle": "Résumé du trajet",
+    "avgSpeed": "Vitesse moy.",
+    "hazardsCrossed": "Dangers",
     "in": "Dans {{distance}}",
     "followRoad": "Suivez la route",
     "stop": "Arrêter la navigation",
