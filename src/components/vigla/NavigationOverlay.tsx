@@ -8,6 +8,7 @@ import {
   type TripSummaryData,
 } from "@/components/vigla/TripSummaryScreen";
 import { supabase } from "@/integrations/supabase/client";
+import { TrafficSignalAhead } from "@/components/vigla/TrafficSignalAhead";
 import { useVigla } from "@/lib/vigla-store";
 import { useNavigationEngine } from "@/hooks/useNavigationEngine";
 import { formatDistance } from "@/lib/geo";
@@ -212,6 +213,7 @@ export function NavigationOverlay() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            <TrafficSignalAhead />
             {navigation.recalculating && (
               <span className="flex items-center gap-1 text-white/70">
                 <Loader2 className="h-3 w-3 animate-spin" />

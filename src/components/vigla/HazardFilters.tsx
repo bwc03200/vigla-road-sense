@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Filter, X, Camera, Radar, Siren, Construction, TriangleAlert, Turtle, Eye, EyeOff, CircleDot, Droplet, PawPrint, AlertOctagon } from "lucide-react";
+import { Filter, X, Camera, Radar, Siren, Construction, TriangleAlert, Turtle, Eye, EyeOff, CircleDot, Droplet, PawPrint, AlertOctagon, TrafficCone } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { HAZARD_FILTER_KEYS, type HazardFilterKey } from "@/types/vigla";
 
@@ -23,6 +23,8 @@ export function HazardFilters() {
   const filters = useVigla((s) => s.hazardFilters);
   const toggle = useVigla((s) => s.toggleHazardFilter);
   const setAll = useVigla((s) => s.setAllHazardFilters);
+  const showSignals = useVigla((s) => s.showTrafficSignals);
+  const toggleSignals = useVigla((s) => s.toggleTrafficSignals);
 
   const activeCount = HAZARD_FILTER_KEYS.filter((k) => filters[k]).length;
   const allOn = activeCount === HAZARD_FILTER_KEYS.length;
@@ -100,6 +102,12 @@ export function HazardFilters() {
                 />
               );
             })}
+            <FilterChip
+              label={t("trafficSignals.filter")}
+              icon={<TrafficCone className="h-3.5 w-3.5" />}
+              active={showSignals}
+              onClick={toggleSignals}
+            />
           </div>
         </div>
       )}

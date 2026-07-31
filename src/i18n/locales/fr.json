@@ -93,7 +93,6 @@
       "chaussee_deformee": "Chaussée déformée"
     }
   },
-
   "route": {
     "planner": "Itinéraire",
     "cta": "Itinéraire",
@@ -578,5 +577,9 @@
     "hazardAhead": "{{label}} signalé dans {{distance}} mètres",
     "turnIn": "Dans {{distance}} mètres, {{instruction}}",
     "turnNow": "Maintenant, {{instruction}}"
+  },
+  "trafficSignals": {
+    "filter": "Feux tricolores",
+    "ahead": "Feu dans {{distance}}"
   }
 }

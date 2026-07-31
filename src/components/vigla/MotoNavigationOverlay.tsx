@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { AlertTriangle, ArrowUp, Radar, Signal, SignalLow, SignalMedium, Wifi } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { formatDistance, formatSpeed } from "@/lib/geo";
+import { TrafficSignalAhead } from "@/components/vigla/TrafficSignalAhead";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -123,6 +124,9 @@ export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
               {t("navigation.in", { distance: formatDistance(navigation.distanceToNextManeuverM) })}
               <span className="mx-2 opacity-40">·</span>
               {(navigation.distanceRemainingM / 1000).toFixed(1)} km
+            </div>
+            <div className="mt-2">
+              <TrafficSignalAhead moto />
             </div>
           </div>
         </div>
