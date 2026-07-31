@@ -162,14 +162,15 @@ export function useNavigationEngine() {
     const durationRemainingS =
       avgSpeed > 0 ? distanceRemainingM / avgSpeed : 0;
 
-    const consumedCoords: [number, number][] = [
-      ...coords.slice(0, proj.segmentIndex + 1),
-      proj.point,
-    ];
-    const remainingCoords: [number, number][] = [
-      proj.point,
-      ...coords.slice(proj.segmentIndex + 1),
-    ];
+    // IMPORTANT: the drawn geometry must NOT include the GPS-projected point.
+    // Injecting proj.point made the head/tail vertex move (and the arrays get a
+    // new identity) on every GPS tick, so Leaflet redrew the polyline ~1x/sec
+    // with a jittering first vertex => visible "vibration". We slice strictly on
+    // route vertices, so the arrays only change when the segment index changes,
+    // and coordsEqual() below then keeps the previous references in the store.
+    const consumedCoords: [number, number][] = coords.slice(0, proj.segmentIndex + 1);
+    const remainingCoords: [number, number][] = coords.slice(proj.segmentIndex);
+
 
     const steps = Array.isArray(navigation.steps) ? navigation.steps : [];
     // Advance the "upcoming maneuver" step index based on distance traveled
