@@ -43,6 +43,12 @@ export interface TripHistory {
   alerts_received: number;
 }
 
+export interface TrafficSignal {
+  id: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface OfficialRadar {
   id: string;
   latitude: number;

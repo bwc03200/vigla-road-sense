@@ -11,6 +11,7 @@ import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
 import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
+import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
 
 
 
@@ -370,6 +371,32 @@ export function MapView() {
   }, [officialRadars, viewport, navigation]);
 
 
+  const showSignals = useVigla((s) => s.showTrafficSignals);
+  const trafficSignals = useVigla((s) => s.trafficSignals);
+  const signalBBox = useMemo(() => {
+    if (!viewport || viewport.zoom < MIN_ZOOM_FOR_SIGNALS) return null;
+    const latPad = (viewport.north - viewport.south) * 0.15;
+    const lngPad = (viewport.east - viewport.west) * 0.15;
+    return {
+      south: viewport.south - latPad,
+      north: viewport.north + latPad,
+      west: viewport.west - lngPad,
+      east: viewport.east + lngPad,
+    };
+  }, [viewport]);
+  useTrafficSignals(signalBBox, viewport?.zoom ?? 0, showSignals);
+
+  const visibleSignals = useMemo(() => {
+    if (!showSignals || !signalBBox) return [];
+    return trafficSignals.filter(
+      (s) =>
+        s.latitude <= signalBBox.north &&
+        s.latitude >= signalBBox.south &&
+        s.longitude <= signalBBox.east &&
+        s.longitude >= signalBBox.west,
+    );
+  }, [trafficSignals, signalBBox, showSignals]);
+
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
@@ -536,6 +563,7 @@ export function MapView() {
       ))}
 
       <OfficialRadarCluster radars={nearbyOfficial} />
+      <OfficialRadarCluster radars={visibleSignals} variant="signal" />
       {convoyMembers
         .filter((m) => m.last_lat != null && m.last_lng != null)
         .map((m) => (

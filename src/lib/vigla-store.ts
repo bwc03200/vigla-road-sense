@@ -3,6 +3,17 @@ import { getVibrationEnabled, setVibrationEnabled as persistVibration } from "@/
 import { DEFAULT_HAZARD_FILTERS, HAZARD_FILTER_KEYS } from "@/types/vigla";
 
 const HAZARD_FILTERS_LS_KEY = "vigla:hazardFilters";
+const SIGNALS_LS_KEY = "vigla:showTrafficSignals";
+
+function loadShowSignals(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    const raw = window.localStorage.getItem(SIGNALS_LS_KEY);
+    return raw === null ? true : JSON.parse(raw) === true;
+  } catch {
+    return true;
+  }
+}
 
 function loadHazardFilters(): import("@/types/vigla").HazardFilters {
   if (typeof window === "undefined") return { ...DEFAULT_HAZARD_FILTERS };
@@ -38,6 +49,7 @@ import type {
   CrashState,
   EmergencyContact,
   HazardFilterKey,
+  TrafficSignal,
   HazardFilters,
   HazardReport,
   OfficialRadar,
@@ -61,6 +73,8 @@ interface ViglaState {
   speedKmh: number;
   hazards: HazardReport[];
   officialRadars: OfficialRadar[];
+  trafficSignals: TrafficSignal[];
+  showTrafficSignals: boolean;
   online: boolean;
   alertedIds: Set<string>;
   geoError: string | null;
@@ -90,6 +104,8 @@ interface ViglaState {
   upsertHazard: (h: HazardReport) => void;
   removeHazard: (id: string) => void;
   setOfficialRadars: (r: OfficialRadar[]) => void;
+  setTrafficSignals: (s: TrafficSignal[]) => void;
+  toggleTrafficSignals: () => void;
   setOnline: (v: boolean) => void;
   markAlerted: (id: string) => void;
   clearAlert: (id: string) => void;
@@ -135,6 +151,8 @@ export const useVigla = create<ViglaState>((set) => ({
   speedKmh: 0,
   hazards: [],
   officialRadars: [],
+  trafficSignals: [],
+  showTrafficSignals: loadShowSignals(),
   online: true,
   alertedIds: new Set<string>(),
   geoError: null,
@@ -227,6 +245,17 @@ export const useVigla = create<ViglaState>((set) => ({
   removeHazard: (id) =>
     set((s) => ({ hazards: s.hazards.filter((x) => x.id !== id) })),
   setOfficialRadars: (r) => set({ officialRadars: r }),
+  setTrafficSignals: (v) => set({ trafficSignals: v }),
+  toggleTrafficSignals: () =>
+    set((s) => {
+      const next = !s.showTrafficSignals;
+      try {
+        window.localStorage.setItem(SIGNALS_LS_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return { showTrafficSignals: next };
+    }),
   setOnline: (v) => set({ online: v }),
   markAlerted: (id) =>
     set((s) => {

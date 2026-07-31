@@ -93,7 +93,6 @@
       "chaussee_deformee": "Damaged road"
     }
   },
-
   "route": {
     "planner": "Route",
     "cta": "Route",
@@ -578,5 +577,9 @@
     "hazardAhead": "{{label}} reported in {{distance}} meters",
     "turnIn": "In {{distance}} meters, {{instruction}}",
     "turnNow": "Now, {{instruction}}"
+  },
+  "trafficSignals": {
+    "filter": "Traffic lights",
+    "ahead": "Traffic light in {{distance}}"
   }
 }

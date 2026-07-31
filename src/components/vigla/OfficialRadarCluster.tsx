@@ -4,7 +4,8 @@ import L from "leaflet";
 import "leaflet.markercluster";
 import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
-import type { OfficialRadar } from "@/types/vigla";
+
+type ClusterPoint = { id: string; latitude: number; longitude: number };
 
 /**
  * Imperative marker-cluster layer for official radars.
@@ -15,7 +16,13 @@ import type { OfficialRadar } from "@/types/vigla";
  * - `disableClusteringAtZoom: 15` → individual pins when the user is zoomed in.
  * - Hazard markers and the user marker stay outside this layer (unclustered).
  */
-export function OfficialRadarCluster({ radars }: { radars: OfficialRadar[] }) {
+export function OfficialRadarCluster({
+  radars,
+  variant = "radar",
+}: {
+  radars: ClusterPoint[];
+  variant?: "radar" | "signal";
+}) {
   const map = useMap();
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
@@ -58,12 +65,20 @@ export function OfficialRadarCluster({ radars }: { radars: OfficialRadar[] }) {
 
     // Add new markers.
     const toAdd: L.Marker[] = [];
-    const icon = L.divIcon({
-      className: "vigla-official-radar-icon",
-      html: `<div style="width:32px;height:32px;border-radius:8px;background:#3B82F6;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 2px #ffffff;color:white;font-size:14px;font-weight:700;">R</div>`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-    });
+    const icon =
+      variant === "signal"
+        ? L.divIcon({
+            className: "vigla-traffic-signal-icon",
+            html: `<div style="width:24px;height:24px;border-radius:6px;background:#0F172A;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:2px 0;box-shadow:0 2px 8px rgba(15,23,42,.3),0 0 0 2px #ffffff;"><span style="width:6px;height:6px;border-radius:50%;background:#EF4444;"></span><span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;"></span><span style="width:6px;height:6px;border-radius:50%;background:#22C55E;"></span></div>`,
+            iconSize: [24, 24],
+            iconAnchor: [12, 12],
+          })
+        : L.divIcon({
+            className: "vigla-official-radar-icon",
+            html: `<div style="width:32px;height:32px;border-radius:8px;background:#3B82F6;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.25),0 0 0 2px #ffffff;color:white;font-size:14px;font-weight:700;">R</div>`,
+            iconSize: [32, 32],
+            iconAnchor: [16, 16],
+          });
     for (const r of radars) {
       if (existing.has(r.id)) continue;
       const m = L.marker([r.latitude, r.longitude], { icon, interactive: false });
@@ -71,7 +86,7 @@ export function OfficialRadarCluster({ radars }: { radars: OfficialRadar[] }) {
       toAdd.push(m);
     }
     if (toAdd.length) group.addLayers(toAdd);
-  }, [radars]);
+  }, [radars, variant]);
 
   return null;
 }
