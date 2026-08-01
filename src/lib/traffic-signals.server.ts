@@ -18,10 +18,14 @@ export interface SignalNode {
   longitude: number;
 }
 
+// Public Overpass mirrors, tried in order: the main instance frequently
+// answers 429/504 for shared server IPs.
 const ENDPOINTS = [
-  "https://overpass-api.de/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass-api.de/api/interpreter",
 ];
+
 
 export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNode[]> {
   const q = `[out:json][timeout:25];node["highway"="traffic_signals"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});out skel qt 800;`;
