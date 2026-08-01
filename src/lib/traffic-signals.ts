@@ -65,7 +65,9 @@ export async function fetchTrafficSignals(
   try {
     // Routed through a server function: direct browser calls to Overpass are
     // blocked from the app origin (`TypeError: Failed to fetch`).
-    const signals = (await getTrafficSignals({ data: bbox })) as TrafficSignal[];
+    const res = await getTrafficSignals({ data: bbox });
+    if (!res.ok) throw new Error(res.error);
+    const signals: TrafficSignal[] = res.signals;
     lastBBox = bbox;
     logEvent(
       "traffic-signals: fetched",
