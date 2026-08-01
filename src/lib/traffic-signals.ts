@@ -54,7 +54,8 @@ export async function fetchTrafficSignals(
   signal?: AbortSignal,
 ): Promise<TrafficSignal[] | null> {
   if (inFlight) return null;
-  if (bboxCovers(lastBBox, bbox)) return null;
+  // Already covered: serve the cached rows so callers stop retrying.
+  if (bboxCovers(lastBBox, bbox)) return loadCachedSignals()?.signals ?? [];
   const now = Date.now();
   if (now - lastRequestAt < MIN_INTERVAL_MS) return null;
 
