@@ -1,9 +1,10 @@
 import type { TrafficSignal } from "@/types/vigla";
 import { logError, logEvent } from "@/lib/logger";
+import { getTrafficSignals } from "@/lib/traffic-signals.functions";
 
 const CACHE_KEY = "vigla:traffic-signals-cache";
 const MIN_INTERVAL_MS = 6000; // Overpass public API is rate-limited.
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+
 
 export interface SignalBBox {
   south: number;
