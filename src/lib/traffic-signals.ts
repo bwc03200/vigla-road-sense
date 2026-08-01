@@ -1,4 +1,5 @@
 import type { TrafficSignal } from "@/types/vigla";
+import { logError, logEvent } from "@/lib/logger";
 
 const CACHE_KEY = "vigla:traffic-signals-cache";
 const MIN_INTERVAL_MS = 6000; // Overpass public API is rate-limited.
