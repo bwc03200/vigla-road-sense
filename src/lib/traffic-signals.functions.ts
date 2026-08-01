@@ -1,16 +1,21 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { queryTrafficSignals } from "./traffic-signals.server";
 
 export const getTrafficSignals = createServerFn({ method: "POST" })
-  .inputValidator((data) =>
-    z
-      .object({
-        south: z.number(),
-        west: z.number(),
-        north: z.number(),
-        east: z.number(),
-      })
-      .parse(data),
-  )
-  .handler(async ({ data }) => queryTrafficSignals(data));
+  .inputValidator((data: unknown) => data as Record<string, number>)
+  .handler(async ({ data }) => {
+    try {
+      const signals = await queryTrafficSignals({
+        south: Number(data.south),
+        west: Number(data.west),
+        north: Number(data.north),
+        east: Number(data.east),
+      });
+      return { ok: true as const, signals };
+    } catch (err) {
+      return {
+        ok: false as const,
+        error: err instanceof Error ? err.message : String(err),
+      };
+    }
+  });
