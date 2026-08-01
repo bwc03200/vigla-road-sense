@@ -30,17 +30,29 @@ export function useTrafficSignals(
 
   useEffect(() => {
     if (!enabled || !bbox || zoom < MIN_ZOOM_FOR_SIGNALS) return;
-    const ctrl = new AbortController();
     let cancelled = false;
-    // Small debounce so a pan gesture doesn't fire per moveend burst.
-    const timer = window.setTimeout(async () => {
-      const rows = await fetchTrafficSignals(bbox, ctrl.signal);
-      if (!cancelled && rows) setTrafficSignals(rows);
-    }, 700);
+    let timer = 0;
+
+    // Poll until we actually get rows: fetchTrafficSignals returns null when
+    // throttled or already covered, and the previous one-shot debounce meant a
+    // single throttled attempt (very common while the map recenters) left the
+    // layer permanently empty. We never abort the request — an aborted fetch
+    // wastes the Overpass quota and returns nothing.
+    const attempt = async () => {
+      const rows = await fetchTrafficSignals(bbox);
+      if (cancelled) return;
+      if (rows) {
+        setTrafficSignals(rows);
+        return;
+      }
+      timer = window.setTimeout(attempt, 3000);
+    };
+    timer = window.setTimeout(attempt, 700);
+
     return () => {
       cancelled = true;
       window.clearTimeout(timer);
-      ctrl.abort();
     };
   }, [bbox, zoom, enabled, setTrafficSignals]);
+
 }
