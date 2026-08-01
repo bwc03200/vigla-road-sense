@@ -52,7 +52,6 @@ export function bboxCovers(outer: SignalBBox | null, inner: SignalBBox): boolean
  */
 export async function fetchTrafficSignals(
   bbox: SignalBBox,
-  signal?: AbortSignal,
 ): Promise<TrafficSignal[] | null> {
   if (inFlight) return null;
   // Already covered: serve the cached rows so callers stop retrying.
@@ -62,21 +61,11 @@ export async function fetchTrafficSignals(
 
   lastRequestAt = now;
   inFlight = true;
-  const q = `[out:json][timeout:25];node["highway"="traffic_signals"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});out skel qt 800;`;
+  logEvent("traffic-signals: request", "info", { bbox }, "traffic-signals-req");
   try {
-    const res = await fetch(OVERPASS_URL, {
-      method: "POST",
-      body: "data=" + encodeURIComponent(q),
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      signal,
-    });
-    if (!res.ok) throw new Error(`overpass ${res.status}`);
-    const data = (await res.json()) as {
-      elements?: { id: number; lat: number; lon: number }[];
-    };
-    const signals: TrafficSignal[] = (data.elements ?? [])
-      .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
-      .map((e) => ({ id: `ts-${e.id}`, latitude: e.lat, longitude: e.lon }));
+    // Routed through a server function: direct browser calls to Overpass are
+    // blocked from the app origin (`TypeError: Failed to fetch`).
+    const signals = (await getTrafficSignals({ data: bbox })) as TrafficSignal[];
     lastBBox = bbox;
     logEvent(
       "traffic-signals: fetched",
@@ -94,15 +83,13 @@ export async function fetchTrafficSignals(
     }
     return signals;
   } catch (err) {
-    // A failed/aborted attempt must not lock the throttle window, otherwise a
-    // pan gesture (which aborts the in-flight request) blocks every retry.
+    // A failed attempt must not lock the throttle window.
     lastRequestAt = 0;
-    if (!(err instanceof DOMException && err.name === "AbortError")) {
-      logError(err, { scope: "overpass-traffic-signals" }, "traffic-signals-fail");
-    }
+    logError(err, { scope: "overpass-traffic-signals" }, "traffic-signals-fail");
     return null;
   } finally {
     inFlight = false;
   }
+
 }
 
