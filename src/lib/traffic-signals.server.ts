@@ -33,11 +33,9 @@ export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNod
 
   for (const url of ENDPOINTS) {
     try {
-      const res = await fetch(url, {
-        method: "POST",
-        body: "data=" + encodeURIComponent(q),
+      const res = await fetch(`${url}?data=${encodeURIComponent(q)}`, {
+        method: "GET",
         headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
           // Overpass rejects/limits clients without an identifying UA.
           "User-Agent": "VIGLA/1.0 (traffic-signals; https://vigla-road-sense.lovable.app)",
           Accept: "application/json",
