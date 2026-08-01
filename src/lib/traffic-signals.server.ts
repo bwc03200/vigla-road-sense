@@ -29,7 +29,7 @@ const ENDPOINTS = [
 
 export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNode[]> {
   const q = `[out:json][timeout:25];node["highway"="traffic_signals"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});out skel qt 800;`;
-  let lastError: unknown = null;
+  const failures: string[] = [];
 
   for (const url of ENDPOINTS) {
     try {
@@ -38,7 +38,7 @@ export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNod
         body: "data=" + encodeURIComponent(q),
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
       });
-      if (!res.ok) throw new Error(`overpass ${res.status}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as {
         elements?: { id: number; lat: number; lon: number }[];
       };
@@ -46,8 +46,10 @@ export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNod
         .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
         .map((e) => ({ id: `ts-${e.id}`, latitude: e.lat, longitude: e.lon }));
     } catch (err) {
-      lastError = err;
+      const host = new URL(url).host;
+      failures.push(`${host}: ${err instanceof Error ? err.message : String(err)}`);
     }
   }
-  throw lastError instanceof Error ? lastError : new Error("overpass unreachable");
+  throw new Error(`overpass unreachable — ${failures.join(" | ")}`);
 }
+
