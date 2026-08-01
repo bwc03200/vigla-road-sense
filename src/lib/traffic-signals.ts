@@ -1,4 +1,5 @@
 import type { TrafficSignal } from "@/types/vigla";
+import { logError, logEvent } from "@/lib/logger";
 
 const CACHE_KEY = "vigla:traffic-signals-cache";
 const MIN_INTERVAL_MS = 6000; // Overpass public API is rate-limited.
@@ -53,7 +54,8 @@ export async function fetchTrafficSignals(
   signal?: AbortSignal,
 ): Promise<TrafficSignal[] | null> {
   if (inFlight) return null;
-  if (bboxCovers(lastBBox, bbox)) return null;
+  // Already covered: serve the cached rows so callers stop retrying.
+  if (bboxCovers(lastBBox, bbox)) return loadCachedSignals()?.signals ?? [];
   const now = Date.now();
   if (now - lastRequestAt < MIN_INTERVAL_MS) return null;
 
@@ -67,7 +69,7 @@ export async function fetchTrafficSignals(
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
       signal,
     });
-    if (!res.ok) throw new Error("overpass");
+    if (!res.ok) throw new Error(`overpass ${res.status}`);
     const data = (await res.json()) as {
       elements?: { id: number; lat: number; lon: number }[];
     };
@@ -75,6 +77,12 @@ export async function fetchTrafficSignals(
       .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
       .map((e) => ({ id: `ts-${e.id}`, latitude: e.lat, longitude: e.lon }));
     lastBBox = bbox;
+    logEvent(
+      "traffic-signals: fetched",
+      "info",
+      { count: signals.length },
+      "traffic-signals-ok",
+    );
     try {
       localStorage.setItem(
         CACHE_KEY,
@@ -84,9 +92,16 @@ export async function fetchTrafficSignals(
       /* quota */
     }
     return signals;
-  } catch {
+  } catch (err) {
+    // A failed/aborted attempt must not lock the throttle window, otherwise a
+    // pan gesture (which aborts the in-flight request) blocks every retry.
+    lastRequestAt = 0;
+    if (!(err instanceof DOMException && err.name === "AbortError")) {
+      logError(err, { scope: "overpass-traffic-signals" }, "traffic-signals-fail");
+    }
     return null;
   } finally {
     inFlight = false;
   }
 }
+
