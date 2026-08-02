@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
 import {
   fetchTrafficSignals,
@@ -33,31 +33,29 @@ export function useTrafficSignals(
     if (cached?.signals?.length) setTrafficSignals(cached.signals);
   }, [setTrafficSignals]);
 
-  useEffect(() => {
-    if (!enabled || !bbox || zoom < MIN_ZOOM_FOR_SIGNALS) return;
-    let cancelled = false;
-    let timer = 0;
+  // Latest viewport kept in a ref: a moving GPS position changes `bbox` every
+  // second, and restarting a debounce timer on each change meant the fetch
+  // never fired while driving (signals only loaded on a perfectly still map).
+  const latest = useRef({ bbox, zoom, enabled });
+  latest.current = { bbox, zoom, enabled };
 
-    // Poll until we actually get rows: fetchTrafficSignals returns null when
-    // throttled or already covered, and the previous one-shot debounce meant a
-    // single throttled attempt (very common while the map recenters) left the
-    // layer permanently empty. We never abort the request — an aborted fetch
-    // wastes the Overpass quota and returns nothing.
-    const attempt = async () => {
-      const rows = await fetchTrafficSignals(bbox);
-      if (cancelled) return;
-      if (rows) {
-        setTrafficSignals(rows);
-        return;
-      }
-      timer = window.setTimeout(attempt, 3000);
-    };
-    timer = window.setTimeout(attempt, 700);
+  useEffect(() => {
+    let cancelled = false;
+    // Single long-lived poller: it always reads the *current* bbox, so panning
+    // to any new area (Lyon, Marseille, rural) triggers a fresh Overpass query
+    // as soon as the throttle window allows. fetchTrafficSignals() itself
+    // skips already-covered areas, so this is cheap.
+    const timer = window.setInterval(async () => {
+      const { bbox: b, zoom: z, enabled: on } = latest.current;
+      if (!on || !b || z < MIN_ZOOM_FOR_SIGNALS) return;
+      const rows = await fetchTrafficSignals(b);
+      if (!cancelled && rows) setTrafficSignals(rows);
+    }, 2000);
 
     return () => {
       cancelled = true;
-      window.clearTimeout(timer);
+      window.clearInterval(timer);
     };
-  }, [bbox, zoom, enabled, setTrafficSignals]);
+  }, [setTrafficSignals]);
 
 }

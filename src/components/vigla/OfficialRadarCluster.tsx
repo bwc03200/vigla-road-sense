@@ -19,9 +19,12 @@ type ClusterPoint = { id: string; latitude: number; longitude: number };
 export function OfficialRadarCluster({
   radars,
   variant = "radar",
+  dark = false,
 }: {
   radars: ClusterPoint[];
   variant?: "radar" | "signal";
+  /** Theme hint only — never gates the layer (signals work in both modes). */
+  dark?: boolean;
 }) {
   const map = useMap();
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
@@ -32,10 +35,11 @@ export function OfficialRadarCluster({
       markerClusterGroup: (opts: L.MarkerClusterGroupOptions) => L.MarkerClusterGroup;
     }).markerClusterGroup({
       chunkedLoading: true,
-      disableClusteringAtZoom: 15,
+      // Signals are far denser than radars → keep them clustered longer.
+      disableClusteringAtZoom: variant === "signal" ? 17 : 15,
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
-      maxClusterRadius: 60,
+      maxClusterRadius: variant === "signal" ? 80 : 60,
     });
     clusterRef.current = group;
     group.addTo(map);
@@ -44,7 +48,7 @@ export function OfficialRadarCluster({
       clusterRef.current = null;
       markersRef.current.clear();
     };
-  }, [map]);
+  }, [map, variant]);
 
   useEffect(() => {
     const group = clusterRef.current;
@@ -65,11 +69,13 @@ export function OfficialRadarCluster({
 
     // Add new markers.
     const toAdd: L.Marker[] = [];
+    const signalRing = dark ? "#242830" : "#ffffff";
+    const signalBg = dark ? "#14171b" : "#0F172A";
     const icon =
       variant === "signal"
         ? L.divIcon({
             className: "vigla-traffic-signal-icon",
-            html: `<div style="width:24px;height:24px;border-radius:6px;background:#0F172A;display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:2px 0;box-shadow:0 2px 8px rgba(15,23,42,.3),0 0 0 2px #ffffff;"><span style="width:6px;height:6px;border-radius:50%;background:#EF4444;"></span><span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;"></span><span style="width:6px;height:6px;border-radius:50%;background:#22C55E;"></span></div>`,
+            html: `<div style="width:24px;height:24px;border-radius:6px;background:${signalBg};display:flex;flex-direction:column;align-items:center;justify-content:space-evenly;padding:2px 0;box-shadow:0 2px 8px rgba(15,23,42,.3),0 0 0 2px ${signalRing};"><span style="width:6px;height:6px;border-radius:50%;background:#EF4444;"></span><span style="width:6px;height:6px;border-radius:50%;background:#F59E0B;"></span><span style="width:6px;height:6px;border-radius:50%;background:#22C55E;"></span></div>`,
             iconSize: [24, 24],
             iconAnchor: [12, 12],
           })
@@ -79,6 +85,8 @@ export function OfficialRadarCluster({
             iconSize: [32, 32],
             iconAnchor: [16, 16],
           });
+    // Theme flip: refresh icons of markers already on the map.
+    if (variant === "signal") for (const m of existing.values()) m.setIcon(icon);
     for (const r of radars) {
       if (existing.has(r.id)) continue;
       const m = L.marker([r.latitude, r.longitude], { icon, interactive: false });
@@ -86,7 +94,7 @@ export function OfficialRadarCluster({
       toAdd.push(m);
     }
     if (toAdd.length) group.addLayers(toAdd);
-  }, [radars, variant]);
+  }, [radars, variant, dark]);
 
   return null;
 }
