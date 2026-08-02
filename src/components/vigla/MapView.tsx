@@ -563,7 +563,7 @@ export function MapView() {
       ))}
 
       <OfficialRadarCluster radars={nearbyOfficial} />
-      <OfficialRadarCluster radars={visibleSignals} variant="signal" />
+      <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
       {convoyMembers
         .filter((m) => m.last_lat != null && m.last_lng != null)
         .map((m) => (

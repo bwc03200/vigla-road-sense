@@ -34,6 +34,7 @@ export function useTrafficSignals(
   }, [setTrafficSignals]);
 
   useEffect(() => {
+    console.log("[dbg-signals]", { enabled, bbox: !!bbox, zoom });
     if (!enabled || !bbox || zoom < MIN_ZOOM_FOR_SIGNALS) return;
     let cancelled = false;
     let timer = 0;
