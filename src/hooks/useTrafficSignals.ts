@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
 import {
   fetchTrafficSignals,
