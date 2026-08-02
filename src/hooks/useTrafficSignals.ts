@@ -6,8 +6,13 @@ import {
   type SignalBBox,
 } from "@/lib/traffic-signals";
 
-/** Zoom threshold below which we don't query Overpass at all. */
-export const MIN_ZOOM_FOR_SIGNALS = 15;
+/**
+ * Zoom threshold below which we don't query Overpass at all.
+ * 13 (not 15): the map's default/idle zoom sits below 15, so signals never
+ * loaded until the user manually zoomed in twice. Clustering keeps the
+ * marker count manageable at these wider zooms.
+ */
+export const MIN_ZOOM_FOR_SIGNALS = 13;
 
 /**
  * Keeps `trafficSignals` in the store in sync with the visible map area.
