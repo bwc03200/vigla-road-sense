@@ -45,12 +45,15 @@ export function useTrafficSignals(
     // to any new area (Lyon, Marseille, rural) triggers a fresh Overpass query
     // as soon as the throttle window allows. fetchTrafficSignals() itself
     // skips already-covered areas, so this is cheap.
-    const timer = window.setInterval(async () => {
+    const tick = async () => {
       const { bbox: b, zoom: z, enabled: on } = latest.current;
       if (!on || !b || z < MIN_ZOOM_FOR_SIGNALS) return;
       const rows = await fetchTrafficSignals(b);
       if (!cancelled && rows) setTrafficSignals(rows);
-    }, 2000);
+    };
+    // Kick off as soon as the map reports a viewport, then keep polling.
+    void tick();
+    const timer = window.setInterval(tick, 2000);
 
     return () => {
       cancelled = true;
