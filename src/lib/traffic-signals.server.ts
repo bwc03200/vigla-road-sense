@@ -18,13 +18,18 @@ export interface SignalNode {
   longitude: number;
 }
 
-// Public Overpass mirrors, tried in order: the main instance frequently
-// answers 429/504 for shared server IPs.
+// Public Overpass mirrors, tried in order. The main instance is first: the
+// community mirrors below were answering with error pages after ~15s each,
+// pushing a single lookup past 30s (markers never appeared while driving).
 const ENDPOINTS = [
-  "https://overpass.private.coffee/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
 ];
+
+/** Per-mirror budget: fail fast instead of stalling the whole lookup. */
+const MIRROR_TIMEOUT_MS = 9000;
+
 
 
 export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNode[]> {
