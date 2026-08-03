@@ -18,13 +18,18 @@ export interface SignalNode {
   longitude: number;
 }
 
-// Public Overpass mirrors, tried in order: the main instance frequently
-// answers 429/504 for shared server IPs.
+// Public Overpass mirrors, tried in order. The main instance is first: the
+// community mirrors below were answering with error pages after ~15s each,
+// pushing a single lookup past 30s (markers never appeared while driving).
 const ENDPOINTS = [
-  "https://overpass.private.coffee/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
+  "https://overpass.private.coffee/api/interpreter",
 ];
+
+/** Per-mirror budget: fail fast instead of stalling the whole lookup. */
+const MIRROR_TIMEOUT_MS = 9000;
+
 
 
 export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNode[]> {
@@ -35,12 +40,14 @@ export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNod
     try {
       const res = await fetch(`${url}?data=${encodeURIComponent(q)}`, {
         method: "GET",
+        signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
         headers: {
           // Overpass rejects/limits clients without an identifying UA.
           "User-Agent": "VIGLA/1.0 (traffic-signals; https://vigla-road-sense.lovable.app)",
           Accept: "application/json",
         },
       });
+
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = (await res.json()) as {
         elements?: { id: number; lat: number; lon: number }[];
