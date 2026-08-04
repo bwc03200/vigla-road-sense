@@ -4,6 +4,9 @@ import { AlertTriangle, ArrowUp, Radar, Signal, SignalLow, SignalMedium, Wifi } 
 import { useVigla } from "@/lib/vigla-store";
 import { formatDistance, formatSpeed } from "@/lib/geo";
 import { TrafficSignalAhead } from "@/components/vigla/TrafficSignalAhead";
+import { RouteBar } from "@/components/vigla/RouteBar";
+import { HazardAlertBanner } from "@/components/vigla/HazardAlertBanner";
+import { useSpeedLimit } from "@/hooks/useRouteMilestones";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -22,6 +25,7 @@ export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
   const speedKmh = useVigla((s) => s.speedKmh);
   const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const officialRadars = useVigla((s) => s.officialRadars);
+  const speedLimit = useSpeedLimit();
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -59,6 +63,8 @@ export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
           <MotoChip
             value={formatSpeed(speedKmh, speedUnit)}
             label={speedUnit === "mph" ? "MPH" : "KM/H"}
+            limit={speedLimit}
+            over={speedLimit != null && speedKmh > speedLimit}
           />
           <MotoChip value={eta} label={t("motoNav.etaLabel")} />
         </div>
@@ -93,6 +99,9 @@ export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
           </button>
         </div>
       )}
+
+      <RouteBar moto />
+      <HazardAlertBanner moto />
 
       {/* Bottom instruction panel */}
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[700]">
@@ -135,17 +144,41 @@ export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
   );
 }
 
-function MotoChip({ value, label }: { value: string; label: string }) {
+function MotoChip({
+  value,
+  label,
+  limit,
+  over,
+}: {
+  value: string;
+  label: string;
+  limit?: number | null;
+  over?: boolean;
+}) {
   return (
     <div
-      className="flex flex-1 flex-col items-center rounded-2xl px-4 py-2.5 tabular-nums"
+      className="relative flex flex-1 flex-col items-center rounded-2xl px-4 py-2.5 tabular-nums"
       style={{
         background: "var(--moto-panel, #14171b)",
         border: "1px solid var(--moto-line, #242830)",
         color: "var(--moto-text, #eef1f4)",
       }}
     >
-      <span className="text-[1.9rem] font-bold leading-none tracking-tight">{value}</span>
+      {limit != null && (
+        <span className="absolute right-1.5 top-1.5 flex h-7 w-7 items-center justify-center rounded-full border-[3px] border-[#e2313f] bg-white text-[11px] font-bold text-slate-900">
+          {limit}
+        </span>
+      )}
+      <span
+        className="text-[1.9rem] font-bold leading-none tracking-tight"
+        style={
+          over
+            ? { color: "#e2313f", textShadow: "0 0 12px rgba(226,49,63,0.45)" }
+            : undefined
+        }
+      >
+        {value}
+      </span>
       <span
         className="mt-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
         style={{ color: "var(--moto-text-dim, #8b9299)" }}
