@@ -4,6 +4,7 @@ import { AlertTriangle, Signal } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, formatDistance, formatSpeed, speedUnitLabel } from "@/lib/geo";
 import { hazardLabel } from "@/lib/i18n-helpers";
+import { useSpeedLimit } from "@/hooks/useRouteMilestones";
 
 export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
@@ -13,6 +14,8 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const route = useVigla((s) => s.route);
   const navActive = useVigla((s) => Boolean(s.navigation && !s.navigation.arrived));
+  const speedLimit = useSpeedLimit();
+  const overLimit = speedLimit != null && speedKmh > speedLimit;
 
   const nextHazard = useMemo(() => {
     if (!position) return null;
@@ -39,8 +42,11 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
       <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-slate-200">
         <div className="flex flex-col items-center leading-none">
           <span
-            className={`tabular-nums font-bold text-slate-900 ${embedded ? "text-[20px]" : "text-[32px]"}`}
-            style={{ fontFeatureSettings: '"tnum"' }}
+            className={`tabular-nums font-bold ${overLimit ? "text-[#e2313f]" : "text-slate-900"} ${embedded ? "text-[20px]" : "text-[32px]"}`}
+            style={{
+              fontFeatureSettings: '"tnum"',
+              textShadow: overLimit ? "0 0 10px rgba(226,49,63,0.35)" : undefined,
+            }}
           >
             {formatSpeed(speedKmh, speedUnit)}
           </span>
@@ -48,7 +54,15 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
             {speedUnitLabel(speedUnit)}
           </span>
         </div>
+        {speedLimit != null && (
+          <div
+            className={`flex shrink-0 items-center justify-center rounded-full border-[3px] border-[#e2313f] bg-white font-bold tabular-nums text-slate-900 ${embedded ? "h-7 w-7 text-[11px]" : "h-9 w-9 text-[13px]"}`}
+          >
+            {speedLimit}
+          </div>
+        )}
         <div className={`w-px bg-slate-200 ${embedded ? "h-7" : "h-10"}`} />
+
         <div className="min-w-0 flex-1">
           {nextHazard ? (
             <div key={nextHazard.label} className="vigla-topbar-alert flex items-center gap-2">

@@ -9,6 +9,8 @@ import {
 } from "@/components/vigla/TripSummaryScreen";
 import { supabase } from "@/integrations/supabase/client";
 import { TrafficSignalAhead } from "@/components/vigla/TrafficSignalAhead";
+import { RouteBar } from "@/components/vigla/RouteBar";
+import { HazardAlertBanner } from "@/components/vigla/HazardAlertBanner";
 import { useVigla } from "@/lib/vigla-store";
 import { useNavigationEngine } from "@/hooks/useNavigationEngine";
 import { formatDistance } from "@/lib/geo";
@@ -180,6 +182,9 @@ export function NavigationOverlay() {
   const step = navigation.steps[navigation.currentStepIndex];
 
   return (
+    <>
+      <RouteBar />
+      <HazardAlertBanner />
     <div className="pointer-events-none absolute inset-x-0 top-0 z-[700] flex flex-col gap-2 p-3">
       <div className="pointer-events-auto rounded-2xl bg-slate-900 text-white shadow-[0_12px_32px_rgba(15,23,42,0.35)]">
         <div className="flex items-start gap-3 p-4">
@@ -231,6 +236,7 @@ export function NavigationOverlay() {
       </div>
       <TopBar embedded />
     </div>
+    </>
   );
 }
 
