@@ -79,17 +79,18 @@ export function useRouteMilestones(limit = 5) {
 
     const seen = new Set<string>();
     const out: RouteMilestone[] = [];
-    let along = 0;
+    let base = 0;
 
-    for (let i = 1; i < coords.length && along < LOOKAHEAD_M; i++) {
+    for (let i = 1; i < coords.length && base < LOOKAHEAD_M; i++) {
       const [pLat, pLng] = coords[i - 1];
       const [la, ln] = coords[i];
-      along += haversine(pLat, pLng, la, ln);
+      const segLen = haversine(pLat, pLng, la, ln);
 
       for (const h of hazards) {
         if (seen.has(h.id)) continue;
         if (hazardFilters && hazardFilters[h.type as HazardType] === false) continue;
-        if (haversine(la, ln, h.latitude, h.longitude) <= ON_ROUTE_M) {
+        const m = segmentMatch(h.latitude, h.longitude, pLat, pLng, la, ln);
+        if (m.dist <= HAZARD_CORRIDOR_M) {
           seen.add(h.id);
           out.push({
             id: h.id,
@@ -97,7 +98,7 @@ export function useRouteMilestones(limit = 5) {
             label: hazardLabel(h.type),
             emoji: HAZARD_EMOJI[h.type] ?? "⚠️",
             color: HAZARD_COLORS[h.type] ?? "#EF4444",
-            distanceM: along,
+            distanceM: base + m.along,
             hazardType: h.type,
           });
         }
@@ -105,7 +106,8 @@ export function useRouteMilestones(limit = 5) {
 
       for (const r of radars) {
         if (seen.has(r.id)) continue;
-        if (haversine(la, ln, r.latitude, r.longitude) <= ON_ROUTE_M) {
+        const m = segmentMatch(r.latitude, r.longitude, pLat, pLng, la, ln);
+        if (m.dist <= RADAR_CORRIDOR_M) {
           seen.add(r.id);
           out.push({
             id: r.id,
@@ -113,7 +115,7 @@ export function useRouteMilestones(limit = 5) {
             label: r.vitesse_controlee ? `${r.vitesse_controlee} km/h` : "Radar",
             emoji: "📷",
             color: HAZARD_COLORS.radar_fixe,
-            distanceM: along,
+            distanceM: base + m.along,
             speedLimit: r.vitesse_controlee,
           });
         }
@@ -123,7 +125,8 @@ export function useRouteMilestones(limit = 5) {
         for (const s of signals) {
           const sid = `sig-${s.latitude.toFixed(5)},${s.longitude.toFixed(5)}`;
           if (seen.has(sid)) continue;
-          if (haversine(la, ln, s.latitude, s.longitude) <= 35) {
+          const m = segmentMatch(s.latitude, s.longitude, pLat, pLng, la, ln);
+          if (m.dist <= SIGNAL_CORRIDOR_M) {
             seen.add(sid);
             out.push({
               id: sid,
@@ -131,12 +134,13 @@ export function useRouteMilestones(limit = 5) {
               label: "Feu",
               emoji: "🚦",
               color: "#0EA5E9",
-              distanceM: along,
+              distanceM: base + m.along,
             });
           }
         }
       }
 
+      base += segLen;
       if (out.length >= limit * 3) break;
     }
 
