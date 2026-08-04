@@ -14,6 +14,8 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const route = useVigla((s) => s.route);
   const navActive = useVigla((s) => Boolean(s.navigation && !s.navigation.arrived));
+  const speedLimit = useSpeedLimit();
+  const overLimit = speedLimit != null && speedKmh > speedLimit;
 
   const nextHazard = useMemo(() => {
     if (!position) return null;
