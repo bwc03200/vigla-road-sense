@@ -4,6 +4,7 @@ import { AlertTriangle, Signal } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, formatDistance, formatSpeed, speedUnitLabel } from "@/lib/geo";
 import { hazardLabel } from "@/lib/i18n-helpers";
+import { useSpeedLimit } from "@/hooks/useRouteMilestones";
 
 export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
