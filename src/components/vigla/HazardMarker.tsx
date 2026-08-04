@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { hazardLabel } from "@/lib/i18n-helpers";
 import type { HazardReport, HazardType } from "@/types/vigla";
 
-const HAZARD_COLORS: Record<HazardType, string> = {
+export const HAZARD_COLORS: Record<HazardType, string> = {
   radar_fixe: "#FF6B35",
   radar_mobile: "#F97316",
   accident: "#EF4444",
@@ -21,7 +21,7 @@ const HAZARD_COLORS: Record<HazardType, string> = {
   chaussee_deformee: "#B91C1C",
 };
 
-const HAZARD_EMOJI: Record<HazardType, string> = {
+export const HAZARD_EMOJI: Record<HazardType, string> = {
   radar_fixe: "📷",
   radar_mobile: "🚔",
   accident: "💥",
