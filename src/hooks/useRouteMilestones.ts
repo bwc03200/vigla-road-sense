@@ -145,7 +145,15 @@ export function useRouteMilestones(limit = 5) {
     }
 
     out.sort((a, b) => a.distanceM - b.distanceM);
-    return out.slice(0, limit);
+    // Hazards/radars must never be crowded out of the list by a dense cluster
+    // of traffic signals (urban routes have dozens): keep them first, then
+    // fill the remaining slots with signals, and re-sort by distance.
+    const priority = out.filter((m) => m.kind !== "signal").slice(0, limit);
+    const fill = out
+      .filter((m) => m.kind === "signal")
+      .slice(0, Math.max(0, limit - priority.length));
+    return [...priority, ...fill].sort((a, b) => a.distanceM - b.distanceM);
+
   }, [navigation, hazards, hazardFilters, radars, signals, showSignals, limit]);
 }
 
