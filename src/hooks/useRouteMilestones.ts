@@ -5,8 +5,45 @@ import { hazardLabel } from "@/lib/i18n-helpers";
 import { HAZARD_COLORS, HAZARD_EMOJI } from "@/components/vigla/HazardMarker";
 import type { HazardType } from "@/types/vigla";
 
-const ON_ROUTE_M = 60;
+/**
+ * Corridor widths. OSRM geometry vertices can be hundreds of metres apart on
+ * straight roads, so matching POIs against *vertices* missed almost everything
+ * (that was why the RouteBar always showed its empty "clear" state). We now
+ * match against the route *segments* (perpendicular distance).
+ */
+const HAZARD_CORRIDOR_M = 90;
+const RADAR_CORRIDOR_M = 150;
+const SIGNAL_CORRIDOR_M = 45;
 const LOOKAHEAD_M = 8000;
+
+/** Perpendicular distance (m) from a point to segment AB + along-offset (m). */
+function segmentMatch(
+  lat: number,
+  lng: number,
+  aLat: number,
+  aLng: number,
+  bLat: number,
+  bLng: number,
+): { dist: number; along: number } {
+  const mPerDegLat = 111320;
+  const mPerDegLng = 111320 * Math.cos((aLat * Math.PI) / 180);
+  const ax = 0;
+  const ay = 0;
+  const bx = (bLng - aLng) * mPerDegLng;
+  const by = (bLat - aLat) * mPerDegLat;
+  const px = (lng - aLng) * mPerDegLng;
+  const py = (lat - aLat) * mPerDegLat;
+  const len2 = bx * bx + by * by;
+  const tRaw = len2 === 0 ? 0 : ((px - ax) * bx + (py - ay) * by) / len2;
+  const t = Math.min(1, Math.max(0, tRaw));
+  const cx = bx * t;
+  const cy = by * t;
+  return {
+    dist: Math.hypot(px - cx, py - cy),
+    along: Math.sqrt(len2) * t,
+  };
+}
+
 
 export type MilestoneKind = "hazard" | "radar" | "signal";
 
