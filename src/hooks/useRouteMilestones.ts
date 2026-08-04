@@ -5,8 +5,45 @@ import { hazardLabel } from "@/lib/i18n-helpers";
 import { HAZARD_COLORS, HAZARD_EMOJI } from "@/components/vigla/HazardMarker";
 import type { HazardType } from "@/types/vigla";
 
-const ON_ROUTE_M = 60;
+/**
+ * Corridor widths. OSRM geometry vertices can be hundreds of metres apart on
+ * straight roads, so matching POIs against *vertices* missed almost everything
+ * (that was why the RouteBar always showed its empty "clear" state). We now
+ * match against the route *segments* (perpendicular distance).
+ */
+const HAZARD_CORRIDOR_M = 90;
+const RADAR_CORRIDOR_M = 150;
+const SIGNAL_CORRIDOR_M = 45;
 const LOOKAHEAD_M = 8000;
+
+/** Perpendicular distance (m) from a point to segment AB + along-offset (m). */
+function segmentMatch(
+  lat: number,
+  lng: number,
+  aLat: number,
+  aLng: number,
+  bLat: number,
+  bLng: number,
+): { dist: number; along: number } {
+  const mPerDegLat = 111320;
+  const mPerDegLng = 111320 * Math.cos((aLat * Math.PI) / 180);
+  const ax = 0;
+  const ay = 0;
+  const bx = (bLng - aLng) * mPerDegLng;
+  const by = (bLat - aLat) * mPerDegLat;
+  const px = (lng - aLng) * mPerDegLng;
+  const py = (lat - aLat) * mPerDegLat;
+  const len2 = bx * bx + by * by;
+  const tRaw = len2 === 0 ? 0 : ((px - ax) * bx + (py - ay) * by) / len2;
+  const t = Math.min(1, Math.max(0, tRaw));
+  const cx = bx * t;
+  const cy = by * t;
+  return {
+    dist: Math.hypot(px - cx, py - cy),
+    along: Math.sqrt(len2) * t,
+  };
+}
+
 
 export type MilestoneKind = "hazard" | "radar" | "signal";
 
@@ -42,17 +79,18 @@ export function useRouteMilestones(limit = 5) {
 
     const seen = new Set<string>();
     const out: RouteMilestone[] = [];
-    let along = 0;
+    let base = 0;
 
-    for (let i = 1; i < coords.length && along < LOOKAHEAD_M; i++) {
+    for (let i = 1; i < coords.length && base < LOOKAHEAD_M; i++) {
       const [pLat, pLng] = coords[i - 1];
       const [la, ln] = coords[i];
-      along += haversine(pLat, pLng, la, ln);
+      const segLen = haversine(pLat, pLng, la, ln);
 
       for (const h of hazards) {
         if (seen.has(h.id)) continue;
         if (hazardFilters && hazardFilters[h.type as HazardType] === false) continue;
-        if (haversine(la, ln, h.latitude, h.longitude) <= ON_ROUTE_M) {
+        const m = segmentMatch(h.latitude, h.longitude, pLat, pLng, la, ln);
+        if (m.dist <= HAZARD_CORRIDOR_M) {
           seen.add(h.id);
           out.push({
             id: h.id,
@@ -60,7 +98,7 @@ export function useRouteMilestones(limit = 5) {
             label: hazardLabel(h.type),
             emoji: HAZARD_EMOJI[h.type] ?? "⚠️",
             color: HAZARD_COLORS[h.type] ?? "#EF4444",
-            distanceM: along,
+            distanceM: base + m.along,
             hazardType: h.type,
           });
         }
@@ -68,7 +106,8 @@ export function useRouteMilestones(limit = 5) {
 
       for (const r of radars) {
         if (seen.has(r.id)) continue;
-        if (haversine(la, ln, r.latitude, r.longitude) <= ON_ROUTE_M) {
+        const m = segmentMatch(r.latitude, r.longitude, pLat, pLng, la, ln);
+        if (m.dist <= RADAR_CORRIDOR_M) {
           seen.add(r.id);
           out.push({
             id: r.id,
@@ -76,7 +115,7 @@ export function useRouteMilestones(limit = 5) {
             label: r.vitesse_controlee ? `${r.vitesse_controlee} km/h` : "Radar",
             emoji: "📷",
             color: HAZARD_COLORS.radar_fixe,
-            distanceM: along,
+            distanceM: base + m.along,
             speedLimit: r.vitesse_controlee,
           });
         }
@@ -86,7 +125,8 @@ export function useRouteMilestones(limit = 5) {
         for (const s of signals) {
           const sid = `sig-${s.latitude.toFixed(5)},${s.longitude.toFixed(5)}`;
           if (seen.has(sid)) continue;
-          if (haversine(la, ln, s.latitude, s.longitude) <= 35) {
+          const m = segmentMatch(s.latitude, s.longitude, pLat, pLng, la, ln);
+          if (m.dist <= SIGNAL_CORRIDOR_M) {
             seen.add(sid);
             out.push({
               id: sid,
@@ -94,17 +134,26 @@ export function useRouteMilestones(limit = 5) {
               label: "Feu",
               emoji: "🚦",
               color: "#0EA5E9",
-              distanceM: along,
+              distanceM: base + m.along,
             });
           }
         }
       }
 
+      base += segLen;
       if (out.length >= limit * 3) break;
     }
 
     out.sort((a, b) => a.distanceM - b.distanceM);
-    return out.slice(0, limit);
+    // Hazards/radars must never be crowded out of the list by a dense cluster
+    // of traffic signals (urban routes have dozens): keep them first, then
+    // fill the remaining slots with signals, and re-sort by distance.
+    const priority = out.filter((m) => m.kind !== "signal").slice(0, limit);
+    const fill = out
+      .filter((m) => m.kind === "signal")
+      .slice(0, Math.max(0, limit - priority.length));
+    return [...priority, ...fill].sort((a, b) => a.distanceM - b.distanceM);
+
   }, [navigation, hazards, hazardFilters, radars, signals, showSignals, limit]);
 }
 
