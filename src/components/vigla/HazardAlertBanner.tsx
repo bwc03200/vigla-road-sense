@@ -14,7 +14,10 @@ const ALERT_RANGE_M = 300;
 export function HazardAlertBanner({ moto = false }: { moto?: boolean }) {
   const { t } = useTranslation();
   const navigation = useVigla((s) => s.navigation);
-  const milestones = useRouteMilestones(5);
+  // Wider window than the RouteBar: a hazard must trigger the banner even when
+  // the 5 nearest milestones are all traffic signals.
+  const milestones = useRouteMilestones(15);
+
 
   if (!navigation || navigation.arrived) return null;
   const next = milestones.find(
