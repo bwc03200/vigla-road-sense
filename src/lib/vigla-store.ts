@@ -322,3 +322,7 @@ export const useVigla = create<ViglaState>((set) => ({
 }));
 
 
+// Dev-only: expose the store for in-browser debugging / automated UI checks.
+if (import.meta.env.DEV && typeof window !== "undefined") {
+  (window as unknown as { __vigla?: typeof useVigla }).__vigla = useVigla;
+}
