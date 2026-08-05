@@ -262,7 +262,7 @@ html { scroll-behavior: smooth; }
   width: 1.375rem !important;
 }
 .vigla-moto-mode .vigla-topbar-alert .tabular-nums,
-.vigla-moto-mode .tabular-nums {
+.vigla-moto-mode .vigla-speed-value {
   color: var(--moto-orange-strong) !important;
   font-weight: 700 !important;
   font-size: 2.75rem !important;
