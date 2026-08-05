@@ -63,7 +63,7 @@ export async function queryFastfoods(bbox: OverpassBBox): Promise<FastfoodResult
   const q =
     `[out:json][timeout:25];` +
     `node["amenity"~"fast_food|restaurant"]["name"~"${BRAND_RE}",i](${area});` +
-    `out tags qt 400;`;
+    `out body qt 400;`;
 
   const started = Date.now();
   const failures: string[] = [];
