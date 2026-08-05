@@ -269,6 +269,9 @@ html { scroll-behavior: smooth; }
   line-height: 1 !important;
   letter-spacing: -0.02em;
 }
+.vigla-moto-mode .vigla-speed-value.vigla-speed-over {
+  color: #e2313f !important;
+}
 
 /* Navigation instruction panel (bottom) */
 .vigla-moto-mode .vigla-nav-overlay,
