@@ -42,7 +42,7 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
       <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-slate-200">
         <div className="flex flex-col items-center leading-none">
           <span
-            className={`tabular-nums font-bold ${overLimit ? "text-[#e2313f]" : "text-slate-900"} ${embedded ? "text-[20px]" : "text-[32px]"}`}
+            className={`vigla-speed-value tabular-nums font-bold ${overLimit ? "text-[#e2313f]" : "text-slate-900"} ${embedded ? "text-[20px]" : "text-[32px]"}`}
             style={{
               fontFeatureSettings: '"tnum"',
               textShadow: overLimit ? "0 0 10px rgba(226,49,63,0.35)" : undefined,
