@@ -78,7 +78,9 @@ export function FastfoodCluster({
       toAdd.push(m);
     }
     if (toAdd.length) group.addLayers(toAdd);
+    console.log("🍔 [CLUSTER] added:", toAdd.length, "removed:", toRemove.length, "total:", existing.size);
   }, [pois, zoom, dark]);
+
 
   return null;
 }
