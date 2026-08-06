@@ -256,6 +256,17 @@ export const useVigla = create<ViglaState>((set) => ({
       }
       return { showTrafficSignals: next };
     }),
+  toggleFastfoods: () =>
+    set((s) => {
+      const next = !s.showFastfoods;
+      try {
+        window.localStorage.setItem(FASTFOODS_LS_KEY, String(next));
+      } catch {
+        /* ignore */
+      }
+      return { showFastfoods: next };
+    }),
+
   setOnline: (v) => set({ online: v }),
   markAlerted: (id) =>
     set((s) => {
