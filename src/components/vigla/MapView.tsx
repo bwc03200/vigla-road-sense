@@ -12,6 +12,9 @@ import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
 import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
+import { useFastfoods } from "@/hooks/useFastfoods";
+import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
+import { FastfoodLayerControl } from "@/components/vigla/FastfoodLayerControl";
 
 
 
@@ -397,6 +400,19 @@ export function MapView() {
     );
   }, [trafficSignals, signalBBox, showSignals]);
 
+  const showFastfoods = useVigla((s) => s.showFastfoods);
+  const { fastfoods } = useFastfoods(signalBBox, viewport?.zoom ?? 0, showFastfoods);
+  const visibleFastfoods = useMemo(() => {
+    if (!showFastfoods || !signalBBox) return [];
+    return fastfoods.filter(
+      (f) =>
+        f.latitude <= signalBBox.north &&
+        f.latitude >= signalBBox.south &&
+        f.longitude <= signalBBox.east &&
+        f.longitude >= signalBBox.west,
+    );
+  }, [fastfoods, signalBBox, showFastfoods]);
+
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
@@ -564,6 +580,13 @@ export function MapView() {
 
       <OfficialRadarCluster radars={nearbyOfficial} />
       <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
+      {showFastfoods && visibleFastfoods.length > 0 && (
+        <FastfoodCluster
+          pois={visibleFastfoods}
+          zoom={viewport?.zoom ?? 13}
+          dark={motoMode || mapTheme === "dark"}
+        />
+      )}
       {convoyMembers
         .filter((m) => m.last_lat != null && m.last_lng != null)
         .map((m) => (
@@ -573,6 +596,9 @@ export function MapView() {
             icon={convoyMemberIcon(m.display_name)}
           />
         ))}
+      <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
+        <FastfoodLayerControl count={visibleFastfoods.length} />
+      </div>
     </MapContainer>
     {pending && (
       <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[860] flex justify-center px-4">
