@@ -413,6 +413,21 @@ export function MapView() {
     );
   }, [fastfoods, signalBBox, showFastfoods]);
 
+  useEffect(() => {
+    if (!showFastfoods) {
+      console.log("🍔 [LAYER] FastFoods layer hidden");
+    } else if (visibleFastfoods.length === 0) {
+      console.log("🍔 [LAYER] enabled but 0 POIs in viewport", {
+        fetched: fastfoods.length,
+        zoom: viewport?.zoom,
+        bbox: signalBBox,
+      });
+    } else {
+      console.log("🍔 [LAYER] rendering", visibleFastfoods.length, "markers");
+    }
+  }, [showFastfoods, visibleFastfoods.length, fastfoods.length, viewport?.zoom, signalBBox]);
+
+
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
