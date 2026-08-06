@@ -32,12 +32,24 @@ export function useFastfoods(
   const active = enabled && !!bbox && zoom >= MIN_ZOOM_FOR_FASTFOODS;
   const bboxKey = bbox ? keyOf(bbox) : "none";
 
+  useEffect(() => {
+    console.log("🍔 [BBOX]", bboxKey, { zoom, enabled, active, bbox });
+  }, [bboxKey, zoom, enabled, active, bbox]);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["fastfoods", bboxKey],
     queryFn: async () => {
-      const res = await getFastfoods({ data: bbox! });
-      if (!res.ok) throw new Error(res.error);
-      return res.data as FastfoodPOI[];
+      console.log("🍔 [FETCH START]", bboxKey);
+      try {
+        const res = await getFastfoods({ data: bbox! });
+        console.log("🍔 [FETCH RESULT]", res);
+        if (!res.ok) throw new Error(res.error);
+        console.log(`🍔 [SUCCESS] Got ${res.data.length} POIs`);
+        return res.data as FastfoodPOI[];
+      } catch (err) {
+        console.error("🍔 [FETCH ERROR]", err);
+        throw err;
+      }
     },
     staleTime: 60 * 60 * 1000,
     gcTime: 3 * 60 * 60 * 1000,
@@ -46,7 +58,16 @@ export function useFastfoods(
   });
 
   useEffect(() => {
+    console.log("🍔 [QUERY STATE]", {
+      isLoading,
+      dataLength: data?.length ?? 0,
+      error: error instanceof Error ? error.message : error,
+    });
+  }, [isLoading, data, error]);
+
+  useEffect(() => {
     if (error) {
+      console.error("🍔 [ERROR TOAST TRIGGER]", error);
       toast.error("Restaurants indisponibles", {
         description: error instanceof Error ? error.message : String(error),
         id: "fastfoods-error",
@@ -54,5 +75,12 @@ export function useFastfoods(
     }
   }, [error]);
 
-  return { fastfoods: data ?? [], isLoading, error };
+  const fastfoods = data ?? [];
+
+  useEffect(() => {
+    console.log("🍔 [RETURN] fastfoods:", fastfoods.length);
+  }, [fastfoods.length]);
+
+  return { fastfoods, isLoading, error };
 }
+
