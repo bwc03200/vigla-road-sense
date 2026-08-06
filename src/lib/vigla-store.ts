@@ -4,6 +4,12 @@ import { DEFAULT_HAZARD_FILTERS, HAZARD_FILTER_KEYS } from "@/types/vigla";
 
 const HAZARD_FILTERS_LS_KEY = "vigla:hazardFilters";
 const SIGNALS_LS_KEY = "vigla:showTrafficSignals";
+const FASTFOODS_LS_KEY = "vigla:showFastfoods";
+
+function loadShowFastfoods(): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(FASTFOODS_LS_KEY) !== "false";
+}
 
 function loadShowSignals(): boolean {
   if (typeof window === "undefined") return true;
@@ -75,6 +81,7 @@ interface ViglaState {
   officialRadars: OfficialRadar[];
   trafficSignals: TrafficSignal[];
   showTrafficSignals: boolean;
+  showFastfoods: boolean;
   online: boolean;
   alertedIds: Set<string>;
   geoError: string | null;
@@ -106,6 +113,7 @@ interface ViglaState {
   setOfficialRadars: (r: OfficialRadar[]) => void;
   setTrafficSignals: (s: TrafficSignal[]) => void;
   toggleTrafficSignals: () => void;
+  toggleFastfoods: () => void;
   setOnline: (v: boolean) => void;
   markAlerted: (id: string) => void;
   clearAlert: (id: string) => void;
@@ -153,6 +161,7 @@ export const useVigla = create<ViglaState>((set) => ({
   officialRadars: [],
   trafficSignals: [],
   showTrafficSignals: loadShowSignals(),
+  showFastfoods: loadShowFastfoods(),
   online: true,
   alertedIds: new Set<string>(),
   geoError: null,
