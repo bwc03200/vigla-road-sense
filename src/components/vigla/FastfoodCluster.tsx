@@ -47,9 +47,11 @@ export function FastfoodCluster({
 
   useEffect(() => {
     const group = clusterRef.current;
+    console.log("🍔 [CLUSTER] pois:", pois.length, "zoom:", zoom, "group:", !!group);
     if (!group) return;
     const existing = markersRef.current;
     const next = new Map(pois.map((p) => [p.id, p]));
+
 
     const toRemove: L.Marker[] = [];
     for (const [id, marker] of existing) {
