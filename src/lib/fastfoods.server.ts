@@ -31,6 +31,7 @@ export type FastfoodResult =
 /** Mirrors tried in order of proven reliability. */
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-a.openstreetmap.fr/api/interpreter",
   "https://overpass-c.openstreetmap.fr/api/interpreter",
 ];
@@ -52,18 +53,36 @@ function normaliseBrand(raw: string): string {
 }
 
 interface OverpassElement {
+  type: string;
   id: number;
-  lat: number;
-  lon: number;
+  lat?: number;
+  lon?: number;
+  center?: { lat: number; lon: number };
   tags?: Record<string, string>;
 }
 
-export async function queryFastfoods(bbox: OverpassBBox): Promise<FastfoodResult> {
+/** Grow the viewport a bit so POIs just off-screen are ready when panning. */
+function pad(bbox: OverpassBBox): OverpassBBox {
+  const dLat = (bbox.north - bbox.south) * 0.35;
+  const dLon = (bbox.east - bbox.west) * 0.35;
+  return {
+    south: bbox.south - dLat,
+    north: bbox.north + dLat,
+    west: bbox.west - dLon,
+    east: bbox.east + dLon,
+  };
+}
+
+export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult> {
+  const bbox = pad(raw);
   const area = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
+  // `nwr` + `out center`: outside dense city centres the brands are mapped as
+  // building polygons (ways/relations), not nodes — a node-only query misses them.
   const q =
-    `[out:json][timeout:25];` +
-    `node["amenity"~"fast_food|restaurant"]["name"~"${BRAND_RE}",i](${area});` +
-    `out body qt 400;`;
+    `[out:json][timeout:25];(` +
+    `nwr["amenity"~"fast_food|restaurant"]["name"~"${BRAND_RE}",i](${area});` +
+    `nwr["amenity"~"fast_food|restaurant"]["brand"~"${BRAND_RE}",i](${area});` +
+    `);out center qt 400;`;
 
   const started = Date.now();
   const failures: string[] = [];
@@ -83,27 +102,40 @@ export async function queryFastfoods(bbox: OverpassBBox): Promise<FastfoodResult
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
       const json = (await res.json()) as { elements?: OverpassElement[] };
+      const seen = new Set<string>();
       const data: FastfoodPOI[] = (json.elements ?? [])
-        .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
         .map((e) => {
           const tags = e.tags ?? {};
+          const lat = e.lat ?? e.center?.lat;
+          const lon = e.lon ?? e.center?.lon;
           const name = tags["name"] ?? tags["brand"] ?? "";
           return {
-            id: `ff-${e.id}`,
-            latitude: e.lat,
-            longitude: e.lon,
+            id: `ff-${e.type ?? "n"}-${e.id}`,
+            latitude: lat as number,
+            longitude: lon as number,
             name,
-            brand: normaliseBrand(tags["brand"] ?? name),
+            brand: normaliseBrand(`${tags["brand"] ?? ""} ${name}`),
             amenity: tags["amenity"] ?? "fast_food",
           };
         })
-        .filter((p) => p.brand !== "other");
+        .filter(
+          (p) =>
+            Number.isFinite(p.latitude) &&
+            Number.isFinite(p.longitude) &&
+            p.brand !== "other" &&
+            !seen.has(p.id) &&
+            seen.add(p.id) !== undefined,
+        );
 
+      console.log(`🍔 [SERVER] ${area} → ${data.length} POIs via ${lastHost}`);
       return { ok: true, data, fetchTime: Date.now() - started };
     } catch (err) {
-      failures.push(`${lastHost}: ${err instanceof Error ? err.message : String(err)}`);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(`🍔 [SERVER] mirror ${lastHost} failed: ${msg}`);
+      failures.push(`${lastHost}: ${msg}`);
     }
   }
+
 
   return {
     ok: false,
