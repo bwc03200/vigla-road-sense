@@ -31,6 +31,7 @@ export type FastfoodResult =
 /** Mirrors tried in order of proven reliability. */
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
+  "https://overpass.kumi.systems/api/interpreter",
   "https://overpass-a.openstreetmap.fr/api/interpreter",
   "https://overpass-c.openstreetmap.fr/api/interpreter",
 ];
