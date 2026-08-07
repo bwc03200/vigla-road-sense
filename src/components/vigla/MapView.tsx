@@ -14,7 +14,7 @@ import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
 import { useFastfoods } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
-import { FastfoodLayerControl } from "@/components/vigla/FastfoodLayerControl";
+import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 
 
 
@@ -401,9 +401,12 @@ export function MapView() {
   }, [trafficSignals, signalBBox, showSignals]);
 
   const showFastfoods = useVigla((s) => s.showFastfoods);
-  const { fastfoods } = useFastfoods(signalBBox, viewport?.zoom ?? 0, showFastfoods);
-  const visibleFastfoods = useMemo(() => {
-    if (!showFastfoods || !signalBBox) return [];
+  // Always query so the chip can appear/disappear based on real POI presence;
+  // the toggle only controls whether markers render.
+  const { fastfoods, isLoading: fastfoodsLoading, isFailing, retryManually } =
+    useFastfoods(signalBBox, viewport?.zoom ?? 0, true);
+  const inViewFastfoods = useMemo(() => {
+    if (!signalBBox) return [];
     return fastfoods.filter(
       (f) =>
         f.latitude <= signalBBox.north &&
@@ -411,7 +414,9 @@ export function MapView() {
         f.longitude <= signalBBox.east &&
         f.longitude >= signalBBox.west,
     );
-  }, [fastfoods, signalBBox, showFastfoods]);
+  }, [fastfoods, signalBBox]);
+  const visibleFastfoods = showFastfoods ? inViewFastfoods : [];
+
 
   useEffect(() => {
     if (!showFastfoods) {
@@ -612,7 +617,13 @@ export function MapView() {
           />
         ))}
       <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
-        <FastfoodLayerControl count={visibleFastfoods.length} />
+        <SmartRestaurantsChip
+          count={inViewFastfoods.length}
+          isLoading={fastfoodsLoading}
+          isFailing={isFailing}
+          onRetry={retryManually}
+        />
+
       </div>
     </MapContainer>
     {pending && (
