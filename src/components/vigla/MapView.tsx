@@ -617,7 +617,13 @@ export function MapView() {
           />
         ))}
       <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
-        <FastfoodLayerControl count={visibleFastfoods.length} />
+        <SmartRestaurantsChip
+          count={inViewFastfoods.length}
+          isLoading={fastfoodsLoading}
+          isFailing={isFailing}
+          onRetry={retryManually}
+        />
+
       </div>
     </MapContainer>
     {pending && (
