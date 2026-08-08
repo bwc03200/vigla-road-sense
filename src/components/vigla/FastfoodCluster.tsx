@@ -21,8 +21,12 @@ export function FastfoodCluster({
   dark?: boolean;
 }) {
   const map = useMap();
+  const { addWaypoint } = useRouteWaypoint();
+  const addWaypointRef = useRef(addWaypoint);
+  addWaypointRef.current = addWaypoint;
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+
 
   useEffect(() => {
     const group = (
