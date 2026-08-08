@@ -6,6 +6,8 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { fastfoodIcon, fastfoodPopupHtml } from "@/components/vigla/FastfoodMarker";
 import type { FastfoodPOI } from "@/types/fastfoods";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
+
 
 /**
  * Clustered fast-food layer (80px radius, count badge from markercluster's
@@ -21,8 +23,12 @@ export function FastfoodCluster({
   dark?: boolean;
 }) {
   const map = useMap();
+  const { addWaypoint } = useRouteWaypoint();
+  const addWaypointRef = useRef(addWaypoint);
+  addWaypointRef.current = addWaypoint;
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
+
 
   useEffect(() => {
     const group = (
@@ -72,10 +78,27 @@ export function FastfoodCluster({
         continue;
       }
       const m = L.marker([poi.latitude, poi.longitude], { icon });
-      m.bindPopup(fastfoodPopupHtml(poi, dark), { closeButton: false, minWidth: 120 });
+      m.bindPopup(fastfoodPopupHtml(poi, dark), { closeButton: false, minWidth: 150 });
       m.on("mouseover", () => m.openPopup());
+      m.on("popupopen", (e: L.LeafletEvent) => {
+        const el = (e as unknown as { popup: L.Popup }).popup.getElement();
+        const btn = el?.querySelector<HTMLButtonElement>("[data-fastfood-route]");
+        if (!btn) return;
+        btn.onclick = (ev) => {
+          ev.stopPropagation();
+          void addWaypointRef.current({
+            name: poi.name,
+            lat: poi.latitude,
+            lng: poi.longitude,
+            type: "restaurant",
+            brand: poi.brand,
+          });
+          m.closePopup();
+        };
+      });
       existing.set(poi.id, m);
       toAdd.push(m);
+
     }
     if (toAdd.length) group.addLayers(toAdd);
     console.log("🍔 [CLUSTER] added:", toAdd.length, "removed:", toRemove.length, "total:", existing.size);

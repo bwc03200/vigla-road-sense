@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { BRAND_COLORS, BRAND_ICONS, type FastfoodPOI } from "@/types/fastfoods";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
+
 
 /**
  * Brand pastille icon. Variable size by zoom (40px wide view / 36px close-up),
@@ -30,8 +32,9 @@ export function fastfoodIcon(
 export function fastfoodPopupHtml(poi: FastfoodPOI, isDarkMode: boolean): string {
   const fg = isDarkMode ? "#F8FAFC" : "#0F172A";
   const sub = isDarkMode ? "#94A3B8" : "#64748B";
-  return `<div style="min-width:120px"><div style="font-weight:600;font-size:13px;color:${fg}">${poi.name}</div><div style="font-size:11px;color:${sub}">Fast-food</div></div>`;
+  return `<div style="min-width:150px"><div style="font-weight:600;font-size:13px;color:${fg}">${poi.name}</div><div style="font-size:11px;color:${sub};text-transform:capitalize">${poi.brand ?? "Fast-food"}</div><button type="button" data-fastfood-route="${poi.id}" style="margin-top:8px;width:100%;border:0;border-radius:9999px;background:#FF6B35;color:#fff;font-size:11px;font-weight:700;padding:7px 10px;cursor:pointer">Ajouter à l'itinéraire</button></div>`;
 }
+
 
 interface FastfoodMarkerProps {
   poi: FastfoodPOI;
@@ -44,15 +47,34 @@ export function FastfoodMarker({ poi, zoom, isDarkMode }: FastfoodMarkerProps) {
     () => fastfoodIcon(poi, zoom, isDarkMode),
     [poi, zoom, isDarkMode],
   );
+  const { addWaypoint } = useRouteWaypoint();
 
   return (
     <Marker position={[poi.latitude, poi.longitude]} icon={icon}>
-      <Popup closeButton={false} minWidth={120}>
+      <Popup closeButton={false} minWidth={150}>
         <div className="p-0.5">
           <div className="text-[13px] font-semibold text-foreground">{poi.name}</div>
-          <div className="text-[11px] text-muted-foreground">Fast-food</div>
+          <div className="text-[11px] capitalize text-muted-foreground">
+            {poi.brand ?? "Fast-food"}
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              addWaypoint({
+                name: poi.name,
+                lat: poi.latitude,
+                lng: poi.longitude,
+                type: "restaurant",
+                brand: poi.brand,
+              })
+            }
+            className="mt-2 w-full rounded-full bg-[#FF6B35] px-2.5 py-1.5 text-[11px] font-bold text-white active:scale-95"
+          >
+            Ajouter à l'itinéraire
+          </button>
         </div>
       </Popup>
     </Marker>
   );
 }
+

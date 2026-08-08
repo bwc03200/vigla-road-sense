@@ -73,12 +73,29 @@ export async function fetchOsrmRoute(
   toLng: number,
   signal?: AbortSignal,
 ): Promise<OsrmRouteResult> {
-  const url = `https://router.project-osrm.org/route/v1/driving/${fromLng},${fromLat};${toLng},${toLat}?overview=full&geometries=geojson&steps=true`;
+  return fetchOsrmRouteVia(
+    [
+      [fromLat, fromLng],
+      [toLat, toLng],
+    ],
+    signal,
+  );
+}
+
+/** Route through an ordered list of [lat, lng] points (origin, vias…, destination). */
+export async function fetchOsrmRouteVia(
+  points: [number, number][],
+  signal?: AbortSignal,
+): Promise<OsrmRouteResult> {
+  if (points.length < 2) throw new Error("no-route");
+  const path = points.map(([lat, lng]) => `${lng},${lat}`).join(";");
+  const url = `https://router.project-osrm.org/route/v1/driving/${path}?overview=full&geometries=geojson&steps=true`;
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error("osrm");
   const data = await res.json();
   const r0 = data?.routes?.[0];
   if (!r0) throw new Error("no-route");
+
   const rawCoords = Array.isArray(r0?.geometry?.coordinates)
     ? r0.geometry.coordinates
     : [];
