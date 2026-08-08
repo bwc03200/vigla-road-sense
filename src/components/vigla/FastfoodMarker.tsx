@@ -30,8 +30,9 @@ export function fastfoodIcon(
 export function fastfoodPopupHtml(poi: FastfoodPOI, isDarkMode: boolean): string {
   const fg = isDarkMode ? "#F8FAFC" : "#0F172A";
   const sub = isDarkMode ? "#94A3B8" : "#64748B";
-  return `<div style="min-width:120px"><div style="font-weight:600;font-size:13px;color:${fg}">${poi.name}</div><div style="font-size:11px;color:${sub}">Fast-food</div></div>`;
+  return `<div style="min-width:150px"><div style="font-weight:600;font-size:13px;color:${fg}">${poi.name}</div><div style="font-size:11px;color:${sub};text-transform:capitalize">${poi.brand ?? "Fast-food"}</div><button type="button" data-fastfood-route="${poi.id}" style="margin-top:8px;width:100%;border:0;border-radius:9999px;background:#FF6B35;color:#fff;font-size:11px;font-weight:700;padding:7px 10px;cursor:pointer">Ajouter à l'itinéraire</button></div>`;
 }
+
 
 interface FastfoodMarkerProps {
   poi: FastfoodPOI;
