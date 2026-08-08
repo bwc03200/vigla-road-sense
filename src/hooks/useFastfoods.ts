@@ -11,7 +11,7 @@ export interface FastfoodBBox {
 }
 
 /** Below this zoom we don't query Overpass (too many POIs, useless at scale). */
-export const MIN_ZOOM_FOR_FASTFOODS = 13;
+export const MIN_ZOOM_FOR_FASTFOODS = 11;
 
 const MAX_RETRIES = 3;
 
