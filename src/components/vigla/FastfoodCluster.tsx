@@ -72,10 +72,27 @@ export function FastfoodCluster({
         continue;
       }
       const m = L.marker([poi.latitude, poi.longitude], { icon });
-      m.bindPopup(fastfoodPopupHtml(poi, dark), { closeButton: false, minWidth: 120 });
+      m.bindPopup(fastfoodPopupHtml(poi, dark), { closeButton: false, minWidth: 150 });
       m.on("mouseover", () => m.openPopup());
+      m.on("popupopen", (e: L.LeafletEvent) => {
+        const el = (e as unknown as { popup: L.Popup }).popup.getElement();
+        const btn = el?.querySelector<HTMLButtonElement>("[data-fastfood-route]");
+        if (!btn) return;
+        btn.onclick = (ev) => {
+          ev.stopPropagation();
+          void addWaypointRef.current({
+            name: poi.name,
+            lat: poi.latitude,
+            lng: poi.longitude,
+            type: "restaurant",
+            brand: poi.brand,
+          });
+          m.closePopup();
+        };
+      });
       existing.set(poi.id, m);
       toAdd.push(m);
+
     }
     if (toAdd.length) group.addLayers(toAdd);
     console.log("🍔 [CLUSTER] added:", toAdd.length, "removed:", toRemove.length, "total:", existing.size);
