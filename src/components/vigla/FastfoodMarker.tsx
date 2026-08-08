@@ -45,15 +45,34 @@ export function FastfoodMarker({ poi, zoom, isDarkMode }: FastfoodMarkerProps) {
     () => fastfoodIcon(poi, zoom, isDarkMode),
     [poi, zoom, isDarkMode],
   );
+  const { addWaypoint } = useRouteWaypoint();
 
   return (
     <Marker position={[poi.latitude, poi.longitude]} icon={icon}>
-      <Popup closeButton={false} minWidth={120}>
+      <Popup closeButton={false} minWidth={150}>
         <div className="p-0.5">
           <div className="text-[13px] font-semibold text-foreground">{poi.name}</div>
-          <div className="text-[11px] text-muted-foreground">Fast-food</div>
+          <div className="text-[11px] capitalize text-muted-foreground">
+            {poi.brand ?? "Fast-food"}
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              addWaypoint({
+                name: poi.name,
+                lat: poi.latitude,
+                lng: poi.longitude,
+                type: "restaurant",
+                brand: poi.brand,
+              })
+            }
+            className="mt-2 w-full rounded-full bg-[#FF6B35] px-2.5 py-1.5 text-[11px] font-bold text-white active:scale-95"
+          >
+            Ajouter à l'itinéraire
+          </button>
         </div>
       </Popup>
     </Marker>
   );
 }
+
