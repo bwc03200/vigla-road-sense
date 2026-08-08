@@ -6,6 +6,8 @@ import "leaflet.markercluster/dist/MarkerCluster.css";
 import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { fastfoodIcon, fastfoodPopupHtml } from "@/components/vigla/FastfoodMarker";
 import type { FastfoodPOI } from "@/types/fastfoods";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
+
 
 /**
  * Clustered fast-food layer (80px radius, count badge from markercluster's
