@@ -48,15 +48,6 @@ export function useFastfoods(
     setRetryCount(0);
   }, [bboxKey]);
 
-  // Proactive city/agglomeration fetch: start loading POIs as soon as the
-  // user zooms into the 11-12 range, before they reach the normal 13+ threshold.
-  useEffect(() => {
-    if (zoom >= 11 && zoom < 13 && bbox && !isLoading) {
-      console.log("🍔 [PROACTIVE] City zoom detected, pre-fetching POIs");
-      void refetch();
-    }
-  }, [zoom, bbox, isLoading, refetch]);
-
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["fastfoods", bboxKey],
     queryFn: async () => {
