@@ -11,7 +11,7 @@ export interface FastfoodBBox {
 }
 
 /** Below this zoom we don't query Overpass (too many POIs, useless at scale). */
-export const MIN_ZOOM_FOR_FASTFOODS = 13;
+export const MIN_ZOOM_FOR_FASTFOODS = 11;
 
 const MAX_RETRIES = 3;
 
@@ -64,6 +64,15 @@ export function useFastfoods(
     retry: false,
     enabled: active,
   });
+
+  // Proactive city/agglomeration fetch: start loading POIs as soon as the
+  // user zooms into the 11-12 range, before they reach the normal 13+ threshold.
+  useEffect(() => {
+    if (zoom >= 11 && zoom < 13 && bbox && !isLoading) {
+      console.log("🍔 [PROACTIVE] City zoom detected, pre-fetching POIs");
+      void refetch();
+    }
+  }, [zoom, bbox, isLoading, refetch]);
 
   // AUTO-HEAL: retry with exponential backoff.
   useEffect(() => {
