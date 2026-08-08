@@ -2,6 +2,8 @@ import { useMemo } from "react";
 import { Marker, Popup } from "react-leaflet";
 import L from "leaflet";
 import { BRAND_COLORS, BRAND_ICONS, type FastfoodPOI } from "@/types/fastfoods";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
+
 
 /**
  * Brand pastille icon. Variable size by zoom (40px wide view / 36px close-up),
