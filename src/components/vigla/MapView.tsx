@@ -438,6 +438,12 @@ export function MapView() {
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
+  // Smart proximity alerts: POIs entering the 300 m ring during active nav.
+  const { alert: proximityAlert, dismiss: dismissProximityAlert } =
+    useProximityAlerts(inViewFastfoods, navActive);
+
+
+
   // Preload adjacent tiles (Leaflet native). Cut buffer down when the browser
   // reports Save-Data / slow connection so we don't burn mobile data.
   const saveData =
