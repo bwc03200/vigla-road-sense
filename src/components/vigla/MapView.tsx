@@ -15,6 +15,8 @@ import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSigna
 import { useFastfoods } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
+import { useProximityAlerts } from "@/hooks/useProximityAlerts";
+import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 
 
 
