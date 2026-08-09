@@ -16,6 +16,9 @@ export function haversine(
 }
 
 export function formatDistance(m: number): string {
+  // Guard against NaN/Infinity coming from a partially-initialised navigation
+  // state — a "NaNkm" label made the whole banner look broken.
+  if (!Number.isFinite(m) || m < 0) return "—";
   if (m < 1000) return `${Math.round(m)}m`;
   return `${(m / 1000).toFixed(1)}km`;
 }
