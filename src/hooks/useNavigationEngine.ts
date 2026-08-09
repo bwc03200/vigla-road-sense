@@ -192,18 +192,21 @@ export function useNavigationEngine() {
           : 0;
         stepStartDistances.push(cumulative);
       }
-      const traveled = proj.distanceAlongM;
+      const traveled = Number.isFinite(proj.distanceAlongM)
+        ? proj.distanceAlongM
+        : 0;
       // Find the first upcoming step whose start we haven't crossed yet.
-      // Never regress below the current index (protects against GPS jitter).
-      let idx = Math.max(1, stepIdx);
-      while (
-        idx < steps.length - 1 &&
-        traveled >= stepStartDistances[idx] - 5
-      ) {
+      // Never regress below the current index (protects against GPS jitter),
+      // but never exceed the last step either — a single-step route would
+      // otherwise land on index 1 and produce a NaN countdown ("dans NaNkm").
+      const lastIdx = steps.length - 1;
+      let idx = Math.min(lastIdx, Math.max(1, stepIdx));
+      while (idx < lastIdx && traveled >= stepStartDistances[idx] - 5) {
         idx += 1;
       }
       stepIdx = idx;
-      distanceToNext = Math.max(0, stepStartDistances[stepIdx] - traveled);
+      const startAt = stepStartDistances[stepIdx] ?? 0;
+      distanceToNext = Math.max(0, startAt - traveled);
       // Prefer straight-line distance to the maneuver point when available —
       // matches driver expectation (the banner counts down to the intersection).
       const s = steps[stepIdx];
