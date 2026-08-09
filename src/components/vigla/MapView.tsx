@@ -635,7 +635,15 @@ export function MapView() {
       </div>
     </MapContainer>
     {proximityAlert && (
-      <div className="pointer-events-none absolute right-4 top-28 z-[870] flex justify-end">
+      /* Anchored bottom-right: the top of the screen belongs to the
+         instruction card + TopBar + hazard banner stack (z 690/700), which
+         this card used to cover entirely. Moto Mode keeps its bottom panel,
+         so lift the card above it. */
+      <div
+        className={`pointer-events-none absolute right-3 z-[720] flex justify-end ${
+          motoMode ? "bottom-[220px]" : "bottom-24"
+        }`}
+      >
         <ProximityAlertCard
           key={proximityAlert.poi.id}
           alert={proximityAlert}
