@@ -15,6 +15,8 @@ import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSigna
 import { useFastfoods } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
+import { useProximityAlerts } from "@/hooks/useProximityAlerts";
+import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 
 
 
@@ -436,6 +438,12 @@ export function MapView() {
   const center: [number, number] = position ? [position.lat, position.lng] : [48.8566, 2.3522];
   const navActive = !!navigation && !navigation.arrived;
 
+  // Smart proximity alerts: POIs entering the 300 m ring during active nav.
+  const { alert: proximityAlert, dismiss: dismissProximityAlert } =
+    useProximityAlerts(inViewFastfoods, navActive);
+
+
+
   // Preload adjacent tiles (Leaflet native). Cut buffer down when the browser
   // reports Save-Data / slow connection so we don't burn mobile data.
   const saveData =
@@ -626,6 +634,15 @@ export function MapView() {
 
       </div>
     </MapContainer>
+    {proximityAlert && (
+      <div className="pointer-events-none absolute right-4 top-28 z-[870] flex justify-end">
+        <ProximityAlertCard
+          key={proximityAlert.poi.id}
+          alert={proximityAlert}
+          onDismiss={dismissProximityAlert}
+        />
+      </div>
+    )}
     {pending && (
       <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[860] flex justify-center px-4">
         <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
