@@ -38,7 +38,11 @@ export function ProximityAlertCard({ alert, onDismiss, moto = false }: Props) {
   };
 
   return (
-    <div className="pointer-events-auto w-[280px] animate-[slide-in-right_0.3s_ease-out] rounded-lg border border-border bg-card/95 p-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)] backdrop-blur">
+    <div
+      className={`pointer-events-auto fixed right-4 z-40 w-[280px] animate-[slide-in-right_0.3s_ease-out] rounded-lg border border-border bg-card/95 p-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)] backdrop-blur ${
+        moto ? "bottom-[220px]" : "bottom-40"
+      }`}
+    >
       <div className="flex items-start gap-3">
         <span className="text-2xl leading-none">{BRAND_ICONS[poi.brand] ?? "🍔"}</span>
         <div className="min-w-0 flex-1">
