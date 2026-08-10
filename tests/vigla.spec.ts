@@ -103,7 +103,7 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
     browser,
   }) => {
     const context = await browser.newContext();
-    const tab1 = await context.new_page?.() ?? (await context.newPage());
+    const tab1 = await context.newPage();
     const tab2 = await context.newPage();
 
     const restore1 = await openApp(tab1);
