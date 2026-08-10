@@ -7,6 +7,8 @@ import type { ProximityAlert } from "@/hooks/useProximityAlerts";
 interface Props {
   alert: ProximityAlert;
   onDismiss: (reason: "manual" | "added") => void;
+  /** Moto Mode keeps a bottom panel — lift the card above it. */
+  moto?: boolean;
 }
 
 function arrowFor(relativeBearing: number) {
@@ -17,7 +19,7 @@ function arrowFor(relativeBearing: number) {
 }
 
 /** Auto-dismissing card shown when a POI enters the 300 m proximity ring. */
-export function ProximityAlertCard({ alert, onDismiss }: Props) {
+export function ProximityAlertCard({ alert, onDismiss, moto = false }: Props) {
   const { addWaypoint } = useRouteWaypoint();
   const [adding, setAdding] = useState(false);
   const { poi, distanceM, relativeBearing } = alert;
@@ -36,7 +38,11 @@ export function ProximityAlertCard({ alert, onDismiss }: Props) {
   };
 
   return (
-    <div className="pointer-events-auto w-[280px] animate-[slide-in-right_0.3s_ease-out] rounded-lg border border-border bg-card/95 p-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)] backdrop-blur">
+    <div
+      className={`pointer-events-auto fixed right-4 z-40 w-[280px] animate-[slide-in-right_0.3s_ease-out] rounded-lg border border-border bg-card/95 p-3 shadow-[0_4px_12px_rgba(0,0,0,0.15)] backdrop-blur ${
+        moto ? "bottom-[220px]" : "bottom-40"
+      }`}
+    >
       <div className="flex items-start gap-3">
         <span className="text-2xl leading-none">{BRAND_ICONS[poi.brand] ?? "🍔"}</span>
         <div className="min-w-0 flex-1">
