@@ -7,6 +7,8 @@ import type { ProximityAlert } from "@/hooks/useProximityAlerts";
 interface Props {
   alert: ProximityAlert;
   onDismiss: (reason: "manual" | "added") => void;
+  /** Moto Mode keeps a bottom panel — lift the card above it. */
+  moto?: boolean;
 }
 
 function arrowFor(relativeBearing: number) {
