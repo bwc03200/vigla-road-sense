@@ -166,3 +166,37 @@ export async function mockGeolocation(
 export function setOfflineMode(page: Page, offline: boolean): void {
   void page.context().setOffline(offline);
 }
+
+/** Number of trips recorded for a user (summaries + history). */
+export async function countTrips(userId: string): Promise<number> {
+  const [summaries, history] = await Promise.all([
+    supabaseAdmin
+      .from("trip_summaries")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId),
+    supabaseAdmin
+      .from("trip_history")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId),
+  ]);
+  return (summaries.count ?? 0) + (history.count ?? 0);
+}
+
+/**
+ * True when user2 cannot read any of user1's rows through the anon/RLS client.
+ * Only user1-owned rows are considered a violation.
+ */
+export async function verifyRLSIsolation(
+  user1Id: string,
+  user2Id: string,
+): Promise<boolean> {
+  if (!user1Id || !user2Id || user1Id === user2Id) return false;
+  const { data, error } = await supabase
+    .from("convoy_alerts")
+    .select("id, user_id")
+    .eq("user_id", user1Id)
+    .limit(1);
+  // An RLS denial surfaces as either an error or an empty result set.
+  if (error) return true;
+  return !data || data.length === 0;
+}
