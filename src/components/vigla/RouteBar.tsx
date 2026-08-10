@@ -38,9 +38,9 @@ export function RouteBar({ moto = false }: { moto?: boolean }) {
   const track = moto ? "var(--moto-line, #242830)" : "#e2e8f0";
 
   return (
-    <div className="pointer-events-none absolute right-3 top-1/2 z-[680] -translate-y-1/2">
+    <div className="pointer-events-none absolute right-3 top-1/2 z-40 -translate-y-1/2">
       <div
-        className="pointer-events-auto flex w-[58px] flex-col items-center gap-2 rounded-2xl px-2 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
+        className="pointer-events-auto flex max-h-[calc(100vh-200px)] w-[58px] flex-col items-center gap-2 overflow-y-auto rounded-2xl px-2 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
         style={panel}
       >
         <div className="relative flex w-full flex-col items-center gap-2">
