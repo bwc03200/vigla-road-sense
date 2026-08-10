@@ -19,7 +19,7 @@ function arrowFor(relativeBearing: number) {
 }
 
 /** Auto-dismissing card shown when a POI enters the 300 m proximity ring. */
-export function ProximityAlertCard({ alert, onDismiss }: Props) {
+export function ProximityAlertCard({ alert, onDismiss, moto = false }: Props) {
   const { addWaypoint } = useRouteWaypoint();
   const [adding, setAdding] = useState(false);
   const { poi, distanceM, relativeBearing } = alert;
