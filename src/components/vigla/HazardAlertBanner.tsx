@@ -45,7 +45,7 @@ export function HazardAlertBanner({
 
   return (
     <div
-      className={`pointer-events-none absolute inset-x-0 z-[690] px-3 ${
+      className={`pointer-events-none absolute inset-x-0 z-50 px-3 ${
         moto ? "top-[168px]" : "top-[176px]"
       }`}
     >
