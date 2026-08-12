@@ -27,6 +27,7 @@ import { TopBar } from "@/components/vigla/TopBar";
 import { ReportGrid } from "@/components/vigla/ReportGrid";
 import { OfflineBadge } from "@/components/vigla/OfflineBadge";
 import { InstallBanner } from "@/components/vigla/InstallPWA";
+import { DemoAlertModal } from "@/components/vigla/DemoAlertModal";
 
 import { BottomTabs, type Tab } from "@/components/vigla/BottomTabs";
 import { RoutePlanner } from "@/components/vigla/RoutePlanner";
@@ -141,6 +142,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
 
   return (
     <div className="relative min-h-[100dvh] bg-background">
+      <DemoAlertModal />
       <Toaster position="top-center" theme="light" richColors closeButton />
       <CrashAlertOverlay />
       <main className="fixed inset-x-0 top-0 bottom-16" style={{ height: "calc(100dvh - 4rem)" }}>
