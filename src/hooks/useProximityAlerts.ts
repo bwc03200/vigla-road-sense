@@ -85,29 +85,57 @@ export function useProximityAlerts(pois: FastfoodPOI[], enabled: boolean) {
       if (!position) return;
       const now = Date.now();
 
+      // Battery guard: pause proximity scanning when the rider hasn't moved
+      // for a minute (speed ~0 and position unchanged).
+      const movedM = lastPosRef.current
+        ? haversine(lastPosRef.current.lat, lastPosRef.current.lng, position.lat, position.lng)
+        : Infinity;
+      if (movedM > 15) {
+        lastPosRef.current = { lat: position.lat, lng: position.lng };
+        lastMoveAtRef.current = now;
+      } else if (now - lastMoveAtRef.current > STATIONARY_PAUSE_MS) {
+        return;
+      }
+
       let best: ProximityAlert | null = null;
       for (const poi of poisRef.current) {
+        const d = haversine(position.lat, position.lng, poi.latitude, poi.longitude);
+        if (!Number.isFinite(d)) continue;
+        // Re-arm a POI once the rider has left the 500 m ring around it.
+        if (d > REARM_DISTANCE_M) {
+          seenRef.current.delete(poi.id);
+          continue;
+        }
         const last = seenRef.current.get(poi.id);
         if (last != null && now - last < REALERT_COOLDOWN_MS) continue;
-        const d = haversine(position.lat, position.lng, poi.latitude, poi.longitude);
-        if (!Number.isFinite(d) || d > PROXIMITY_THRESHOLD_M) continue;
+        if (d > PROXIMITY_THRESHOLD_M) continue;
+        const abs = bearing(position.lat, position.lng, poi.latitude, poi.longitude);
+        const rel = (abs - (position.heading ?? 0) + 360) % 360;
+        // POI already behind the rider: never alert.
+        if (position.heading != null && rel > 110 && rel < 250) continue;
         if (!best || d < best.distanceM) {
-          const abs = bearing(position.lat, position.lng, poi.latitude, poi.longitude);
+          const speedKmh = Math.max(position.speed ?? 0, 20);
           best = {
             poi,
             distanceM: d,
-            relativeBearing: (abs - (position.heading ?? 0) + 360) % 360,
+            relativeBearing: rel,
+            etaMin: Math.max(1, Math.round(d / 1000 / speedKmh * 60)),
           };
         }
       }
 
       if (!best) return;
+      // Global anti-spam window.
+      if (now - lastAlertAtRef.current < MIN_TIME_BETWEEN_ALERTS_MS) return;
       setAlert((current) => {
         if (current) return current;
         seenRef.current.set(best!.poi.id, now);
-        console.log(
-          `🍔 [POI ALERT ${best!.distanceM.toFixed(0)}M] ${best!.poi.name}`,
-        );
+        lastAlertAtRef.current = now;
+        console.log("🍔 [POI ALERT 300M]", {
+          poi: best!.poi.name,
+          distance: Math.round(best!.distanceM),
+          time: now,
+        });
         clearTimer();
         dismissTimerRef.current = setTimeout(
           () => setAlert(null),
@@ -116,6 +144,7 @@ export function useProximityAlerts(pois: FastfoodPOI[], enabled: boolean) {
         return best;
       });
     };
+
 
     tick();
     const id = setInterval(tick, PROXIMITY_CHECK_MS);
