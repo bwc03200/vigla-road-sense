@@ -324,3 +324,15 @@ html { scroll-behavior: smooth; }
     0 0 0 4px #ffffff,
     0 4px 12px rgba(0, 0, 0, 0.6) !important;
 }
+
+
+/* Heading lock (active navigation): the map panes rotate so the direction of
+   travel points up. Markers, popups and the user arrow are counter-rotated so
+   labels stay readable and the arrow keeps pointing "up the road". */
+.vigla-heading-lock .leaflet-marker-icon,
+.vigla-heading-lock .leaflet-popup {
+  rotate: calc(-1 * var(--vigla-map-rot, 0deg));
+}
+.vigla-heading-lock .vigla-user-icon {
+  rotate: 0deg;
+}
