@@ -59,8 +59,9 @@ export function ProximityAlertCard({ alert, onDismiss, moto = false }: Props) {
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-bold text-foreground">{poi.name}</div>
           <div className="text-xs text-muted-foreground">
-            {Math.round(distanceM)} m • à proximité
+            {(distanceM / 1000).toFixed(1)} km • {alert.etaMin} min
           </div>
+
           <div className="text-[11px] font-medium text-primary">
             {arrowFor(relativeBearing)}
           </div>

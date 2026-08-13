@@ -91,7 +91,7 @@ function InteractionTracker() {
   return null;
 }
 
-function NavigationFollow({ lat, lng }: { lat: number; lng: number; heading?: number | null }) {
+function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; heading?: number | null }) {
   const map = useMap();
   const firstFollow = useRef(true);
   useEffect(() => {
@@ -104,14 +104,78 @@ function NavigationFollow({ lat, lng }: { lat: number; lng: number; heading?: nu
       map.setView([lat, lng], map.getZoom(), { animate: true });
     }
   }, [lat, lng, map]);
-  // The map is always north-up. Heading is shown only by the UserMarker icon.
+
+  // Heading lock: rotate the map container so the direction of travel points
+  // up. Debounced (200ms), jitter-filtered, eased over 2.5s, and reverted to
+  // north-up smoothly when navigation stops or GPS heading is lost.
+  const targetRef = useRef(0);
+  const lastTargetAtRef = useRef(0);
+  useEffect(() => {
+    if (heading == null || !Number.isFinite(heading)) return;
+    const now = Date.now();
+    const delta = Math.abs(((heading - targetRef.current + 540) % 360) - 180);
+    // GPS jitter: ignore rapid small-ish swings.
+    if (now - lastTargetAtRef.current < 200 && delta < 15) return;
+    lastTargetAtRef.current = now;
+    targetRef.current = heading;
+  }, [heading]);
+
   useEffect(() => {
     const el = map.getContainer();
-    el.style.transform = "";
-    el.style.transition = "";
+    const panes = () =>
+      [
+        map.getPane("tilePane"),
+        map.getPane("overlayPane"),
+        map.getPane("shadowPane"),
+        map.getPane("markerPane"),
+        map.getPane("popupPane"),
+      ].filter(Boolean) as HTMLElement[];
+
+    let current = 0;
+    let from = 0;
+    let to = 0;
+    let startedAt = performance.now();
+    let raf = 0;
+    const easeInOutQuad = (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
+
+    const frame = (now: number) => {
+      const target = targetRef.current;
+      if (target !== to) {
+        from = current;
+        to = target;
+        startedAt = now;
+      }
+      const p = Math.min(1, (now - startedAt) / 2500);
+      const diff = ((to - from + 540) % 360) - 180;
+      current = from + diff * easeInOutQuad(p);
+      const rot = -current;
+      // Rotate the map panes only, so floating UI (chips, buttons, HUD)
+      // stays upright. Origin = the on-screen map centre.
+      const origin = map.latLngToLayerPoint(map.getCenter());
+      for (const pane of panes()) {
+        pane.style.transformOrigin = `${origin.x}px ${origin.y}px`;
+        pane.style.transform = `rotate(${rot.toFixed(2)}deg)`;
+      }
+      el.style.setProperty("--vigla-map-rot", `${rot.toFixed(2)}deg`);
+      raf = requestAnimationFrame(frame);
+    };
+    el.classList.add("vigla-heading-lock");
+    raf = requestAnimationFrame(frame);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      el.classList.remove("vigla-heading-lock");
+      for (const pane of panes()) {
+        pane.style.transform = "";
+        pane.style.transformOrigin = "";
+      }
+      el.style.removeProperty("--vigla-map-rot");
+    };
   }, [map]);
+
   return null;
 }
+
 
 
 function InvalidateOnResize() {
