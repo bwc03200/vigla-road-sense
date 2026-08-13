@@ -5,7 +5,13 @@ import type { FastfoodPOI } from "@/types/fastfoods";
 
 export const PROXIMITY_THRESHOLD_M = 300;
 export const PROXIMITY_CHECK_MS = 2000;
-export const PROXIMITY_DISMISS_MS = 3500;
+export const PROXIMITY_DISMISS_MS = 3000;
+/** Global anti-spam: at most one popup per 30 s. */
+export const MIN_TIME_BETWEEN_ALERTS_MS = 30000;
+/** Leaving this ring re-arms a POI that was already shown. */
+const REARM_DISTANCE_M = 500;
+/** Stop polling when the rider has not moved for a minute (battery). */
+const STATIONARY_PAUSE_MS = 60000;
 /** Don't re-alert for the same POI within this window. */
 const REALERT_COOLDOWN_MS = 5 * 60 * 1000;
 
