@@ -20,7 +20,10 @@ export interface ProximityAlert {
   distanceM: number;
   /** Bearing from the user to the POI, relative to current heading (deg). */
   relativeBearing: number;
+  /** Rough drive time to the POI, in minutes (min. 1). */
+  etaMin: number;
 }
+
 
 function bearing(lat1: number, lng1: number, lat2: number, lng2: number) {
   const toRad = (d: number) => (d * Math.PI) / 180;
