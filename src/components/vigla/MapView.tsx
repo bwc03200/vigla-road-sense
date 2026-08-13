@@ -122,7 +122,15 @@ function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; hea
 
   useEffect(() => {
     const el = map.getContainer();
-    el.style.transformOrigin = "50% 50%";
+    const panes = () =>
+      [
+        map.getPane("tilePane"),
+        map.getPane("overlayPane"),
+        map.getPane("shadowPane"),
+        map.getPane("markerPane"),
+        map.getPane("popupPane"),
+      ].filter(Boolean) as HTMLElement[];
+
     let current = 0;
     let from = 0;
     let to = 0;
@@ -134,7 +142,6 @@ function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; hea
       const target = targetRef.current;
       if (target !== to) {
         from = current;
-        // shortest angular path
         to = target;
         startedAt = now;
       }
@@ -142,7 +149,13 @@ function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; hea
       const diff = ((to - from + 540) % 360) - 180;
       current = from + diff * easeInOutQuad(p);
       const rot = -current;
-      el.style.transform = `scale(1.35) rotate(${rot.toFixed(2)}deg)`;
+      // Rotate the map panes only, so floating UI (chips, buttons, HUD)
+      // stays upright. Origin = the on-screen map centre.
+      const origin = map.latLngToLayerPoint(map.getCenter());
+      for (const pane of panes()) {
+        pane.style.transformOrigin = `${origin.x}px ${origin.y}px`;
+        pane.style.transform = `rotate(${rot.toFixed(2)}deg)`;
+      }
       el.style.setProperty("--vigla-map-rot", `${rot.toFixed(2)}deg`);
       raf = requestAnimationFrame(frame);
     };
@@ -152,11 +165,14 @@ function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; hea
     return () => {
       cancelAnimationFrame(raf);
       el.classList.remove("vigla-heading-lock");
-      el.style.transform = "";
-      el.style.transition = "";
+      for (const pane of panes()) {
+        pane.style.transform = "";
+        pane.style.transformOrigin = "";
+      }
       el.style.removeProperty("--vigla-map-rot");
     };
   }, [map]);
+
   return null;
 }
 
