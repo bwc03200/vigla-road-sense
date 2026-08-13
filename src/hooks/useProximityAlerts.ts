@@ -43,6 +43,9 @@ export function useProximityAlerts(pois: FastfoodPOI[], enabled: boolean) {
   const [alert, setAlert] = useState<ProximityAlert | null>(null);
   const seenRef = useRef<Map<string, number>>(new Map());
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastPosRef = useRef<{ lat: number; lng: number } | null>(null);
+  const lastMoveAtRef = useRef(Date.now());
+  const lastAlertAtRef = useRef(0);
   const poisRef = useRef(pois);
   poisRef.current = pois;
 
@@ -114,7 +117,7 @@ export function useProximityAlerts(pois: FastfoodPOI[], enabled: boolean) {
         // POI already behind the rider: never alert.
         if (position.heading != null && rel > 110 && rel < 250) continue;
         if (!best || d < best.distanceM) {
-          const speedKmh = Math.max(position.speed ?? 0, 20);
+          const speedKmh = Math.max(useVigla.getState().speedKmh || 0, 20);
           best = {
             poi,
             distanceM: d,
