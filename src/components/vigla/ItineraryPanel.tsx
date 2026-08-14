@@ -68,7 +68,7 @@ export function ItineraryPanel() {
   if (!route || route.waypoints.length === 0) return null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center px-3 pb-3 md:justify-end">
+    <div className="pointer-events-none fixed inset-x-0 bottom-16 z-30 flex justify-center px-3 pb-3 md:bottom-4 md:justify-end">
       <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-border bg-background/95 shadow-[0_16px_40px_rgba(15,23,42,0.18)] backdrop-blur-md">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="text-sm font-semibold">{t("navigation.itinerary")}</div>
