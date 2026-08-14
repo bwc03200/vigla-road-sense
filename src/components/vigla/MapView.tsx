@@ -17,6 +17,7 @@ import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
+import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 
 
 
