@@ -97,6 +97,12 @@ export async function generateQuickRide(
         distanceM: r0.distance ?? 0,
         durationS: r0.duration ?? 0,
         steps: [],
+        legs: Array.isArray(r0?.legs)
+          ? r0.legs.map((leg: { distance?: number; duration?: number }) => ({
+              distance: leg.distance ?? 0,
+              duration: leg.duration ?? 0,
+            }))
+          : [],
       };
     } catch (err) {
       lastErr = err;

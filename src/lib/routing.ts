@@ -169,5 +169,9 @@ export function buildRouteState(
     durationS: result.durationS,
     hazardIds: hazardsAlongRoute(hazards, result.coords),
     steps: result.steps,
+    legs: result.legs.map((leg) => ({
+      distanceM: leg.distance,
+      durationS: leg.duration,
+    })),
   };
 }
