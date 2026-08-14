@@ -64,6 +64,7 @@ export interface OsrmRouteResult {
   distanceM: number;
   durationS: number;
   steps: RouteStep[];
+  legs: Array<{ distance: number; duration: number }>;
 }
 
 export async function fetchOsrmRoute(
