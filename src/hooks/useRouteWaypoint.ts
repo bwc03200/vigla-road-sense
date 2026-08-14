@@ -2,6 +2,7 @@ import { useCallback } from "react";
 import { toast } from "sonner";
 import { useVigla } from "@/lib/vigla-store";
 import { buildRouteState, fetchOsrmRouteVia } from "@/lib/routing";
+import type { RouteWaypoint } from "@/types/vigla";
 
 export interface AddWaypointPayload {
   name: string;
@@ -21,9 +22,15 @@ function formatEta(s: number) {
   return `${Math.floor(min / 60)} h ${String(min % 60).padStart(2, "0")}`;
 }
 
+function makeWaypointId(type: string) {
+  return `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
 /**
  * Adds a POI as an intermediate waypoint on the active route (or routes
  * straight to it when no route exists), then recalculates via OSRM.
+ * Each POI is appended to the persistent waypoints list; the destination
+ * always remains the last waypoint.
  */
 export function useRouteWaypoint() {
   const addWaypoint = useCallback(async (waypoint: AddWaypointPayload) => {
@@ -38,23 +45,65 @@ export function useRouteWaypoint() {
     }
 
     try {
-      const destination = route
-        ? route.destination
-        : { lat: waypoint.lat, lng: waypoint.lng, label: waypoint.name };
+      const isFirstWaypoint = !route;
 
-      const points: [number, number][] = route
-        ? [
-            [position.lat, position.lng],
-            [waypoint.lat, waypoint.lng],
-            [destination.lat, destination.lng],
-          ]
-        : [
-            [position.lat, position.lng],
-            [waypoint.lat, waypoint.lng],
+      const newWaypoint: RouteWaypoint = {
+        id: makeWaypointId(waypoint.type),
+        type: isFirstWaypoint ? "destination" : "poi",
+        name: waypoint.name,
+        lat: waypoint.lat,
+        lon: waypoint.lng,
+      };
+
+      // Migrate an old RouteState that has no waypoints array yet by
+      // synthesising a destination waypoint from route.destination.
+      let baseWaypoints: RouteWaypoint[] = route?.waypoints ?? [];
+      if (route && baseWaypoints.length === 0) {
+        baseWaypoints = [
+          {
+            id: makeWaypointId("destination"),
+            type: "destination",
+            name: route.destination.label,
+            lat: route.destination.lat,
+            lon: route.destination.lng,
+          },
+        ];
+      }
+
+      let nextWaypoints: RouteWaypoint[];
+      if (isFirstWaypoint) {
+        nextWaypoints = [newWaypoint];
+      } else {
+        // Insert the new POI just before the final destination waypoint.
+        const destIndex = baseWaypoints.findIndex((w) => w.type === "destination");
+        if (destIndex === -1) {
+          nextWaypoints = [...baseWaypoints, newWaypoint];
+        } else {
+          nextWaypoints = [
+            ...baseWaypoints.slice(0, destIndex),
+            newWaypoint,
+            ...baseWaypoints.slice(destIndex),
           ];
+        }
+      }
+
+      const destinationWaypoint =
+        nextWaypoints.find((w) => w.type === "destination") ??
+        nextWaypoints[nextWaypoints.length - 1];
+
+      const destination = {
+        lat: destinationWaypoint.lat,
+        lng: destinationWaypoint.lon,
+        label: destinationWaypoint.name,
+      };
+
+      const points: [number, number][] = [
+        [position.lat, position.lng],
+        ...nextWaypoints.map((w) => [w.lat, w.lon] as [number, number]),
+      ];
 
       const result = await fetchOsrmRouteVia(points);
-      const newRoute = buildRouteState(destination, result, hazards);
+      const newRoute = buildRouteState(destination, result, hazards, nextWaypoints);
       setRoute(newRoute);
 
       if (navigation && !navigation.arrived) {
@@ -78,7 +127,7 @@ export function useRouteWaypoint() {
 
       const eta = formatEta(newRoute.durationS);
       const distance = formatDistance(newRoute.distanceM);
-      console.log("🍔 [ROUTE SUCCESS]", { eta, distance });
+      console.log("🍔 [ROUTE SUCCESS]", { eta, distance, waypoints: nextWaypoints });
       toast.success(`✅ ${waypoint.name} ajouté`, {
         description: `ETA: ${eta} • ${distance}`,
       });

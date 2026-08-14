@@ -68,8 +68,17 @@ export interface RouteStep {
   location: [number, number];
 }
 
+export interface RouteWaypoint {
+  id: string;
+  type: "poi" | "destination";
+  name: string;
+  lat: number;
+  lon: number;
+}
+
 export interface RouteState {
   destination: { lat: number; lng: number; label: string };
+  waypoints: RouteWaypoint[];
   coords: [number, number][];
   distanceM: number;
   durationS: number;
