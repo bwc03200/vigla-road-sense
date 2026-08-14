@@ -756,6 +756,7 @@ export function MapView() {
         </div>
       </div>
     )}
+    {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     </>
   );
 }
