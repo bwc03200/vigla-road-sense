@@ -149,6 +149,8 @@
     "duration": "Duration",
     "distance": "Distance",
     "alerts": "Alerts",
+    "itinerary": "Itinerary",
+    "stops": "stops",
     "resumeCaption": "Trip in progress",
     "resumeQuestion": "Resume trip to {{label}}?",
     "resumeNo": "No, new trip",

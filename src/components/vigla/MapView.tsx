@@ -17,6 +17,7 @@ import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
+import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 
 
 
@@ -755,6 +756,7 @@ export function MapView() {
         </div>
       </div>
     )}
+    {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     </>
   );
 }

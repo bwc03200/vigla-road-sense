@@ -76,6 +76,11 @@ export interface RouteWaypoint {
   lon: number;
 }
 
+export interface RouteLeg {
+  distanceM: number;
+  durationS: number;
+}
+
 export interface RouteState {
   destination: { lat: number; lng: number; label: string };
   waypoints: RouteWaypoint[];
@@ -84,6 +89,7 @@ export interface RouteState {
   durationS: number;
   hazardIds: string[];
   steps: RouteStep[];
+  legs: RouteLeg[];
 }
 
 export interface ActiveNavigation {

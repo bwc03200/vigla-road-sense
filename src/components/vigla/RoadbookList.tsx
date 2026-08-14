@@ -60,6 +60,7 @@ export function RoadbookList({ userId }: { userId: string }) {
         distanceM: (rb.distance_km ?? 0) * 1000,
         durationS: (rb.duration_days ?? 1) * 3600,
         steps: [],
+        legs: [],
       },
       hazards,
     );

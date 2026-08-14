@@ -149,6 +149,8 @@
     "duration": "Durée",
     "distance": "Distance",
     "alerts": "Alertes",
+    "itinerary": "Itinéraire",
+    "stops": "étapes",
     "resumeCaption": "Trajet en cours",
     "resumeQuestion": "Reprendre le trajet vers {{label}} ?",
     "resumeNo": "Non, nouveau trajet",
