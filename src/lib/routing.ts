@@ -111,8 +111,9 @@ export async function fetchOsrmRouteVia(
     .map(([lng, lat]: [number, number]) => [lat, lng]);
   if (coords.length < 2) throw new Error("no-route");
   const steps: RouteStep[] = [];
-  const legs = Array.isArray(r0?.legs) ? r0.legs : [];
-  for (const leg of legs) {
+  const rawLegs = Array.isArray(r0?.legs) ? r0.legs : [];
+  const legs: Array<{ distance: number; duration: number }> = [];
+  for (const leg of rawLegs) {
     const legSteps = Array.isArray(leg?.steps) ? (leg.steps as OsrmStep[]) : [];
     for (const s of legSteps) {
       if (!s || !s.maneuver) continue;
@@ -127,12 +128,17 @@ export async function fetchOsrmRouteVia(
         location: [loc[1], loc[0]],
       });
     }
+    legs.push({
+      distance: Number.isFinite(leg?.distance) ? leg.distance : 0,
+      duration: Number.isFinite(leg?.duration) ? leg.duration : 0,
+    });
   }
   return {
     coords,
     distanceM: r0.distance ?? 0,
     durationS: r0.duration ?? 0,
     steps,
+    legs,
   };
 }
 
