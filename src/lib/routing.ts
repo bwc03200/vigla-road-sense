@@ -152,9 +152,11 @@ export function buildRouteState(
   destination: RouteState["destination"],
   result: OsrmRouteResult,
   hazards: HazardReport[],
+  waypoints: RouteState["waypoints"] = [],
 ): RouteState {
   return {
     destination,
+    waypoints,
     coords: result.coords,
     distanceM: result.distanceM,
     durationS: result.durationS,
