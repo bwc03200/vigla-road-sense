@@ -15,6 +15,9 @@ import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSigna
 import { useFastfoods } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
+import { QuickRoutePOIButton } from "@/components/vigla/QuickRoutePOIButton";
+import { QuickRoutePOIModal } from "@/components/vigla/QuickRoutePOIModal";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
@@ -507,6 +510,23 @@ export function MapView() {
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(inViewFastfoods, navActive);
 
+  // P9: quick route straight to a POI from a bottom-sheet list.
+  const [quickRouteModalOpen, setQuickRouteModalOpen] = useState(false);
+  const { routeDirectToPOI } = useRouteWaypoint();
+  const handleRouteToPOI = useCallback(
+    async (poi: (typeof inViewFastfoods)[number]) => {
+      setQuickRouteModalOpen(false);
+      await routeDirectToPOI({
+        name: poi.name,
+        lat: poi.latitude,
+        lng: poi.longitude,
+        type: "restaurant",
+        brand: poi.brand,
+      });
+    },
+    [routeDirectToPOI],
+  );
+
 
 
   // Preload adjacent tiles (Leaflet native). Cut buffer down when the browser
@@ -696,6 +716,10 @@ export function MapView() {
           isFailing={isFailing}
           onRetry={retryManually}
         />
+        <QuickRoutePOIButton
+          count={inViewFastfoods.length}
+          onClick={() => setQuickRouteModalOpen(true)}
+        />
 
       </div>
     </MapContainer>
@@ -757,6 +781,14 @@ export function MapView() {
       </div>
     )}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
+    <QuickRoutePOIModal
+      isOpen={quickRouteModalOpen}
+      fastfoods={inViewFastfoods}
+      currentGPS={position ? { lat: position.lat, lng: position.lng } : null}
+      isLoading={fastfoodsLoading}
+      onClose={() => setQuickRouteModalOpen(false)}
+      onRouteToPOI={handleRouteToPOI}
+    />
     </>
   );
 }

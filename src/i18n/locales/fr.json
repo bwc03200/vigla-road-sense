@@ -182,7 +182,9 @@
       "slight right": "légèrement à droite",
       "straight": "tout droit",
       "uturn": "faites demi-tour"
-    }
+    },
+    "browse_restaurants": "Parcourir les restaurants",
+    "restaurants": "Restaurants"
   },
   "roadbooks": {
     "title": "Roadbooks",
@@ -583,5 +585,8 @@
   "trafficSignals": {
     "filter": "Feux tricolores",
     "ahead": "Feu dans {{distance}}"
+  },
+  "distances": {
+    "km": "km"
   }
 }
