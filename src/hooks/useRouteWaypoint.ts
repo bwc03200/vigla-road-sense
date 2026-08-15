@@ -141,5 +141,51 @@ export function useRouteWaypoint() {
     }
   }, []);
 
-  return { addWaypoint };
+  /**
+   * P9: route DIRECTLY to a POI (it becomes the destination). Any previously
+   * added intermediate waypoints are cleared.
+   */
+  const routeDirectToPOI = useCallback(async (poi: AddWaypointPayload) => {
+    const { position, hazards, setRoute } = useVigla.getState();
+    if (!position) {
+      toast.error("Position GPS indisponible");
+      console.log(`❌ [QUICK ROUTE FAILED] — POI: ${poi.name}, error: no-gps, modal remains open`);
+      return null;
+    }
+
+    try {
+      const destination = { lat: poi.lat, lng: poi.lng, label: poi.name };
+      const waypoints: RouteWaypoint[] = [
+        {
+          id: makeWaypointId("destination"),
+          type: "destination",
+          name: poi.name,
+          lat: poi.lat,
+          lon: poi.lng,
+        },
+      ];
+
+      const result = await fetchOsrmRouteVia([
+        [position.lat, position.lng],
+        [poi.lat, poi.lng],
+      ]);
+      const newRoute = buildRouteState(destination, result, hazards, waypoints);
+      setRoute(newRoute);
+
+      const eta = formatEta(newRoute.durationS);
+      const distance = formatDistance(newRoute.distanceM);
+      console.log(
+        `🚀 [QUICK ROUTE TO POI] — POI: ${poi.name}, distance: ${distance}, destination set, navigation started`,
+      );
+      toast.success(`🚀 ${poi.name}`, { description: `ETA: ${eta} • ${distance}` });
+      return { eta, distance, route: newRoute };
+    } catch (error) {
+      console.log(`❌ [QUICK ROUTE FAILED] — POI: ${poi.name}, error: ${String(error)}`);
+      toast.error("Erreur", { description: "Itinéraire indisponible" });
+      return null;
+    }
+  }, []);
+
+  return { addWaypoint, routeDirectToPOI };
 }
+
