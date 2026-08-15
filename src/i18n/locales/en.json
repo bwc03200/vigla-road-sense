@@ -182,7 +182,9 @@
       "slight right": "slight right",
       "straight": "straight",
       "uturn": "make a U-turn"
-    }
+    },
+    "browse_restaurants": "Browse Restaurants",
+    "restaurants": "Restaurants"
   },
   "roadbooks": {
     "title": "Roadbooks",
@@ -583,5 +585,8 @@
   "trafficSignals": {
     "filter": "Traffic lights",
     "ahead": "Traffic light in {{distance}}"
+  },
+  "distances": {
+    "km": "km"
   }
 }
