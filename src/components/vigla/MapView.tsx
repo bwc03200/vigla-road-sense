@@ -15,8 +15,8 @@ import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSigna
 import { useFastfoods } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
-import { QuickRoutePOIButton } from "@/components/vigla/QuickRoutePOIButton";
-import { QuickRoutePOIModal } from "@/components/vigla/QuickRoutePOIModal";
+import { CityDisplay } from "@/components/vigla/CityDisplay";
+import { useCityName } from "@/hooks/useCityName";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
@@ -30,6 +30,18 @@ import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 
 
 
+
+/** Exposes the Leaflet map instance to the outer component. */
+function MapRefCapture({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
+  const map = useMap();
+  useEffect(() => {
+    mapRef.current = map;
+    return () => {
+      mapRef.current = null;
+    };
+  }, [map, mapRef]);
+  return null;
+}
 
 function destinationIcon() {
   return L.divIcon({
@@ -510,24 +522,56 @@ export function MapView() {
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(inViewFastfoods, navActive);
 
-  // P9: quick route straight to a POI from a bottom-sheet list.
-  const [quickRouteModalOpen, setQuickRouteModalOpen] = useState(false);
+  // P1: selecting a restaurant → auto-zoom on the whole cluster + direct route.
+  const mapRef = useRef<L.Map | null>(null);
   const { routeDirectToPOI } = useRouteWaypoint();
-  const handleRouteToPOI = useCallback(
+  const handleFastfoodSelect = useCallback(
     async (poi: (typeof inViewFastfoods)[number]) => {
-      setQuickRouteModalOpen(false);
-      await routeDirectToPOI({
+      const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
+      const lats = cluster.map((r) => r.latitude);
+      const lons = cluster.map((r) => r.longitude);
+      const bounds: [[number, number], [number, number]] = [
+        [Math.min(...lats), Math.min(...lons)],
+        [Math.max(...lats), Math.max(...lons)],
+      ];
+      mapRef.current?.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 16,
+        animate: true,
+        duration: 0.5,
+      });
+      console.log("🎯 [AUTO-ZOOM CLUSTER]", {
+        restaurantCount: cluster.length,
+        zoomLevel: 16,
+        bounds: {
+          minLat: bounds[0][0],
+          maxLat: bounds[1][0],
+          minLon: bounds[0][1],
+          maxLon: bounds[1][1],
+        },
+      });
+
+      const res = await routeDirectToPOI({
         name: poi.name,
         lat: poi.latitude,
         lng: poi.longitude,
         type: "restaurant",
         brand: poi.brand,
       });
+      if (res) {
+        console.log("🍔 [DIRECT ROUTE]", {
+          restaurant: poi.name,
+          distance: res.distance,
+          eta: res.eta,
+          currentLat: position?.lat,
+          currentLon: position?.lng,
+        });
+      }
     },
-    [routeDirectToPOI],
+    [inViewFastfoods, routeDirectToPOI, position],
   );
 
-
+  const cityName = useCityName(position?.lat, position?.lng);
 
   // Preload adjacent tiles (Leaflet native). Cut buffer down when the browser
   // reports Save-Data / slow connection so we don't burn mobile data.
@@ -611,6 +655,7 @@ export function MapView() {
         maxZoom={19}
       />
       <InvalidateOnResize />
+      <MapRefCapture mapRef={mapRef} />
       {position && !route && !navActive && (
         <FollowUser
           lat={position.lat}
@@ -698,6 +743,7 @@ export function MapView() {
           pois={visibleFastfoods}
           zoom={viewport?.zoom ?? 13}
           dark={motoMode || mapTheme === "dark"}
+          onSelect={handleFastfoodSelect}
         />
       )}
       {convoyMembers
@@ -711,16 +757,12 @@ export function MapView() {
         ))}
       <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
         <SmartRestaurantsChip
-          count={inViewFastfoods.length}
+          pois={inViewFastfoods}
           isLoading={fastfoodsLoading}
           isFailing={isFailing}
           onRetry={retryManually}
+          onSelect={handleFastfoodSelect}
         />
-        <QuickRoutePOIButton
-          count={inViewFastfoods.length}
-          onClick={() => setQuickRouteModalOpen(true)}
-        />
-
       </div>
     </MapContainer>
     {proximityAlert && (
@@ -781,14 +823,7 @@ export function MapView() {
       </div>
     )}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
-    <QuickRoutePOIModal
-      isOpen={quickRouteModalOpen}
-      fastfoods={inViewFastfoods}
-      currentGPS={position ? { lat: position.lat, lng: position.lng } : null}
-      isLoading={fastfoodsLoading}
-      onClose={() => setQuickRouteModalOpen(false)}
-      onRouteToPOI={handleRouteToPOI}
-    />
+    <CityDisplay city={cityName} />
     </>
   );
 }
