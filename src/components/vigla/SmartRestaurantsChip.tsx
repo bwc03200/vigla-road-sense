@@ -1,28 +1,33 @@
-import { useEffect, useRef } from "react";
-import { useVigla } from "@/lib/vigla-store";
+import { useEffect, useRef, useState } from "react";
+import type { FastfoodPOI } from "@/types/fastfoods";
 
 interface SmartRestaurantsChipProps {
   /** POIs actually visible in the current viewport. */
-  count: number;
+  pois: FastfoodPOI[];
   isLoading?: boolean;
   /** All auto-retries exhausted — offer a manual retry. */
   isFailing?: boolean;
   onRetry?: () => void;
+  /** Selecting a restaurant: auto-zoom to the cluster + direct route. */
+  onSelect: (poi: FastfoodPOI) => void;
 }
+
+const MAX_VISIBLE = 5;
 
 /**
  * Restaurants chip that only exists while POIs are present in the viewport.
- * Toggling persists through the Vigla store (`vigla:showFastfoods`).
+ * Tapping expands it into the list of restaurant names; picking one routes
+ * straight to it.
  */
 export function SmartRestaurantsChip({
-  count,
+  pois,
   isLoading = false,
   isFailing = false,
   onRetry,
+  onSelect,
 }: SmartRestaurantsChipProps) {
-  const show = useVigla((s) => s.showFastfoods);
-  const toggle = useVigla((s) => s.toggleFastfoods);
-
+  const [expanded, setExpanded] = useState(false);
+  const count = pois.length;
   const hasData = count > 0;
   const wasVisible = useRef(hasData);
 
@@ -31,40 +36,74 @@ export function SmartRestaurantsChip({
       console.log("🍔 [CHIP VISIBILITY]", { was: wasVisible.current, now: hasData, count });
       wasVisible.current = hasData;
     }
-    if (!hasData) console.log("🍔 [CHIP HIDDEN] No POIs in viewport");
   }, [hasData, count]);
+
+  useEffect(() => {
+    if (!hasData) setExpanded(false);
+  }, [hasData]);
 
   if (!hasData && !isFailing) return null;
 
+  const visible = pois.slice(0, MAX_VISIBLE);
+  const extra = count - visible.length;
+
   return (
     <div className="pointer-events-none flex flex-col items-start gap-2">
-      <button
-        type="button"
-        onClick={() => {
-          console.log("🍔 [CHIP TOGGLE]", !show);
-          toggle();
-        }}
-        aria-pressed={show}
-        title="Toggle restaurants layer"
-        className={`pointer-events-auto inline-flex h-11 items-center gap-2 rounded-full border px-4 text-xs font-semibold shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95 ${
-          show
-            ? "border-[#FF6B35] bg-[#FF6B35] text-white"
-            : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50"
-        }`}
-      >
-        <span aria-hidden="true">🍔</span>
-        <span>Restaurants</span>
-        {hasData && (
-          <span
-            className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-              show ? "bg-white text-[#FF6B35]" : "bg-slate-100 text-slate-500"
-            }`}
+      {hasData && (
+        <div
+          className={`pointer-events-auto rounded-xl bg-[#FF8C00] px-5 py-3 text-white shadow-[0_4px_12px_rgba(255,140,0,0.3)] transition ${
+            expanded ? "min-w-[260px] max-w-[300px]" : ""
+          }`}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              const next = !expanded;
+              setExpanded(next);
+              console.log("🍔 [CHIP TOGGLED]", {
+                state: next ? "expanded" : "collapsed",
+                restaurantCount: count,
+                names: pois.map((p) => p.name),
+              });
+            }}
+            aria-expanded={expanded}
+            className="flex w-full items-center gap-2 text-left text-sm font-bold active:scale-[0.98]"
           >
-            {count}
-          </span>
-        )}
-        {isLoading && <span className="text-[10px] font-normal opacity-75">…</span>}
-      </button>
+            <span aria-hidden="true">🍔</span>
+            <span className="flex-1">{count} FastFoods nearby</span>
+            {isLoading && <span className="text-[10px] font-normal opacity-75">…</span>}
+          </button>
+
+          {expanded && (
+            <ul className="m-0 list-none p-0 pt-2 text-sm font-normal">
+              {visible.map((poi) => (
+                <li key={poi.id} className="border-t border-white/30 first:border-t-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log("🍔 [RESTAURANT SELECTED]", {
+                        name: poi.name,
+                        lat: poi.latitude,
+                        lon: poi.longitude,
+                      });
+                      setExpanded(false);
+                      onSelect(poi);
+                    }}
+                    className="w-full truncate py-1.5 text-left transition hover:opacity-90 active:scale-[0.98]"
+                  >
+                    {poi.name}
+                  </button>
+                </li>
+              ))}
+              {extra > 0 && (
+                <li className="border-t border-white/30 py-1.5 text-xs opacity-80">
+                  +{extra} more
+                </li>
+              )}
+            </ul>
+          )}
+        </div>
+      )}
 
       {isFailing && onRetry && (
         <button
