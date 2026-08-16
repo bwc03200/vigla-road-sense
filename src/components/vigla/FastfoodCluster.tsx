@@ -17,15 +17,30 @@ export function FastfoodCluster({
   pois,
   zoom,
   dark = false,
+  onSelect,
 }: {
   pois: FastfoodPOI[];
   zoom: number;
   dark?: boolean;
+  /** Selecting a POI: auto-zoom to the cluster + direct route. */
+  onSelect?: (poi: FastfoodPOI) => void;
 }) {
   const map = useMap();
   const { addWaypoint } = useRouteWaypoint();
-  const addWaypointRef = useRef(addWaypoint);
-  addWaypointRef.current = addWaypoint;
+  const actionRef = useRef<(poi: FastfoodPOI) => void>(() => {});
+  actionRef.current = (poi: FastfoodPOI) => {
+    if (onSelect) {
+      void onSelect(poi);
+      return;
+    }
+    void addWaypoint({
+      name: poi.name,
+      lat: poi.latitude,
+      lng: poi.longitude,
+      type: "restaurant",
+      brand: poi.brand,
+    });
+  };
   const clusterRef = useRef<L.MarkerClusterGroup | null>(null);
   const markersRef = useRef<Map<string, L.Marker>>(new Map());
 
@@ -86,13 +101,7 @@ export function FastfoodCluster({
         if (!btn) return;
         btn.onclick = (ev) => {
           ev.stopPropagation();
-          void addWaypointRef.current({
-            name: poi.name,
-            lat: poi.latitude,
-            lng: poi.longitude,
-            type: "restaurant",
-            brand: poi.brand,
-          });
+          actionRef.current(poi);
           m.closePopup();
         };
       });
