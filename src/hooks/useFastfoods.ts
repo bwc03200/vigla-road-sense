@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getFastfoods } from "@/lib/fastfoods.functions";
+import { checkCache, storeCache } from "@/lib/fastfood-cache";
 import type { FastfoodPOI } from "@/types/fastfoods";
+
 
 export interface FastfoodBBox {
   south: number;
