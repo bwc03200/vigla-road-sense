@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { haversine } from "@/lib/geo";
+import { fetchCityName } from "@/lib/city-name";
 
 /**
  * Reverse-geocodes the current GPS fix to a city name (Nominatim).
@@ -18,19 +19,7 @@ export function useCityName(lat: number | null | undefined, lng: number | null |
     let cancelled = false;
     (async () => {
       try {
-        const url = new URL("https://nominatim.openstreetmap.org/reverse");
-        url.searchParams.set("format", "json");
-        url.searchParams.set("lat", String(lat));
-        url.searchParams.set("lon", String(lng));
-        url.searchParams.set("zoom", "12");
-        const res = await fetch(url.toString(), { headers: { Accept: "application/json" } });
-        if (!res.ok) throw new Error(`nominatim ${res.status}`);
-        const data = (await res.json()) as {
-          address?: Record<string, string | undefined>;
-        };
-        const a = data.address ?? {};
-        const name =
-          a.city ?? a.town ?? a.village ?? a.municipality ?? a.county ?? a.region ?? null;
+        const name = await fetchCityName(lat, lng);
         if (cancelled || !name) return;
         setCity(name);
         console.log("🏙️ [CITY DETECTED]", { city: name, lat, lon: lng });

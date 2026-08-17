@@ -143,3 +143,69 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
     failedMirror: lastHost,
   };
 }
+
+/**
+ * Thin wrapper that queries Overpass directly (single mirror, 5 s timeout).
+ * Returns an empty array on failure so callers stay resilient.
+ */
+export async function fetchOverpassRestaurants(bbox: OverpassBBox): Promise<FastfoodPOI[]> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+  try {
+    const area = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
+    const q =
+      `[out:json][timeout:25];(` +
+      `nwr["amenity"~"fast_food|restaurant"]["name"~"${BRAND_RE}",i](${area});` +
+      `nwr["amenity"~"fast_food|restaurant"]["brand"~"${BRAND_RE}",i](${area});` +
+      `);out center qt 400;`;
+
+    const response = await fetch(
+      `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`,
+      {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "VIGLA/1.0 (fastfoods; https://vigla-road-sense.lovable.app)",
+          Accept: "application/json",
+        },
+      },
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.error("❌ [OVERPASS ERROR]", response.status);
+      return [];
+    }
+
+    const json = (await response.json()) as { elements?: OverpassElement[] };
+    const seen = new Set<string>();
+    return (json.elements ?? [])
+      .map((e) => {
+        const tags = e.tags ?? {};
+        const lat = e.lat ?? e.center?.lat;
+        const lon = e.lon ?? e.center?.lon;
+        const name = tags["name"] ?? tags["brand"] ?? "";
+        return {
+          id: `ff-${e.type ?? "n"}-${e.id}`,
+          latitude: lat as number,
+          longitude: lon as number,
+          name,
+          brand: normaliseBrand(`${tags["brand"] ?? ""} ${name}`),
+          amenity: tags["amenity"] ?? "fast_food",
+        };
+      })
+      .filter(
+        (p) =>
+          Number.isFinite(p.latitude) &&
+          Number.isFinite(p.longitude) &&
+          p.brand !== "other" &&
+          !seen.has(p.id) &&
+          seen.add(p.id) !== undefined,
+      );
+  } catch (err) {
+    console.error("❌ [OVERPASS TIMEOUT]", err);
+    clearTimeout(timeoutId);
+    return [];
+  }
+}
