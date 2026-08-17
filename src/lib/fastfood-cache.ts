@@ -8,11 +8,20 @@ interface CacheEntry {
 const TTL_MS = 30 * 60 * 1000;
 const fastFoodCache = new Map<string, CacheEntry>();
 
-/** Key = viewport centre rounded to ~1km + zoom level. */
+/**
+ * Zoom bucket: POIs are fetched for the whole padded viewport, so nearby
+ * zoom levels can safely share one entry (city 11-12, local 13-15, street 16+).
+ */
+function zoomBucket(zoom: number): string {
+  if (zoom < 13) return "city";
+  if (zoom < 16) return "local";
+  return "street";
+}
+
+/** Key = viewport centre snapped to a ~5km grid + zoom bucket. */
 export function getCacheKey(lat: number, lon: number, zoom: number): string {
-  const roundedLat = Math.round(lat * 100) / 100;
-  const roundedLon = Math.round(lon * 100) / 100;
-  return `${roundedLat}_${roundedLon}_${zoom}`;
+  const snap = (n: number) => (Math.round(n * 20) / 20).toFixed(2);
+  return `${snap(lat)}_${snap(lon)}_${zoomBucket(zoom)}`;
 }
 
 export function checkCache(lat: number, lon: number, zoom: number): FastfoodPOI[] | null {
