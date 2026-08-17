@@ -53,14 +53,24 @@ export function useFastfoods(
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["fastfoods", bboxKey],
     queryFn: async () => {
+      const centerLat = (bbox!.south + bbox!.north) / 2;
+      const centerLon = (bbox!.west + bbox!.east) / 2;
+      const cached = checkCache(centerLat, centerLon, Math.round(zoom));
+      if (cached) {
+        setRetryCount(0);
+        return cached;
+      }
       console.log("🍔 [FETCH START]", bboxKey);
       const res = await getFastfoods({ data: bbox! });
       console.log("🍔 [FETCH RESULT]", res);
       if (!res.ok) throw new Error(res.error);
       console.log(`🍔 [SUCCESS] ${res.data.length} POIs`);
+      const pois = res.data as FastfoodPOI[];
+      storeCache(centerLat, centerLon, Math.round(zoom), pois);
       setRetryCount(0);
-      return res.data as FastfoodPOI[];
+      return pois;
     },
+
     staleTime: 60 * 60 * 1000,
     gcTime: 3 * 60 * 60 * 1000,
     retry: false,
