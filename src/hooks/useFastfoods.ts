@@ -41,6 +41,14 @@ export function useFastfoods(
   const [retryCount, setRetryCount] = useState(0);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Debounce the viewport: zooming/panning fires many bbox updates per second
+  // and Overpass answers 429 (rate limit) when we hammer it like that.
+  const [settledKey, setSettledKey] = useState(bboxKey);
+  useEffect(() => {
+    const id = setTimeout(() => setSettledKey(bboxKey), 700);
+    return () => clearTimeout(id);
+  }, [bboxKey]);
+
   useEffect(() => {
     console.log("🍔 [BBOX]", { active, zoom, bbox });
   }, [bboxKey, zoom, active, bbox]);
