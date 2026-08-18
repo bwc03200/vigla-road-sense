@@ -36,7 +36,7 @@ const ENDPOINTS = [
 ];
 
 /** Per-mirror budget: fail fast instead of stalling the whole lookup. */
-const MIRROR_TIMEOUT_MS = 8000;
+const MIRROR_TIMEOUT_MS = 15000;
 
 const BRAND_RE = "McDonald's|KFC|Burger King|Subway|Quick";
 
@@ -90,13 +90,12 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
   for (const url of ENDPOINTS) {
     lastHost = new URL(url).host;
     try {
-      const res = await fetch(`${url}?data=${encodeURIComponent(q)}`, {
-        method: "GET",
+      // POST with a form body: overpass-api.de answers 406 to the GET form of
+      // this brand-regex query, while every mirror accepts the POST form.
+      const res = await fetch(url, {
+        method: "POST",
+        body: new URLSearchParams({ data: q }),
         signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
-        headers: {
-          "User-Agent": "VIGLA/1.0 (fastfoods; https://vigla-road-sense.lovable.app)",
-          Accept: "application/json",
-        },
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
