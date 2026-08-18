@@ -81,7 +81,7 @@ export function SmartRestaurantsChip({
                   <button
                     type="button"
                     onClick={() => {
-                      console.log("🍔 [RESTAURANT SELECTED]", {
+                      console.log("🍔 [CHIP RESTAURANT TAPPED]", {
                         name: poi.name,
                         lat: poi.latitude,
                         lon: poi.longitude,
