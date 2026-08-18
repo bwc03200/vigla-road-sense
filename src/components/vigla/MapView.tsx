@@ -6,7 +6,7 @@ import L from "leaflet";
 import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, projectOnPolyline } from "@/lib/geo";
-import { buildRouteState, fetchOsrmRoute, type OsrmRouteResult } from "@/lib/routing";
+import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
@@ -20,7 +20,7 @@ import { useCityName } from "@/hooks/useCityName";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
-import { QuickRoutePOIPreviewModal } from "@/components/vigla/QuickRoutePOIPreviewModal";
+
 
 
 
@@ -488,13 +488,10 @@ export function MapView() {
   // the toggle only controls whether markers render.
   // Only query once the GPS fix is known AND the viewport actually contains it:
   // otherwise the first lookup burns an Overpass slot on the fallback centre (Paris).
-  const fastfoodsReady =
-    !!position &&
-    !!signalBBox &&
-    position.lat >= signalBBox.south &&
-    position.lat <= signalBBox.north &&
-    position.lng >= signalBBox.west &&
-    position.lng <= signalBBox.east;
+  // Ready as soon as we have a viewport and a GPS fix exists (or the user has
+  // zoomed into a city): the chip must show wherever the map is looking.
+  const fastfoodsReady = !!signalBBox && (!!position || (viewport?.zoom ?? 0) >= 11);
+
   const { fastfoods, isLoading: fastfoodsLoading, isFailing, retryManually } =
     useFastfoods(signalBBox, viewport?.zoom ?? 0, fastfoodsReady);
   const inViewFastfoods = useMemo(() => {
