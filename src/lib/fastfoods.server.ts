@@ -160,7 +160,7 @@ export async function fetchOverpassRestaurants(bbox: OverpassBBox): Promise<Fast
       `);out center qt 400;`;
 
     const response = await fetch(
-      `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(q)}`,
+      `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`,
       {
         signal: controller.signal,
         headers: {
