@@ -807,19 +807,8 @@ export function MapView() {
         </>
       )}
 
-      {poiPreview && (
-        <>
-          <Polyline
-            positions={poiPreview.result.coords}
-            pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.45 }}
-          />
-          <Marker
-            position={[poiPreview.poi.lat, poiPreview.poi.lng]}
-            icon={pendingIcon()}
-          />
-          <FitRoute coords={poiPreview.result.coords} />
-        </>
-      )}
+
+
 
       {nearbyHazards.map((h) => (
         <HazardMarker key={h.id} hazard={h} />
