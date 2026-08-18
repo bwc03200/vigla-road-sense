@@ -51,13 +51,18 @@ export function SmartRestaurantsChip({
     if (!hasData) setExpanded(false);
   }, [hasData]);
 
-  if (!hasData && !isFailing) return null;
+  if (!hasData && !isFailing && !isLoading) return null;
 
   const visible = pois.slice(0, MAX_VISIBLE);
   const extra = count - visible.length;
 
   return (
     <div className="pointer-events-none flex flex-col items-start gap-2">
+      {!hasData && isLoading && (
+        <div className="pointer-events-none rounded-xl bg-[#FF8C00]/80 px-5 py-3 text-sm font-bold text-white shadow-[0_4px_12px_rgba(255,140,0,0.3)]">
+          <span aria-hidden="true">🍔</span> Recherche…
+        </div>
+      )}
       {hasData && (
         <div
           className={`pointer-events-auto rounded-xl bg-[#FF8C00] px-5 py-3 text-white shadow-[0_4px_12px_rgba(255,140,0,0.3)] transition ${
