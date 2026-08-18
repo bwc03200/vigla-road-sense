@@ -108,7 +108,8 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
       // this brand-regex query, while every mirror accepts the POST form.
       const res = await fetch(url, {
         method: "POST",
-        body: new URLSearchParams({ data: q }),
+        headers: OVERPASS_HEADERS,
+        body: new URLSearchParams({ data: q }).toString(),
         signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
