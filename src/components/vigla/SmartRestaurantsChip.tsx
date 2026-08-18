@@ -32,6 +32,15 @@ export function SmartRestaurantsChip({
   const wasVisible = useRef(hasData);
 
   useEffect(() => {
+    console.log("🍔 [CHIP MOUNTED]");
+    return () => console.log("🍔 [CHIP UNMOUNTED]");
+  }, []);
+
+  useEffect(() => {
+    console.log("🍔 [CHIP RENDER STATE]", { count, hasData, isLoading, isFailing });
+  }, [count, hasData, isLoading, isFailing]);
+
+  useEffect(() => {
     if (hasData !== wasVisible.current) {
       console.log("🍔 [CHIP VISIBILITY]", { was: wasVisible.current, now: hasData, count });
       wasVisible.current = hasData;
