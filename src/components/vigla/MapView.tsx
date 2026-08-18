@@ -20,6 +20,7 @@ import { useCityName } from "@/hooks/useCityName";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
+import { QuickRoutePOIPreviewModal } from "@/components/vigla/QuickRoutePOIPreviewModal";
 
 
 
@@ -806,6 +807,20 @@ export function MapView() {
         </>
       )}
 
+      {poiPreview && (
+        <>
+          <Polyline
+            positions={poiPreview.result.coords}
+            pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.45 }}
+          />
+          <Marker
+            position={[poiPreview.poi.lat, poiPreview.poi.lng]}
+            icon={pendingIcon()}
+          />
+          <FitRoute coords={poiPreview.result.coords} />
+        </>
+      )}
+
       {nearbyHazards.map((h) => (
         <HazardMarker key={h.id} hazard={h} />
       ))}
@@ -896,6 +911,21 @@ export function MapView() {
         </div>
       </div>
     )}
+    <QuickRoutePOIPreviewModal
+      preview={
+        poiPreview
+          ? {
+              name: poiPreview.poi.name,
+              brand: poiPreview.poi.brand,
+              distanceM: poiPreview.result.distanceM,
+              durationS: poiPreview.result.durationS,
+            }
+          : null
+      }
+      loading={poiPreviewLoading}
+      onConfirm={confirmPoiPreview}
+      onCancel={cancelPoiPreview}
+    />
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>
