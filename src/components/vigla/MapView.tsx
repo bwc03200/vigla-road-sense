@@ -6,7 +6,7 @@ import L from "leaflet";
 import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, projectOnPolyline } from "@/lib/geo";
-import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import { buildRouteState, fetchOsrmRoute, type OsrmRouteResult } from "@/lib/routing";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
@@ -17,10 +17,10 @@ import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
-import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
+import { QuickRoutePOIPreviewModal } from "@/components/vigla/QuickRoutePOIPreviewModal";
 
 
 
@@ -378,6 +378,7 @@ export function MapView() {
   const mapFollowsUser = useVigla((s) => s.mapFollowsUser);
   const setMapFollowsUser = useVigla((s) => s.setMapFollowsUser);
   const setRoute = useVigla((s) => s.setRoute);
+  const setNavigation = useVigla((s) => s.setNavigation);
 
 
   const hazardFilters = useVigla((s) => s.hazardFilters);
@@ -531,9 +532,13 @@ export function MapView() {
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(inViewFastfoods, navActive);
 
-  // P1: selecting a restaurant → auto-zoom on the whole cluster + direct route.
+  // P1: selecting a restaurant → auto-zoom on the whole cluster, then preview.
   const mapRef = useRef<L.Map | null>(null);
-  const { routeDirectToPOI } = useRouteWaypoint();
+  const [poiPreview, setPoiPreview] = useState<{
+    poi: { name: string; brand?: string; lat: number; lng: number };
+    result: OsrmRouteResult;
+  } | null>(null);
+  const [poiPreviewLoading, setPoiPreviewLoading] = useState(false);
   const handleFastfoodSelect = useCallback(
     async (poi: (typeof inViewFastfoods)[number]) => {
       const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
@@ -549,6 +554,7 @@ export function MapView() {
         animate: true,
         duration: 0.5,
       });
+      console.log("🎯 [POI TAPPED]", poi.name);
       console.log("🎯 [AUTO-ZOOM CLUSTER]", {
         restaurantCount: cluster.length,
         zoomLevel: 16,
@@ -560,25 +566,85 @@ export function MapView() {
         },
       });
 
-      const res = await routeDirectToPOI({
-        name: poi.name,
-        lat: poi.latitude,
-        lng: poi.longitude,
-        type: "restaurant",
-        brand: poi.brand,
-      });
-      if (res) {
-        console.log("🍔 [DIRECT ROUTE]", {
-          restaurant: poi.name,
-          distance: res.distance,
-          eta: res.eta,
-          currentLat: position?.lat,
-          currentLon: position?.lng,
+      if (!position) {
+        toast.error(t("hazard.report.gpsUnavailable"));
+        return;
+      }
+      setPoiPreview(null);
+      setPoiPreviewLoading(true);
+      try {
+        const result = await fetchOsrmRoute(
+          position.lat,
+          position.lng,
+          poi.latitude,
+          poi.longitude,
+        );
+        console.log("🗺️ [PREVIEW ROUTE FETCHED]", {
+          poi: poi.name,
+          distanceM: Math.round(result.distanceM),
+          durationS: Math.round(result.durationS),
         });
+        setPoiPreview({
+          poi: { name: poi.name, brand: poi.brand, lat: poi.latitude, lng: poi.longitude },
+          result,
+        });
+        console.log("📋 [PREVIEW MODAL OPEN]", poi.name);
+      } catch {
+        toast.error(t("route.serviceUnavailable"));
+      } finally {
+        setPoiPreviewLoading(false);
       }
     },
-    [inViewFastfoods, routeDirectToPOI, position],
+    [inViewFastfoods, position, t],
   );
+
+  const confirmPoiPreview = useCallback(() => {
+    if (!poiPreview) return;
+    console.log("✅ [CONFIRM CLICKED]", poiPreview.poi.name);
+    const { poi, result } = poiPreview;
+    const state = buildRouteState(
+      { lat: poi.lat, lng: poi.lng, label: poi.name },
+      result,
+      hazards,
+      [
+        {
+          id: `destination-${Date.now()}`,
+          type: "destination",
+          name: poi.name,
+          lat: poi.lat,
+          lon: poi.lng,
+        },
+      ],
+    );
+    setRoute(state);
+    setNavigation({
+      routeCoords: state.coords,
+      remainingCoords: state.coords,
+      consumedCoords: [],
+      steps: state.steps,
+      currentStepIndex: 0,
+      distanceRemainingM: state.distanceM,
+      durationRemainingS: state.durationS,
+      distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
+      offRouteM: 0,
+      offRouteSince: null,
+      recalculating: false,
+      arrived: false,
+      startedAt: new Date().toISOString(),
+      alertsReceived: 0,
+    });
+    setPoiPreview(null);
+    console.log("📋 [PREVIEW MODAL CLOSED]");
+    console.log("🚀 [ROUTE STARTED]", poi.name);
+  }, [poiPreview, hazards, setRoute, setNavigation]);
+
+  const cancelPoiPreview = useCallback(() => {
+    console.log("❌ [CANCEL CLICKED]");
+    setPoiPreview(null);
+    setPoiPreviewLoading(false);
+    console.log("📋 [PREVIEW MODAL CLOSED]");
+  }, []);
+
 
   const cityName = useCityName(position?.lat, position?.lng);
 
@@ -741,6 +807,20 @@ export function MapView() {
         </>
       )}
 
+      {poiPreview && (
+        <>
+          <Polyline
+            positions={poiPreview.result.coords}
+            pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.45 }}
+          />
+          <Marker
+            position={[poiPreview.poi.lat, poiPreview.poi.lng]}
+            icon={pendingIcon()}
+          />
+          <FitRoute coords={poiPreview.result.coords} />
+        </>
+      )}
+
       {nearbyHazards.map((h) => (
         <HazardMarker key={h.id} hazard={h} />
       ))}
@@ -831,6 +911,21 @@ export function MapView() {
         </div>
       </div>
     )}
+    <QuickRoutePOIPreviewModal
+      preview={
+        poiPreview
+          ? {
+              name: poiPreview.poi.name,
+              brand: poiPreview.poi.brand,
+              distanceM: poiPreview.result.distanceM,
+              durationS: poiPreview.result.durationS,
+            }
+          : null
+      }
+      loading={poiPreviewLoading}
+      onConfirm={confirmPoiPreview}
+      onCancel={cancelPoiPreview}
+    />
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>
