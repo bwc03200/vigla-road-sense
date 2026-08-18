@@ -38,7 +38,7 @@ const ENDPOINTS = [
 ];
 
 /** Per-mirror budget: fail fast instead of stalling the whole lookup. */
-const MIRROR_TIMEOUT_MS = 9000;
+const MIRROR_TIMEOUT_MS = 18000;
 
 const BRAND_RE = "McDonald's|KFC|Burger King|Subway|Quick";
 

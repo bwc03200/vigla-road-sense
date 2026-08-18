@@ -486,7 +486,9 @@ export function MapView() {
   // Always query so the chip can appear/disappear based on real POI presence;
   // the toggle only controls whether markers render.
   const { fastfoods, isLoading: fastfoodsLoading, isFailing, retryManually } =
-    useFastfoods(signalBBox, viewport?.zoom ?? 0, true);
+    // Skip the very first lookup while the map still sits on the fallback
+    // centre: it burns an Overpass slot on a city the rider isn't in.
+    useFastfoods(signalBBox, viewport?.zoom ?? 0, !!position);
   const inViewFastfoods = useMemo(() => {
     if (!signalBBox) return [];
     return fastfoods.filter(
