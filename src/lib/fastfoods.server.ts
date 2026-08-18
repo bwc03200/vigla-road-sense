@@ -28,17 +28,15 @@ export type FastfoodResult =
   | { ok: true; data: FastfoodPOI[]; fetchTime: number }
   | { ok: false; error: string; failedMirror: string };
 
-/** Mirrors tried in order of proven reliability. */
+/** Mirrors tried in order of preference. */
 const ENDPOINTS = [
-  // kumi answers in ~1.5s; the main instance has been returning 406/504 for
-  // this brand-regex query, so it is only a fallback now.
+  "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
-  "https://overpass-api.de/api/interpreter",
 ];
 
 /** Per-mirror budget: fail fast instead of stalling the whole lookup. */
-const MIRROR_TIMEOUT_MS = 18000;
+const MIRROR_TIMEOUT_MS = 8000;
 
 const BRAND_RE = "McDonald's|KFC|Burger King|Subway|Quick";
 
@@ -162,7 +160,7 @@ export async function fetchOverpassRestaurants(bbox: OverpassBBox): Promise<Fast
       `);out center qt 400;`;
 
     const response = await fetch(
-      `https://overpass.kumi.systems/api/interpreter?data=${encodeURIComponent(q)}`,
+      `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`,
       {
         signal: controller.signal,
         headers: {
