@@ -531,9 +531,13 @@ export function MapView() {
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(inViewFastfoods, navActive);
 
-  // P1: selecting a restaurant → auto-zoom on the whole cluster + direct route.
+  // P1: selecting a restaurant → auto-zoom on the whole cluster, then preview.
   const mapRef = useRef<L.Map | null>(null);
-  const { routeDirectToPOI } = useRouteWaypoint();
+  const [poiPreview, setPoiPreview] = useState<{
+    poi: { name: string; brand?: string; lat: number; lng: number };
+    result: OsrmRouteResult;
+  } | null>(null);
+  const [poiPreviewLoading, setPoiPreviewLoading] = useState(false);
   const handleFastfoodSelect = useCallback(
     async (poi: (typeof inViewFastfoods)[number]) => {
       const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
@@ -549,6 +553,7 @@ export function MapView() {
         animate: true,
         duration: 0.5,
       });
+      console.log("🎯 [POI TAPPED]", poi.name);
       console.log("🎯 [AUTO-ZOOM CLUSTER]", {
         restaurantCount: cluster.length,
         zoomLevel: 16,
@@ -560,25 +565,85 @@ export function MapView() {
         },
       });
 
-      const res = await routeDirectToPOI({
-        name: poi.name,
-        lat: poi.latitude,
-        lng: poi.longitude,
-        type: "restaurant",
-        brand: poi.brand,
-      });
-      if (res) {
-        console.log("🍔 [DIRECT ROUTE]", {
-          restaurant: poi.name,
-          distance: res.distance,
-          eta: res.eta,
-          currentLat: position?.lat,
-          currentLon: position?.lng,
+      if (!position) {
+        toast.error(t("hazard.report.gpsUnavailable"));
+        return;
+      }
+      setPoiPreview(null);
+      setPoiPreviewLoading(true);
+      try {
+        const result = await fetchOsrmRoute(
+          position.lat,
+          position.lng,
+          poi.latitude,
+          poi.longitude,
+        );
+        console.log("🗺️ [PREVIEW ROUTE FETCHED]", {
+          poi: poi.name,
+          distanceM: Math.round(result.distanceM),
+          durationS: Math.round(result.durationS),
         });
+        setPoiPreview({
+          poi: { name: poi.name, brand: poi.brand, lat: poi.latitude, lng: poi.longitude },
+          result,
+        });
+        console.log("📋 [PREVIEW MODAL OPEN]", poi.name);
+      } catch {
+        toast.error(t("route.serviceUnavailable"));
+      } finally {
+        setPoiPreviewLoading(false);
       }
     },
-    [inViewFastfoods, routeDirectToPOI, position],
+    [inViewFastfoods, position, t],
   );
+
+  const confirmPoiPreview = useCallback(() => {
+    if (!poiPreview) return;
+    console.log("✅ [CONFIRM CLICKED]", poiPreview.poi.name);
+    const { poi, result } = poiPreview;
+    const state = buildRouteState(
+      { lat: poi.lat, lng: poi.lng, label: poi.name },
+      result,
+      hazards,
+      [
+        {
+          id: `destination-${Date.now()}`,
+          type: "destination",
+          name: poi.name,
+          lat: poi.lat,
+          lon: poi.lng,
+        },
+      ],
+    );
+    setRoute(state);
+    setNavigation({
+      routeCoords: state.coords,
+      remainingCoords: state.coords,
+      consumedCoords: [],
+      steps: state.steps,
+      currentStepIndex: 0,
+      distanceRemainingM: state.distanceM,
+      durationRemainingS: state.durationS,
+      distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
+      offRouteM: 0,
+      offRouteSince: null,
+      recalculating: false,
+      arrived: false,
+      startedAt: new Date().toISOString(),
+      alertsReceived: 0,
+    });
+    setPoiPreview(null);
+    console.log("📋 [PREVIEW MODAL CLOSED]");
+    console.log("🚀 [ROUTE STARTED]", poi.name);
+  }, [poiPreview, hazards, setRoute, setNavigation]);
+
+  const cancelPoiPreview = useCallback(() => {
+    console.log("❌ [CANCEL CLICKED]");
+    setPoiPreview(null);
+    setPoiPreviewLoading(false);
+    console.log("📋 [PREVIEW MODAL CLOSED]");
+  }, []);
+
 
   const cityName = useCityName(position?.lat, position?.lng);
 
