@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getFastfoods } from "@/lib/fastfoods.functions";
 import { checkCache, storeCache } from "@/lib/fastfood-cache";
 import type { FastfoodPOI } from "@/types/fastfoods";
@@ -41,6 +41,14 @@ export function useFastfoods(
   const [retryCount, setRetryCount] = useState(0);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Debounce the viewport: zooming/panning fires many bbox updates per second
+  // and Overpass answers 429 (rate limit) when we hammer it like that.
+  const [settledKey, setSettledKey] = useState(bboxKey);
+  useEffect(() => {
+    const id = setTimeout(() => setSettledKey(bboxKey), 700);
+    return () => clearTimeout(id);
+  }, [bboxKey]);
+
   useEffect(() => {
     console.log("🍔 [BBOX]", { active, zoom, bbox });
   }, [bboxKey, zoom, active, bbox]);
@@ -51,7 +59,7 @@ export function useFastfoods(
   }, [bboxKey]);
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["fastfoods", bboxKey],
+    queryKey: ["fastfoods", settledKey],
     queryFn: async () => {
       const centerLat = (bbox!.south + bbox!.north) / 2;
       const centerLon = (bbox!.west + bbox!.east) / 2;
@@ -60,7 +68,7 @@ export function useFastfoods(
         setRetryCount(0);
         return cached;
       }
-      console.log("🍔 [FETCH START]", bboxKey);
+      console.log("🍔 [FETCH START]", settledKey);
       const res = await getFastfoods({ data: bbox! });
       console.log("🍔 [FETCH RESULT]", res);
       if (!res.ok) throw new Error(res.error);
@@ -74,17 +82,11 @@ export function useFastfoods(
     staleTime: 60 * 60 * 1000,
     gcTime: 3 * 60 * 60 * 1000,
     retry: false,
-    enabled: active,
+    // Keep showing the last known POIs while the new viewport loads, so the
+    // chip doesn't blink out on every pan.
+    placeholderData: keepPreviousData,
+    enabled: active && settledKey === bboxKey,
   });
-
-  // Proactive city/agglomeration fetch: start loading POIs as soon as the
-  // user zooms into the 11-12 range, before they reach the normal 13+ threshold.
-  useEffect(() => {
-    if (active && zoom >= 11 && zoom < 13 && bbox && !isLoading) {
-      console.log("🍔 [PROACTIVE] City zoom detected, pre-fetching POIs");
-      void refetch();
-    }
-  }, [active, zoom, bbox, isLoading, refetch]);
 
   // AUTO-HEAL: retry with exponential backoff.
   useEffect(() => {

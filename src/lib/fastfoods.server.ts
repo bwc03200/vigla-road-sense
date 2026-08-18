@@ -33,7 +33,19 @@ const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
+  "https://overpass.osm.jp/api/interpreter",
 ];
+
+/**
+ * Overpass mirrors answer 406 when the request looks like a bot (no UA /
+ * no Accept). Sending a descriptive UA + explicit form content type is what
+ * makes overpass-api.de accept the brand-regex POST.
+ */
+const OVERPASS_HEADERS: Record<string, string> = {
+  "User-Agent": "VIGLA/1.0 (motorcycle navigation; https://vigla-road-sense.lovable.app)",
+  Accept: "application/json",
+  "Content-Type": "application/x-www-form-urlencoded",
+};
 
 /** Per-mirror budget: fail fast instead of stalling the whole lookup. */
 const MIRROR_TIMEOUT_MS = 15000;
@@ -94,7 +106,8 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
       // this brand-regex query, while every mirror accepts the POST form.
       const res = await fetch(url, {
         method: "POST",
-        body: new URLSearchParams({ data: q }),
+        headers: OVERPASS_HEADERS,
+        body: new URLSearchParams({ data: q }).toString(),
         signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -135,11 +148,86 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
   }
 
 
+  // Every Overpass mirror is down or rate-limiting us: fall back to Nominatim,
+  // which serves the same OSM data through a different (much more permissive)
+  // endpoint. Brand-by-brand search inside the viewport.
+  const fallback = await nominatimFallback(bbox);
+  if (fallback.length) {
+    console.log(`🍔 [SERVER] nominatim fallback → ${fallback.length} POIs`);
+    return { ok: true, data: fallback, fetchTime: Date.now() - started };
+  }
+
   return {
     ok: false,
     error: `overpass unreachable — ${failures.join(" | ")}`,
     failedMirror: lastHost,
   };
+}
+
+const NOMINATIM_BRANDS = ["McDonald's", "KFC", "Burger King", "Subway", "Quick"];
+
+interface NominatimPlace {
+  osm_type?: string;
+  osm_id?: number;
+  place_id?: number;
+  lat?: string;
+  lon?: string;
+  name?: string;
+  display_name?: string;
+  type?: string;
+}
+
+async function nominatimFallback(bbox: OverpassBBox): Promise<FastfoodPOI[]> {
+  const out: FastfoodPOI[] = [];
+  const seen = new Set<string>();
+  const viewbox = `${bbox.west},${bbox.north},${bbox.east},${bbox.south}`;
+
+  for (const brand of NOMINATIM_BRANDS) {
+    try {
+      const url =
+        `https://nominatim.openstreetmap.org/search?` +
+        new URLSearchParams({
+          q: brand,
+          format: "json",
+          limit: "20",
+          viewbox,
+          bounded: "1",
+        }).toString();
+      const res = await fetch(url, {
+        headers: {
+          "User-Agent":
+            "VIGLA/1.0 (motorcycle navigation; https://vigla-road-sense.lovable.app)",
+          Accept: "application/json",
+        },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) continue;
+      const places = (await res.json()) as NominatimPlace[];
+      for (const p of places) {
+        const lat = Number(p.lat);
+        const lon = Number(p.lon);
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
+        const id = `ff-${p.osm_type?.[0] ?? "n"}-${p.osm_id ?? p.place_id}`;
+        if (seen.has(id)) continue;
+        const name = p.name ?? brand;
+        const key = normaliseBrand(`${brand} ${name}`);
+        if (key === "other") continue;
+        seen.add(id);
+        out.push({
+          id,
+          latitude: lat,
+          longitude: lon,
+          name,
+          brand: key,
+          amenity: p.type ?? "fast_food",
+        });
+      }
+    } catch (err) {
+      console.warn(`🍔 [SERVER] nominatim ${brand} failed:`, err);
+    }
+  }
+
+  return out;
 }
 
 /**
