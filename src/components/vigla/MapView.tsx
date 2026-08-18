@@ -485,10 +485,17 @@ export function MapView() {
   const showFastfoods = useVigla((s) => s.showFastfoods);
   // Always query so the chip can appear/disappear based on real POI presence;
   // the toggle only controls whether markers render.
+  // Only query once the GPS fix is known AND the viewport actually contains it:
+  // otherwise the first lookup burns an Overpass slot on the fallback centre (Paris).
+  const fastfoodsReady =
+    !!position &&
+    !!signalBBox &&
+    position.lat >= signalBBox.south &&
+    position.lat <= signalBBox.north &&
+    position.lng >= signalBBox.west &&
+    position.lng <= signalBBox.east;
   const { fastfoods, isLoading: fastfoodsLoading, isFailing, retryManually } =
-    // Skip the very first lookup while the map still sits on the fallback
-    // centre: it burns an Overpass slot on a city the rider isn't in.
-    useFastfoods(signalBBox, viewport?.zoom ?? 0, !!position);
+    useFastfoods(signalBBox, viewport?.zoom ?? 0, fastfoodsReady);
   const inViewFastfoods = useMemo(() => {
     if (!signalBBox) return [];
     return fastfoods.filter(
