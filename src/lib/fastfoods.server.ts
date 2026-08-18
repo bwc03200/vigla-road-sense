@@ -33,7 +33,21 @@ const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
   "https://overpass.private.coffee/api/interpreter",
+  "https://overpass.osm.jp/api/interpreter",
+  "https://overpass.osm.ch/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
+
+/**
+ * Overpass mirrors answer 406 when the request looks like a bot (no UA /
+ * no Accept). Sending a descriptive UA + explicit form content type is what
+ * makes overpass-api.de accept the brand-regex POST.
+ */
+const OVERPASS_HEADERS: Record<string, string> = {
+  "User-Agent": "VIGLA/1.0 (motorcycle navigation; https://vigla-road-sense.lovable.app)",
+  Accept: "application/json",
+  "Content-Type": "application/x-www-form-urlencoded",
+};
 
 /** Per-mirror budget: fail fast instead of stalling the whole lookup. */
 const MIRROR_TIMEOUT_MS = 15000;
