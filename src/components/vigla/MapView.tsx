@@ -6,7 +6,7 @@ import L from "leaflet";
 import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, projectOnPolyline } from "@/lib/geo";
-import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import { buildRouteState, fetchOsrmRoute, type OsrmRouteResult } from "@/lib/routing";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
@@ -17,7 +17,6 @@ import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
-import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
@@ -378,6 +377,7 @@ export function MapView() {
   const mapFollowsUser = useVigla((s) => s.mapFollowsUser);
   const setMapFollowsUser = useVigla((s) => s.setMapFollowsUser);
   const setRoute = useVigla((s) => s.setRoute);
+  const setNavigation = useVigla((s) => s.setNavigation);
 
 
   const hazardFilters = useVigla((s) => s.hazardFilters);
