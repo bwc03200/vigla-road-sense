@@ -58,7 +58,7 @@ export function SmartRestaurantsChip({
 
   return (
     <div
-      className="flex flex-col items-start gap-2"
+      className="pointer-events-auto flex flex-col items-start gap-2"
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
       onMouseDown={(e) => e.stopPropagation()}
