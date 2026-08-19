@@ -60,7 +60,17 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
           headers: { Accept: "application/json" },
         });
         if (!res.ok) throw new Error("nominatim");
-        setResults((await res.json()) as NominatimResult[]);
+        let list = (await res.json()) as NominatimResult[];
+        // Nothing nearby? widen the search so the field is never a dead end.
+        if (list.length === 0 && position) {
+          url.searchParams.delete("bounded");
+          const wide = await fetch(url.toString(), {
+            signal: ctrl.signal,
+            headers: { Accept: "application/json" },
+          });
+          if (wide.ok) list = (await wide.json()) as NominatimResult[];
+        }
+        setResults(list);
       } catch (err) {
         if ((err as Error).name !== "AbortError") setResults([]);
       } finally {
