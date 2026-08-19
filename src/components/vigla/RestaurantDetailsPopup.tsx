@@ -15,7 +15,11 @@ async function fetchDetails(poi: FastfoodPOI): Promise<Details> {
   const cached = detailsCache.get(poi.id);
   if (cached) return cached;
   const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${poi.latitude}&lon=${poi.longitude}&addressdetails=1&extratags=1`;
-  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  // Hard timeout: without it a hanging geocoder leaves the sheet on "Chargement…" forever.
+  const res = await fetch(url, {
+    headers: { Accept: "application/json" },
+    signal: AbortSignal.timeout(8000),
+  });
   if (!res.ok) throw new Error("reverse failed");
   const json = (await res.json()) as {
     display_name?: string;
