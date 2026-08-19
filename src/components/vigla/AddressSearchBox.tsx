@@ -48,10 +48,12 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
         url.searchParams.set("limit", "6");
         if (position) {
           const d = 0.1;
+          // left,top,right,bottom — bounded=1 hard-restricts results to the box
           url.searchParams.set(
             "viewbox",
-            `${position.lng - d},${position.lat - d},${position.lng + d},${position.lat + d}`,
+            `${position.lng - d},${position.lat + d},${position.lng + d},${position.lat - d}`,
           );
+          url.searchParams.set("bounded", "1");
         }
         const res = await fetch(url.toString(), {
           signal: ctrl.signal,
