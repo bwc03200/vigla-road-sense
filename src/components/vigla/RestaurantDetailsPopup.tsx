@@ -99,121 +99,139 @@ export function RestaurantDetailsPopup({
     : null;
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-0 z-[950] flex justify-center px-3 pb-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={poi.name}
+      className="fixed inset-0 z-[950] flex flex-col bg-card"
+      style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 60px)" }}
+      onTouchStart={(e) => {
+        touchX.current = e.touches[0]?.clientX ?? null;
+      }}
+      onTouchEnd={(e) => {
+        const start = touchX.current;
+        const end = e.changedTouches[0]?.clientX ?? null;
+        touchX.current = null;
+        if (start == null || end == null) return;
+        const dx = end - start;
+        if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+      }}
+    >
+      {/* Header */}
       <div
-        className="pointer-events-auto w-full max-w-md overflow-hidden rounded-3xl border border-border bg-card shadow-[0_16px_48px_rgba(15,23,42,0.28)]"
-        onTouchStart={(e) => {
-          touchX.current = e.touches[0]?.clientX ?? null;
-        }}
-        onTouchEnd={(e) => {
-          const start = touchX.current;
-          const end = e.changedTouches[0]?.clientX ?? null;
-          touchX.current = null;
-          if (start == null || end == null) return;
-          const dx = end - start;
-          if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
-        }}
+        className="flex shrink-0 items-center gap-1 border-b border-border px-2"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 0.25rem)" }}
       >
-        <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-          <button
-            type="button"
-            aria-label="Restaurant précédent"
-            onClick={() => go(-1)}
-            className="rounded-full p-2 text-foreground active:scale-95 disabled:opacity-30"
-            disabled={pois.length < 2}
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-          <span className="flex-1 text-center text-xs font-semibold text-muted-foreground">
-            {index + 1} / {pois.length}
-          </span>
-          <button
-            type="button"
-            aria-label="Restaurant suivant"
-            onClick={() => go(1)}
-            className="rounded-full p-2 text-foreground active:scale-95 disabled:opacity-30"
-            disabled={pois.length < 2}
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-          <button
-            type="button"
-            aria-label="Fermer"
-            onClick={onClose}
-            className="rounded-full p-2 text-muted-foreground active:scale-95"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
+        <button
+          type="button"
+          aria-label="Restaurant précédent"
+          onClick={() => go(-1)}
+          className="flex h-11 w-11 items-center justify-center rounded-full text-foreground active:scale-95 disabled:opacity-30"
+          disabled={pois.length < 2}
+        >
+          <ChevronLeft className="h-6 w-6" />
+        </button>
+        <span className="flex-1 text-center text-sm font-semibold text-muted-foreground">
+          {index + 1} / {pois.length}
+        </span>
+        <button
+          type="button"
+          aria-label="Restaurant suivant"
+          onClick={() => go(1)}
+          className="flex h-11 w-11 items-center justify-center rounded-full text-foreground active:scale-95 disabled:opacity-30"
+          disabled={pois.length < 2}
+        >
+          <ChevronRight className="h-6 w-6" />
+        </button>
+        <button
+          type="button"
+          aria-label="Fermer"
+          onClick={onClose}
+          className="flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground active:scale-95"
+        >
+          <X className="h-6 w-6" />
+        </button>
+      </div>
 
-        <div ref={scrollRef} className="max-h-[45vh] overflow-y-auto overscroll-contain px-4 py-3">
-          <div className="flex items-center gap-3">
-            <span
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xl"
-              style={{ boxShadow: `0 0 0 2px ${brandColor}` }}
-              aria-hidden="true"
-            >
-              {BRAND_ICONS[poi.brand] ?? "🍴"}
-            </span>
-            <div className="min-w-0">
-              <div className="truncate text-base font-bold text-foreground">{poi.name}</div>
-              <div className="text-xs capitalize text-muted-foreground">
-                {poi.brand?.replace("_", " ") ?? "Fast-food"}
-                {distance != null ? ` · ${formatDistance(distance)}` : ""}
-              </div>
+      {/* Scrollable content */}
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4">
+        <div className="flex items-center gap-3">
+          <span
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-2xl"
+            style={{ boxShadow: `0 0 0 2px ${brandColor}` }}
+            aria-hidden="true"
+          >
+            {BRAND_ICONS[poi.brand] ?? "🍴"}
+          </span>
+          <div className="min-w-0">
+            <h2 className="text-lg font-bold leading-tight text-foreground">{poi.name}</h2>
+            <div className="text-xs capitalize text-muted-foreground">
+              {poi.brand?.replace("_", " ") ?? "Fast-food"}
+              {distance != null ? ` · ${formatDistance(distance)}` : ""}
             </div>
           </div>
-
-          <dl className="mt-3 space-y-2 text-sm">
-            <div>
-              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">Adresse</dt>
-              <dd className="text-foreground">
-                {loading && !details?.address ? "Chargement…" : (details?.address ?? "Non renseignée")}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">Téléphone</dt>
-              <dd className="text-foreground">
-                {details?.phone ? (
-                  <a href={`tel:${details.phone}`} className="underline">
-                    {details.phone}
-                  </a>
-                ) : loading ? (
-                  "Chargement…"
-                ) : (
-                  "Non renseigné"
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">Horaires</dt>
-              <dd className="whitespace-pre-line text-foreground">
-                {loading && !details?.hours ? "Chargement…" : (details?.hours ?? "Non renseignés")}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[11px] font-semibold uppercase text-muted-foreground">
-                Coordonnées
-              </dt>
-              <dd className="text-foreground">
-                {poi.latitude.toFixed(5)}, {poi.longitude.toFixed(5)}
-              </dd>
-            </div>
-          </dl>
         </div>
 
-        <div className="border-t border-border p-3">
-          <button
-            type="button"
-            onClick={() => onRoute(poi)}
-            disabled={routing}
-            className="flex w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-4 py-3 text-sm font-bold text-white active:scale-[0.98] disabled:opacity-60"
-          >
-            <Navigation className="h-4 w-4" />
-            {routing ? "Calcul de l'itinéraire…" : "Y aller"}
-          </button>
-        </div>
+        <dl className="mt-5 space-y-4 text-sm">
+          <div>
+            <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Adresse
+            </dt>
+            <dd className="mt-0.5 text-foreground">
+              {loading && !details?.address ? "Chargement…" : (details?.address ?? "Non renseignée")}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Téléphone
+            </dt>
+            <dd className="mt-0.5 text-foreground">
+              {details?.phone ? (
+                <a
+                  href={`tel:${details.phone}`}
+                  className="inline-flex min-h-[44px] items-center underline"
+                >
+                  {details.phone}
+                </a>
+              ) : loading ? (
+                "Chargement…"
+              ) : (
+                "Non renseigné"
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Horaires
+            </dt>
+            <dd className="mt-0.5 whitespace-pre-line text-foreground">
+              {loading && !details?.hours ? "Chargement…" : (details?.hours ?? "Non renseignés")}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Coordonnées
+            </dt>
+            <dd className="mt-0.5 text-foreground">
+              {poi.latitude.toFixed(5)}, {poi.longitude.toFixed(5)}
+            </dd>
+          </div>
+        </dl>
+      </div>
+
+      {/* Sticky action */}
+      <div className="shrink-0 border-t border-border p-3">
+        <button
+          type="button"
+          onClick={() => onRoute(poi)}
+          disabled={routing}
+          className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#FF6B35] px-4 text-base font-bold text-white active:scale-[0.98] disabled:opacity-60"
+        >
+          <Navigation className="h-5 w-5" />
+          {routing ? "Calcul de l'itinéraire…" : "Y aller"}
+        </button>
       </div>
     </div>
   );
 }
+
