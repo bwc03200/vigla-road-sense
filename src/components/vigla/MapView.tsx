@@ -12,7 +12,7 @@ import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
 import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
-import { useFastfoods } from "@/hooks/useFastfoods";
+import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { CityDisplay } from "@/components/vigla/CityDisplay";
@@ -338,31 +338,39 @@ function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
       });
     };
     emit();
+    // The map often mounts before its container has final size; re-emit once
+    // layout settles so the very first viewport is accurate (no zoom cycle
+    // needed to trigger POI layers).
+    const t1 = window.setTimeout(emit, 300);
+    const t2 = window.setTimeout(emit, 1200);
+    map.on("moveend zoomend zoomlevelschange resize load viewreset", emit);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      map.off("moveend zoomend zoomlevelschange resize load viewreset", emit);
+    };
   }, [map, onChange]);
-  useMapEvents({
-    moveend: (e) => {
-      const b = e.target.getBounds();
-      onChange({
-        north: b.getNorth(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        west: b.getWest(),
-        zoom: e.target.getZoom(),
-      });
-    },
-    zoomend: (e) => {
-      const b = e.target.getBounds();
-      onChange({
-        north: b.getNorth(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        west: b.getWest(),
-        zoom: e.target.getZoom(),
-      });
-    },
-  });
   return null;
 }
+
+/** Small read-out of the current zoom level (top-right of the map). */
+function ZoomIndicator() {
+  const map = useMap();
+  const [zoom, setZoom] = useState(() => map.getZoom());
+  useEffect(() => {
+    const update = () => setZoom(map.getZoom());
+    map.on("zoomend zoom", update);
+    return () => {
+      map.off("zoomend zoom", update);
+    };
+  }, [map]);
+  return (
+    <div className="pointer-events-none absolute right-3 top-3 z-[600] rounded-md bg-white/85 px-2 py-1 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
+      Zoom level: {Math.round(zoom)}
+    </div>
+  );
+}
+
 
 export function MapView() {
   const { t } = useTranslation();
@@ -484,27 +492,36 @@ export function MapView() {
   }, [trafficSignals, signalBBox, showSignals]);
 
   const showFastfoods = useVigla((s) => s.showFastfoods);
-  // Always query so the chip can appear/disappear based on real POI presence;
-  // the toggle only controls whether markers render.
-  // Only query once the GPS fix is known AND the viewport actually contains it:
-  // otherwise the first lookup burns an Overpass slot on the fallback centre (Paris).
-  // Ready as soon as we have a viewport and a GPS fix exists (or the user has
-  // zoomed into a city): the chip must show wherever the map is looking.
-  const fastfoodsReady = !!signalBBox && (!!position || (viewport?.zoom ?? 0) >= 11);
+  // FastFoods have their own (lower) zoom threshold than traffic signals, so
+  // they get their own padded bbox — otherwise the chip only appeared once the
+  // user crossed the signals threshold (13), which is why it needed cycles.
+  const fastfoodBBox = useMemo(() => {
+    if (!viewport || viewport.zoom < MIN_ZOOM_FOR_FASTFOODS) return null;
+    const latPad = (viewport.north - viewport.south) * 0.15;
+    const lngPad = (viewport.east - viewport.west) * 0.15;
+    return {
+      south: viewport.south - latPad,
+      north: viewport.north + latPad,
+      west: viewport.west - lngPad,
+      east: viewport.east + lngPad,
+    };
+  }, [viewport]);
+  const fastfoodsReady = !!fastfoodBBox;
 
   const { fastfoods, isLoading: fastfoodsLoading, isFailing, retryManually } =
-    useFastfoods(signalBBox, viewport?.zoom ?? 0, fastfoodsReady);
+    useFastfoods(fastfoodBBox, viewport?.zoom ?? 0, fastfoodsReady);
   const inViewFastfoods = useMemo(() => {
-    if (!signalBBox) return [];
+    if (!fastfoodBBox) return [];
     return fastfoods.filter(
       (f) =>
-        f.latitude <= signalBBox.north &&
-        f.latitude >= signalBBox.south &&
-        f.longitude <= signalBBox.east &&
-        f.longitude >= signalBBox.west,
+        f.latitude <= fastfoodBBox.north &&
+        f.latitude >= fastfoodBBox.south &&
+        f.longitude <= fastfoodBBox.east &&
+        f.longitude >= fastfoodBBox.west,
     );
-  }, [fastfoods, signalBBox]);
+  }, [fastfoods, fastfoodBBox]);
   const visibleFastfoods = showFastfoods ? inViewFastfoods : [];
+
 
 
   useEffect(() => {
@@ -670,6 +687,8 @@ export function MapView() {
     <>
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <ViewportTracker onChange={setViewport} />
+      <ZoomIndicator />
+
       <InteractionTracker />
 
       <TileLayer
