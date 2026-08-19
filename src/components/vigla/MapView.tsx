@@ -849,6 +849,13 @@ export function MapView() {
             icon={convoyMemberIcon(m.display_name)}
           />
         ))}
+      <div className="pointer-events-none absolute left-3 top-[4.5rem] z-[700] flex">
+        <AddressSearchBox
+          onSelect={handleAddressSelect}
+          routing={addressRouting}
+          dark={motoMode || mapTheme === "dark"}
+        />
+      </div>
       <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
         <SmartRestaurantsChip
           pois={inViewFastfoods}
