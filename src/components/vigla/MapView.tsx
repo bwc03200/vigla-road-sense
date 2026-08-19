@@ -338,31 +338,39 @@ function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
       });
     };
     emit();
+    // The map often mounts before its container has final size; re-emit once
+    // layout settles so the very first viewport is accurate (no zoom cycle
+    // needed to trigger POI layers).
+    const t1 = window.setTimeout(emit, 300);
+    const t2 = window.setTimeout(emit, 1200);
+    map.on("moveend zoomend zoomlevelschange resize load viewreset", emit);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+      map.off("moveend zoomend zoomlevelschange resize load viewreset", emit);
+    };
   }, [map, onChange]);
-  useMapEvents({
-    moveend: (e) => {
-      const b = e.target.getBounds();
-      onChange({
-        north: b.getNorth(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        west: b.getWest(),
-        zoom: e.target.getZoom(),
-      });
-    },
-    zoomend: (e) => {
-      const b = e.target.getBounds();
-      onChange({
-        north: b.getNorth(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        west: b.getWest(),
-        zoom: e.target.getZoom(),
-      });
-    },
-  });
   return null;
 }
+
+/** Small read-out of the current zoom level (top-right of the map). */
+function ZoomIndicator() {
+  const map = useMap();
+  const [zoom, setZoom] = useState(() => map.getZoom());
+  useEffect(() => {
+    const update = () => setZoom(map.getZoom());
+    map.on("zoomend zoom", update);
+    return () => {
+      map.off("zoomend zoom", update);
+    };
+  }, [map]);
+  return (
+    <div className="pointer-events-none absolute right-3 top-3 z-[600] rounded-md bg-white/85 px-2 py-1 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
+      Zoom level: {Math.round(zoom)}
+    </div>
+  );
+}
+
 
 export function MapView() {
   const { t } = useTranslation();
