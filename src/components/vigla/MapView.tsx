@@ -853,6 +853,15 @@ export function MapView() {
         <AddressSearchBox
           onSelect={handleAddressSelect}
           routing={addressRouting}
+          center={
+            viewport
+              ? {
+                  lat: (viewport.north + viewport.south) / 2,
+                  lng: (viewport.east + viewport.west) / 2,
+                }
+              : null
+          }
+          zoom={viewport?.zoom}
           dark={motoMode || mapTheme === "dark"}
         />
       </div>

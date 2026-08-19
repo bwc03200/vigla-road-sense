@@ -14,6 +14,18 @@ interface Props {
   onSelect: (lat: number, lng: number, label: string) => void | Promise<void>;
   routing?: boolean;
   dark?: boolean;
+  /** Live map centre — used as the search bias when the user has panned away. */
+  center?: { lat: number; lng: number } | null;
+  /** Live map zoom — scales how tight the search box is. */
+  zoom?: number;
+}
+
+/** Half-size (in degrees) of the search bias box for a given zoom level. */
+function bboxDeltaForZoom(zoom: number | undefined): number {
+  if (zoom == null) return 0.1;
+  if (zoom < 12) return 0.3;
+  if (zoom <= 14) return 0.1;
+  return 0.05;
 }
 
 /**
@@ -21,9 +33,25 @@ interface Props {
  * Picking a suggestion hands the coordinates back to MapView, which reuses the
  * existing OSRM routing + navigation start logic (same path as POI taps).
  */
-export function AddressSearchBox({ onSelect, routing = false, dark = false }: Props) {
+export function AddressSearchBox({
+  onSelect,
+  routing = false,
+  dark = false,
+  center = null,
+  zoom,
+}: Props) {
   const { t } = useTranslation();
   const position = useVigla((s) => s.position);
+  // Read the freshest GPS/map state at request time instead of baking the
+  // initial position into the effect closure.
+  const anchorRef = useRef<{ lat: number; lng: number } | null>(null);
+  const zoomRef = useRef<number | undefined>(zoom);
+  anchorRef.current = position
+    ? { lat: position.lat, lng: position.lng }
+    : center
+      ? { lat: center.lat, lng: center.lng }
+      : null;
+  zoomRef.current = zoom;
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -46,12 +74,13 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
         url.searchParams.set("q", query.trim());
         url.searchParams.set("format", "json");
         url.searchParams.set("limit", "6");
-        if (position) {
-          const d = 0.1;
+        const anchor = anchorRef.current;
+        if (anchor) {
+          const d = bboxDeltaForZoom(zoomRef.current);
           // left,top,right,bottom — bounded=1 hard-restricts results to the box
           url.searchParams.set(
             "viewbox",
-            `${position.lng - d},${position.lat + d},${position.lng + d},${position.lat - d}`,
+            `${anchor.lng - d},${anchor.lat + d},${anchor.lng + d},${anchor.lat - d}`,
           );
           url.searchParams.set("bounded", "1");
         }
@@ -62,7 +91,7 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
         if (!res.ok) throw new Error("nominatim");
         let list = (await res.json()) as NominatimResult[];
         // Nothing nearby? widen the search so the field is never a dead end.
-        if (list.length === 0 && position) {
+        if (list.length === 0 && anchor) {
           url.searchParams.delete("bounded");
           const wide = await fetch(url.toString(), {
             signal: ctrl.signal,
@@ -80,7 +109,7 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, position]);
+  }, [query]);
 
   const panel = dark
     ? "bg-[#14171b] text-white ring-white/10"
