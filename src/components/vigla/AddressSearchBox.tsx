@@ -33,9 +33,25 @@ function bboxDeltaForZoom(zoom: number | undefined): number {
  * Picking a suggestion hands the coordinates back to MapView, which reuses the
  * existing OSRM routing + navigation start logic (same path as POI taps).
  */
-export function AddressSearchBox({ onSelect, routing = false, dark = false }: Props) {
+export function AddressSearchBox({
+  onSelect,
+  routing = false,
+  dark = false,
+  center = null,
+  zoom,
+}: Props) {
   const { t } = useTranslation();
   const position = useVigla((s) => s.position);
+  // Read the freshest GPS/map state at request time instead of baking the
+  // initial position into the effect closure.
+  const anchorRef = useRef<{ lat: number; lng: number } | null>(null);
+  const zoomRef = useRef<number | undefined>(zoom);
+  anchorRef.current = position
+    ? { lat: position.lat, lng: position.lng }
+    : center
+      ? { lat: center.lat, lng: center.lng }
+      : null;
+  zoomRef.current = zoom;
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [searching, setSearching] = useState(false);
