@@ -4,7 +4,9 @@ export type FastfoodBrand =
   | "kfc"
   | "burger_king"
   | "subway"
-  | "quick";
+  | "quick"
+  /** Independent restaurants, kebabs, pizzerias, crêperies, cafés… */
+  | "other";
 
 export interface FastfoodPOI {
   id: string;
@@ -21,6 +23,7 @@ export const BRAND_COLORS: Record<FastfoodBrand, string> = {
   burger_king: "#FF6B35",
   subway: "#2E7D32",
   quick: "#7C3AED",
+  other: "#64748B",
 };
 
 export const BRAND_ICONS: Record<FastfoodBrand, string> = {
@@ -29,4 +32,5 @@ export const BRAND_ICONS: Record<FastfoodBrand, string> = {
   burger_king: "🍔",
   subway: "🌯",
   quick: "🍟",
+  other: "🍴",
 };
