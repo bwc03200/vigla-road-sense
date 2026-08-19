@@ -15,6 +15,7 @@ import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSigna
 import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
+import { RestaurantDetailsPopup } from "@/components/vigla/RestaurantDetailsPopup";
 import { AddressSearchBox } from "@/components/vigla/AddressSearchBox";
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
@@ -550,7 +551,24 @@ export function MapView() {
   // P1: selecting a restaurant → auto-zoom on the cluster, then route directly.
   const mapRef = useRef<L.Map | null>(null);
   const [poiRouting, setPoiRouting] = useState(false);
+  const [poiPopup, setPoiPopup] = useState<{
+    list: typeof inViewFastfoods;
+    index: number;
+  } | null>(null);
+  const openPoiPopup = useCallback(
+    (poi: (typeof inViewFastfoods)[number]) => {
+      const list = inViewFastfoods.length ? inViewFastfoods : [poi];
+      const index = Math.max(
+        0,
+        list.findIndex((p) => p.id === poi.id),
+      );
+      console.log("🍔 [POPUP OPEN]", poi.name, `${index + 1}/${list.length}`);
+      setPoiPopup({ list, index });
+    },
+    [inViewFastfoods],
+  );
   const handleFastfoodSelect = useCallback(
+
     async (poi: (typeof inViewFastfoods)[number]) => {
       const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
       const lats = cluster.map((r) => r.latitude);
@@ -611,6 +629,7 @@ export function MapView() {
           alertsReceived: 0,
         });
         console.log("🚀 [ROUTE STARTED]", poi.name);
+        setPoiPopup(null);
       } catch {
         toast.error(t("route.serviceUnavailable"));
       } finally {
@@ -837,7 +856,7 @@ export function MapView() {
           pois={visibleFastfoods}
           zoom={viewport?.zoom ?? 13}
           dark={motoMode || mapTheme === "dark"}
-          onSelect={handleFastfoodSelect}
+          onSelect={openPoiPopup}
         />
       )}
       {convoyMembers
@@ -871,7 +890,7 @@ export function MapView() {
           isLoading={fastfoodsLoading}
           isFailing={isFailing}
           onRetry={retryManually}
-          onSelect={handleFastfoodSelect}
+          onSelect={openPoiPopup}
         />
       </div>
     </MapContainer>
@@ -939,6 +958,18 @@ export function MapView() {
           {t("common.loading")}
         </div>
       </div>
+    )}
+
+    {poiPopup && (
+      <RestaurantDetailsPopup
+        pois={poiPopup.list}
+        index={poiPopup.index}
+        onIndexChange={(i) => setPoiPopup((p) => (p ? { ...p, index: i } : p))}
+        onClose={() => setPoiPopup(null)}
+        onRoute={handleFastfoodSelect}
+        userPosition={position}
+        routing={poiRouting}
+      />
     )}
 
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
