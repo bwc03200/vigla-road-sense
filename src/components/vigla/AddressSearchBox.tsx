@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Search, X } from "lucide-react";
+import { useVigla } from "@/lib/vigla-store";
 
 interface NominatimResult {
   place_id: number;
@@ -22,6 +23,7 @@ interface Props {
  */
 export function AddressSearchBox({ onSelect, routing = false, dark = false }: Props) {
   const { t } = useTranslation();
+  const position = useVigla((s) => s.position);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<NominatimResult[]>([]);
   const [searching, setSearching] = useState(false);
@@ -44,6 +46,13 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
         url.searchParams.set("q", query.trim());
         url.searchParams.set("format", "json");
         url.searchParams.set("limit", "6");
+        if (position) {
+          const d = 0.1;
+          url.searchParams.set(
+            "viewbox",
+            `${position.lng - d},${position.lat - d},${position.lng + d},${position.lat + d}`,
+          );
+        }
         const res = await fetch(url.toString(), {
           signal: ctrl.signal,
           headers: { Accept: "application/json" },
@@ -59,7 +68,7 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query]);
+  }, [query, position]);
 
   const panel = dark
     ? "bg-[#14171b] text-white ring-white/10"
@@ -93,7 +102,7 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
       </div>
 
       {results.length > 0 && (
-        <ul className={`mt-1 max-h-64 overflow-y-auto rounded-xl shadow-lg ring-1 ${panel}`}>
+        <ul className={`mt-1 max-h-[200px] overflow-y-auto rounded-xl shadow-lg ring-1 ${panel}`}>
           {results.map((r) => (
             <li key={r.place_id}>
               <button
