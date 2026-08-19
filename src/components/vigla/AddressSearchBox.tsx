@@ -14,6 +14,18 @@ interface Props {
   onSelect: (lat: number, lng: number, label: string) => void | Promise<void>;
   routing?: boolean;
   dark?: boolean;
+  /** Live map centre — used as the search bias when the user has panned away. */
+  center?: { lat: number; lng: number } | null;
+  /** Live map zoom — scales how tight the search box is. */
+  zoom?: number;
+}
+
+/** Half-size (in degrees) of the search bias box for a given zoom level. */
+function bboxDeltaForZoom(zoom: number | undefined): number {
+  if (zoom == null) return 0.1;
+  if (zoom < 12) return 0.3;
+  if (zoom <= 14) return 0.1;
+  return 0.05;
 }
 
 /**
