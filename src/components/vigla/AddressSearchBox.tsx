@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Loader2, Search, X } from "lucide-react";
+import { useVigla } from "@/lib/vigla-store";
 
 interface NominatimResult {
   place_id: number;
