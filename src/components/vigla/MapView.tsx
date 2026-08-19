@@ -12,7 +12,7 @@ import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
 import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
-import { useFastfoods } from "@/hooks/useFastfoods";
+import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { CityDisplay } from "@/components/vigla/CityDisplay";
