@@ -12,7 +12,7 @@ interface SmartRestaurantsChipProps {
   onSelect: (poi: FastfoodPOI) => void;
 }
 
-const MAX_VISIBLE = 5;
+const MAX_VISIBLE = 12;
 
 /**
  * Restaurants chip that only exists while POIs are present in the viewport.
@@ -101,7 +101,7 @@ export function SmartRestaurantsChip({
           </button>
 
           {expanded && (
-            <ul className="m-0 list-none p-0 pt-2 text-sm font-normal">
+            <ul className="m-0 max-h-[220px] list-none overflow-y-auto p-0 pt-2 text-sm font-normal">
               {visible.map((poi) => (
                 <li key={poi.id} className="border-t border-white/30 first:border-t-0">
                   <button
