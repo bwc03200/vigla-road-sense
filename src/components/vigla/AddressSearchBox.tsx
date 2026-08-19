@@ -48,17 +48,29 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
         url.searchParams.set("limit", "6");
         if (position) {
           const d = 0.1;
+          // left,top,right,bottom — bounded=1 hard-restricts results to the box
           url.searchParams.set(
             "viewbox",
-            `${position.lng - d},${position.lat - d},${position.lng + d},${position.lat + d}`,
+            `${position.lng - d},${position.lat + d},${position.lng + d},${position.lat - d}`,
           );
+          url.searchParams.set("bounded", "1");
         }
         const res = await fetch(url.toString(), {
           signal: ctrl.signal,
           headers: { Accept: "application/json" },
         });
         if (!res.ok) throw new Error("nominatim");
-        setResults((await res.json()) as NominatimResult[]);
+        let list = (await res.json()) as NominatimResult[];
+        // Nothing nearby? widen the search so the field is never a dead end.
+        if (list.length === 0 && position) {
+          url.searchParams.delete("bounded");
+          const wide = await fetch(url.toString(), {
+            signal: ctrl.signal,
+            headers: { Accept: "application/json" },
+          });
+          if (wide.ok) list = (await wide.json()) as NominatimResult[];
+        }
+        setResults(list);
       } catch (err) {
         if ((err as Error).name !== "AbortError") setResults([]);
       } finally {
