@@ -15,6 +15,7 @@ import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSigna
 import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
+import { RestaurantDetailsPopup } from "@/components/vigla/RestaurantDetailsPopup";
 import { AddressSearchBox } from "@/components/vigla/AddressSearchBox";
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
@@ -628,6 +629,7 @@ export function MapView() {
           alertsReceived: 0,
         });
         console.log("🚀 [ROUTE STARTED]", poi.name);
+        setPoiPopup(null);
       } catch {
         toast.error(t("route.serviceUnavailable"));
       } finally {
@@ -854,7 +856,7 @@ export function MapView() {
           pois={visibleFastfoods}
           zoom={viewport?.zoom ?? 13}
           dark={motoMode || mapTheme === "dark"}
-          onSelect={handleFastfoodSelect}
+          onSelect={openPoiPopup}
         />
       )}
       {convoyMembers
@@ -888,7 +890,7 @@ export function MapView() {
           isLoading={fastfoodsLoading}
           isFailing={isFailing}
           onRetry={retryManually}
-          onSelect={handleFastfoodSelect}
+          onSelect={openPoiPopup}
         />
       </div>
     </MapContainer>
@@ -956,6 +958,18 @@ export function MapView() {
           {t("common.loading")}
         </div>
       </div>
+    )}
+
+    {poiPopup && (
+      <RestaurantDetailsPopup
+        pois={poiPopup.list}
+        index={poiPopup.index}
+        onIndexChange={(i) => setPoiPopup((p) => (p ? { ...p, index: i } : p))}
+        onClose={() => setPoiPopup(null)}
+        onRoute={handleFastfoodSelect}
+        userPosition={position}
+        routing={poiRouting}
+      />
     )}
 
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
