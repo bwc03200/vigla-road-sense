@@ -95,6 +95,13 @@ export function FastfoodCluster({
       const m = L.marker([poi.latitude, poi.longitude], { icon });
       m.bindPopup(fastfoodPopupHtml(poi, dark), { closeButton: false, minWidth: 150 });
       m.on("mouseover", () => m.openPopup());
+      // Tapping a marker opens the shared details sheet (same data as the chip).
+      m.on("click", (ev: L.LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(ev);
+        console.log("🍔 [MARKER TAPPED]", poi.name);
+        m.closePopup();
+        actionRef.current(poi);
+      });
       m.on("popupopen", (e: L.LeafletEvent) => {
         const el = (e as unknown as { popup: L.Popup }).popup.getElement();
         const btn = el?.querySelector<HTMLButtonElement>("[data-fastfood-route]");

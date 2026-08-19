@@ -891,6 +891,7 @@ export function MapView() {
           isFailing={isFailing}
           onRetry={retryManually}
           onSelect={openPoiPopup}
+          userPosition={position}
         />
       </div>
     </MapContainer>

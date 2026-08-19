@@ -43,7 +43,7 @@ export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNod
         signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
         headers: {
           // Overpass rejects/limits clients without an identifying UA.
-          "User-Agent": "VIGLA/1.0 (traffic-signals; https://vigla-road-sense.lovable.app)",
+          "User-Agent": "VIGLA/1.0",
           Accept: "application/json",
         },
       });

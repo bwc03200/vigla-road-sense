@@ -48,7 +48,8 @@ const ENDPOINTS = [
  * makes overpass-api.de accept the POST.
  */
 const OVERPASS_HEADERS: Record<string, string> = {
-  "User-Agent": "VIGLA/1.0 (motorcycle navigation; https://vigla-road-sense.lovable.app)",
+  // Keep this short: overpass-api.de answers 406 for UA strings containing a URL.
+  "User-Agent": "VIGLA/1.0",
   Accept: "application/json",
   "Content-Type": "application/x-www-form-urlencoded",
 };
@@ -254,7 +255,7 @@ async function nominatimFallback(bbox: OverpassBBox): Promise<FastfoodPOI[]> {
       const res = await fetch(url, {
         headers: {
           "User-Agent":
-            "VIGLA/1.0 (motorcycle navigation; https://vigla-road-sense.lovable.app)",
+            "VIGLA/1.0 (contact: vigla-road-sense.lovable.app)",
           Accept: "application/json",
         },
         signal: AbortSignal.timeout(8000),
@@ -307,7 +308,7 @@ export async function fetchOverpassRestaurants(bbox: OverpassBBox): Promise<Fast
       {
         signal: controller.signal,
         headers: {
-          "User-Agent": "VIGLA/1.0 (fastfoods; https://vigla-road-sense.lovable.app)",
+          "User-Agent": "VIGLA/1.0",
           Accept: "application/json",
         },
       },
