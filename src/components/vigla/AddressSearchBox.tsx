@@ -102,7 +102,7 @@ export function AddressSearchBox({ onSelect, routing = false, dark = false }: Pr
       </div>
 
       {results.length > 0 && (
-        <ul className={`mt-1 max-h-64 overflow-y-auto rounded-xl shadow-lg ring-1 ${panel}`}>
+        <ul className={`mt-1 max-h-[200px] overflow-y-auto rounded-xl shadow-lg ring-1 ${panel}`}>
           {results.map((r) => (
             <li key={r.place_id}>
               <button
