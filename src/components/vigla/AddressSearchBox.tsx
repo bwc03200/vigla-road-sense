@@ -74,12 +74,13 @@ export function AddressSearchBox({
         url.searchParams.set("q", query.trim());
         url.searchParams.set("format", "json");
         url.searchParams.set("limit", "6");
-        if (position) {
-          const d = 0.1;
+        const anchor = anchorRef.current;
+        if (anchor) {
+          const d = bboxDeltaForZoom(zoomRef.current);
           // left,top,right,bottom — bounded=1 hard-restricts results to the box
           url.searchParams.set(
             "viewbox",
-            `${position.lng - d},${position.lat + d},${position.lng + d},${position.lat - d}`,
+            `${anchor.lng - d},${anchor.lat + d},${anchor.lng + d},${anchor.lat - d}`,
           );
           url.searchParams.set("bounded", "1");
         }
