@@ -12,7 +12,7 @@ interface SmartRestaurantsChipProps {
   onSelect: (poi: FastfoodPOI) => void;
 }
 
-const MAX_VISIBLE = 5;
+const MAX_VISIBLE = 12;
 
 /**
  * Restaurants chip that only exists while POIs are present in the viewport.
@@ -51,7 +51,11 @@ export function SmartRestaurantsChip({
     if (!hasData) setExpanded(false);
   }, [hasData]);
 
-  if (!hasData && !isFailing) return null;
+  useEffect(() => {
+    if (hasData) console.log("🍔 [CHIP_RENDERED]", count);
+  }, [hasData, count]);
+
+  if (!hasData && !isFailing && !isLoading) return null;
 
   const visible = pois.slice(0, MAX_VISIBLE);
   const extra = count - visible.length;
@@ -64,6 +68,13 @@ export function SmartRestaurantsChip({
       onMouseDown={(e) => e.stopPropagation()}
       onTouchStart={(e) => e.stopPropagation()}
     >
+      {!hasData && isLoading && (
+        <div className="pointer-events-none flex items-center gap-2 rounded-xl bg-[#FF8C00]/90 px-4 py-2.5 text-xs font-bold text-white shadow-[0_4px_12px_rgba(255,140,0,0.3)]">
+          <span className="h-3 w-3 animate-spin rounded-full border-2 border-white/40 border-t-white" />
+          Recherche des restaurants…
+        </div>
+      )}
+
       {hasData && (
         <div
           className={`pointer-events-auto rounded-xl bg-[#FF8C00] px-5 py-3 text-white shadow-[0_4px_12px_rgba(255,140,0,0.3)] transition ${
@@ -90,7 +101,7 @@ export function SmartRestaurantsChip({
           </button>
 
           {expanded && (
-            <ul className="m-0 list-none p-0 pt-2 text-sm font-normal">
+            <ul className="m-0 max-h-[220px] list-none overflow-y-auto p-0 pt-2 text-sm font-normal">
               {visible.map((poi) => (
                 <li key={poi.id} className="border-t border-white/30 first:border-t-0">
                   <button

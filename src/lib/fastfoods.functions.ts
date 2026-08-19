@@ -9,5 +9,6 @@ export const getFastfoods = createServerFn({ method: "POST" })
       west: Number(data.west),
       north: Number(data.north),
       east: Number(data.east),
+      zoom: Number.isFinite(Number(data.zoom)) ? Number(data.zoom) : undefined,
     }),
   );

@@ -1,26 +1,32 @@
 /**
- * Server-side Overpass fetch for fast-food / restaurant POIs (major brands).
+ * Server-side Overpass fetch for restaurant / food POIs.
  *
- * Same rationale as traffic-signals.server.ts: the browser cannot reach the
- * Overpass mirrors directly from the app origin, so the query runs server-side
- * and returns plain JSON. Never throws — callers get a structured result.
+ * The browser cannot reach the Overpass mirrors directly from the app origin,
+ * so the query runs server-side and returns plain JSON. Never throws — callers
+ * get a structured result.
+ *
+ * The query is intentionally exhaustive: chains AND independents (kebabs,
+ * pizzerias, crêperies, cafés, pubs, bars serving food) so the chip appears in
+ * every commune that has at least one place to eat.
  */
 export interface OverpassBBox {
   south: number;
   west: number;
   north: number;
   east: number;
+  /** Current map zoom (0-20) — drives the search radius. */
+  zoom?: number;
 }
 
 export interface FastfoodPOI {
   id: string;
   latitude: number;
   longitude: number;
-  /** Display name (OSM `name`, falling back to `brand`). */
+  /** Display name (OSM `name`, falling back to `brand` / cuisine). */
   name: string;
-  /** Normalised brand key: mcdonalds | kfc | burger_king | subway | quick. */
+  /** Normalised brand key: mcdonalds | kfc | burger_king | subway | quick | other. */
   brand: string;
-  /** Raw OSM amenity value (fast_food | restaurant). */
+  /** Raw OSM amenity value (fast_food | restaurant | cafe | pub | bar). */
   amenity: string;
 }
 
@@ -39,7 +45,7 @@ const ENDPOINTS = [
 /**
  * Overpass mirrors answer 406 when the request looks like a bot (no UA /
  * no Accept). Sending a descriptive UA + explicit form content type is what
- * makes overpass-api.de accept the brand-regex POST.
+ * makes overpass-api.de accept the POST.
  */
 const OVERPASS_HEADERS: Record<string, string> = {
   "User-Agent": "VIGLA/1.0 (motorcycle navigation; https://vigla-road-sense.lovable.app)",
@@ -51,6 +57,7 @@ const OVERPASS_HEADERS: Record<string, string> = {
 const MIRROR_TIMEOUT_MS = 15000;
 
 const BRAND_RE = "McDonald's|KFC|Burger King|Subway|Quick";
+const AMENITY_RE = "restaurant|fast_food|cafe|pub|bar";
 
 /** Map a raw OSM name/brand to a stable brand key used by the UI. */
 function normaliseBrand(raw: string): string {
@@ -72,28 +79,78 @@ interface OverpassElement {
   tags?: Record<string, string>;
 }
 
-/** Grow the viewport a bit so POIs just off-screen are ready when panning. */
+/**
+ * Search radius (degrees) by zoom: ±10° at z0 → ±0.0001° at z20.
+ * r(z) = 10^(1 - 0.25z)
+ */
+export function radiusForZoom(zoom: number): number {
+  const z = Math.min(20, Math.max(0, zoom));
+  return Math.pow(10, 1 - 0.25 * z);
+}
+
+/**
+ * Grow the viewport so POIs just off-screen are ready when panning, and make
+ * sure the searched box is at least the zoom-scaled radius (a tiny viewport in
+ * a small commune must still reach the village centre).
+ */
 function pad(bbox: OverpassBBox): OverpassBBox {
   const dLat = (bbox.north - bbox.south) * 0.35;
   const dLon = (bbox.east - bbox.west) * 0.35;
-  return {
+  let out = {
     south: bbox.south - dLat,
     north: bbox.north + dLat,
     west: bbox.west - dLon,
     east: bbox.east + dLon,
+  };
+
+  if (typeof bbox.zoom === "number") {
+    // Keep Overpass sane: never search a box wider than ~1.5° from a viewport.
+    const r = Math.min(1.5, Math.max(radiusForZoom(bbox.zoom), 0.02));
+    const cLat = (bbox.south + bbox.north) / 2;
+    const cLon = (bbox.west + bbox.east) / 2;
+    out = {
+      south: Math.min(out.south, cLat - r),
+      north: Math.max(out.north, cLat + r),
+      west: Math.min(out.west, cLon - r),
+      east: Math.max(out.east, cLon + r),
+    };
+    console.log("🍔 [SEARCH_BBOX_BY_ZOOM]", { zoom: bbox.zoom, radius: r, bbox: out });
+  }
+
+  return out;
+}
+
+function toPOI(e: OverpassElement): FastfoodPOI {
+  const tags = e.tags ?? {};
+  const lat = e.lat ?? e.center?.lat;
+  const lon = e.lon ?? e.center?.lon;
+  const cuisine = tags["cuisine"]?.split(";")[0]?.replace(/_/g, " ");
+  const name =
+    tags["name"] ??
+    tags["brand"] ??
+    tags["operator"] ??
+    (cuisine ? cuisine.replace(/^./, (c) => c.toUpperCase()) : "Restaurant");
+  return {
+    id: `ff-${e.type ?? "n"}-${e.id}`,
+    latitude: lat as number,
+    longitude: lon as number,
+    name,
+    brand: normaliseBrand(`${tags["brand"] ?? ""} ${tags["name"] ?? ""}`),
+    amenity: tags["amenity"] ?? "restaurant",
   };
 }
 
 export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult> {
   const bbox = pad(raw);
   const area = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
-  // `nwr` + `out center`: outside dense city centres the brands are mapped as
+  // `nwr` + `out center`: outside dense city centres places are mapped as
   // building polygons (ways/relations), not nodes — a node-only query misses them.
   const q =
     `[out:json][timeout:25];(` +
-    `nwr["amenity"~"fast_food|restaurant"]["name"~"${BRAND_RE}",i](${area});` +
-    `nwr["amenity"~"fast_food|restaurant"]["brand"~"${BRAND_RE}",i](${area});` +
-    `);out center qt 400;`;
+    `nwr["amenity"~"${AMENITY_RE}"](${area});` +
+    `nwr["cuisine"](${area});` +
+    `);out center qt 600;`;
+  console.log("🍔 [OVERPASS_QUERY]", q);
 
   const started = Date.now();
   const failures: string[] = [];
@@ -101,9 +158,8 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
 
   for (const url of ENDPOINTS) {
     lastHost = new URL(url).host;
+    console.log("🍔 [MIRROR] trying", lastHost);
     try {
-      // POST with a form body: overpass-api.de answers 406 to the GET form of
-      // this brand-regex query, while every mirror accepts the POST form.
       const res = await fetch(url, {
         method: "POST",
         headers: OVERPASS_HEADERS,
@@ -115,45 +171,39 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
       const json = (await res.json()) as { elements?: OverpassElement[] };
       const seen = new Set<string>();
       const data: FastfoodPOI[] = (json.elements ?? [])
-        .map((e) => {
-          const tags = e.tags ?? {};
-          const lat = e.lat ?? e.center?.lat;
-          const lon = e.lon ?? e.center?.lon;
-          const name = tags["name"] ?? tags["brand"] ?? "";
-          return {
-            id: `ff-${e.type ?? "n"}-${e.id}`,
-            latitude: lat as number,
-            longitude: lon as number,
-            name,
-            brand: normaliseBrand(`${tags["brand"] ?? ""} ${name}`),
-            amenity: tags["amenity"] ?? "fast_food",
-          };
-        })
+        .map(toPOI)
         .filter(
           (p) =>
             Number.isFinite(p.latitude) &&
             Number.isFinite(p.longitude) &&
-            p.brand !== "other" &&
             !seen.has(p.id) &&
             seen.add(p.id) !== undefined,
         );
 
-      console.log(`🍔 [SERVER] ${area} → ${data.length} POIs via ${lastHost}`);
+      console.log("🍔 [RESTAURANTS_FOUND]", {
+        mirror: lastHost,
+        area,
+        count: data.length,
+        ms: Date.now() - started,
+      });
+      if (data.length === 0) {
+        // Nothing here through this mirror — try the next one before giving up.
+        failures.push(`${lastHost}: 0 results`);
+        continue;
+      }
       return { ok: true, data, fetchTime: Date.now() - started };
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`🍔 [SERVER] mirror ${lastHost} failed: ${msg}`);
+      console.warn(`🍔 [MIRROR] ${lastHost} failed: ${msg}`);
       failures.push(`${lastHost}: ${msg}`);
     }
   }
 
-
-  // Every Overpass mirror is down or rate-limiting us: fall back to Nominatim,
-  // which serves the same OSM data through a different (much more permissive)
-  // endpoint. Brand-by-brand search inside the viewport.
+  // Every Overpass mirror is down, rate-limiting, or empty: fall back to
+  // Nominatim, which serves the same OSM data through a different endpoint.
   const fallback = await nominatimFallback(bbox);
   if (fallback.length) {
-    console.log(`🍔 [SERVER] nominatim fallback → ${fallback.length} POIs`);
+    console.log("🍔 [RESTAURANTS_FOUND] nominatim fallback", fallback.length);
     return { ok: true, data: fallback, fetchTime: Date.now() - started };
   }
 
@@ -164,7 +214,15 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
   };
 }
 
-const NOMINATIM_BRANDS = ["McDonald's", "KFC", "Burger King", "Subway", "Quick"];
+const NOMINATIM_QUERIES = [
+  "restaurant",
+  "fast food",
+  "kebab",
+  "pizzeria",
+  "café",
+  "McDonald's",
+  "Burger King",
+];
 
 interface NominatimPlace {
   osm_type?: string;
@@ -182,12 +240,12 @@ async function nominatimFallback(bbox: OverpassBBox): Promise<FastfoodPOI[]> {
   const seen = new Set<string>();
   const viewbox = `${bbox.west},${bbox.north},${bbox.east},${bbox.south}`;
 
-  for (const brand of NOMINATIM_BRANDS) {
+  for (const term of NOMINATIM_QUERIES) {
     try {
       const url =
         `https://nominatim.openstreetmap.org/search?` +
         new URLSearchParams({
-          q: brand,
+          q: term,
           format: "json",
           limit: "20",
           viewbox,
@@ -209,21 +267,19 @@ async function nominatimFallback(bbox: OverpassBBox): Promise<FastfoodPOI[]> {
         if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue;
         const id = `ff-${p.osm_type?.[0] ?? "n"}-${p.osm_id ?? p.place_id}`;
         if (seen.has(id)) continue;
-        const name = p.name ?? brand;
-        const key = normaliseBrand(`${brand} ${name}`);
-        if (key === "other") continue;
+        const name = p.name ?? p.display_name?.split(",")[0] ?? term;
         seen.add(id);
         out.push({
           id,
           latitude: lat,
           longitude: lon,
           name,
-          brand: key,
-          amenity: p.type ?? "fast_food",
+          brand: normaliseBrand(name),
+          amenity: p.type ?? "restaurant",
         });
       }
     } catch (err) {
-      console.warn(`🍔 [SERVER] nominatim ${brand} failed:`, err);
+      console.warn(`🍔 [MIRROR] nominatim "${term}" failed:`, err);
     }
   }
 
@@ -242,9 +298,9 @@ export async function fetchOverpassRestaurants(bbox: OverpassBBox): Promise<Fast
     const area = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
     const q =
       `[out:json][timeout:25];(` +
-      `nwr["amenity"~"fast_food|restaurant"]["name"~"${BRAND_RE}",i](${area});` +
-      `nwr["amenity"~"fast_food|restaurant"]["brand"~"${BRAND_RE}",i](${area});` +
-      `);out center qt 400;`;
+      `nwr["amenity"~"${AMENITY_RE}"](${area});` +
+      `nwr["cuisine"](${area});` +
+      `);out center qt 600;`;
 
     const response = await fetch(
       `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(q)}`,
@@ -267,25 +323,11 @@ export async function fetchOverpassRestaurants(bbox: OverpassBBox): Promise<Fast
     const json = (await response.json()) as { elements?: OverpassElement[] };
     const seen = new Set<string>();
     return (json.elements ?? [])
-      .map((e) => {
-        const tags = e.tags ?? {};
-        const lat = e.lat ?? e.center?.lat;
-        const lon = e.lon ?? e.center?.lon;
-        const name = tags["name"] ?? tags["brand"] ?? "";
-        return {
-          id: `ff-${e.type ?? "n"}-${e.id}`,
-          latitude: lat as number,
-          longitude: lon as number,
-          name,
-          brand: normaliseBrand(`${tags["brand"] ?? ""} ${name}`),
-          amenity: tags["amenity"] ?? "fast_food",
-        };
-      })
+      .map(toPOI)
       .filter(
         (p) =>
           Number.isFinite(p.latitude) &&
           Number.isFinite(p.longitude) &&
-          p.brand !== "other" &&
           !seen.has(p.id) &&
           seen.add(p.id) !== undefined,
       );
@@ -295,3 +337,6 @@ export async function fetchOverpassRestaurants(bbox: OverpassBBox): Promise<Fast
     return [];
   }
 }
+
+// Keep the brand regex referenced for future brand-only queries.
+export const FASTFOOD_BRAND_RE = BRAND_RE;

@@ -64,20 +64,24 @@ export function useFastfoods(
       const centerLat = (bbox!.south + bbox!.north) / 2;
       const centerLon = (bbox!.west + bbox!.east) / 2;
       const cached = checkCache(centerLat, centerLon, Math.round(zoom));
-      if (cached) {
+      // An empty cache entry must never block discovery — refetch instead.
+      if (cached && cached.length > 0) {
         setRetryCount(0);
         return cached;
       }
-      console.log("🍔 [FETCH START]", settledKey);
-      const res = await getFastfoods({ data: bbox! });
-      console.log("🍔 [FETCH RESULT]", res);
+      console.log("🍔 [FETCH START]", settledKey, "zoom:", zoom);
+      const res = await getFastfoods({ data: { ...bbox!, zoom: Math.round(zoom) } });
       if (!res.ok) throw new Error(res.error);
-      console.log(`🍔 [SUCCESS] ${res.data.length} POIs`);
+      console.log(`🍔 [RESTAURANTS_FOUND] ${res.data.length} POIs`);
       const pois = res.data as FastfoodPOI[];
-      storeCache(centerLat, centerLon, Math.round(zoom), pois);
+      if (pois.length > 0) {
+        storeCache(centerLat, centerLon, Math.round(zoom), pois);
+        console.log("🍔 [CACHE_STORED]", pois.length);
+      }
       setRetryCount(0);
       return pois;
     },
+
 
     staleTime: 60 * 60 * 1000,
     gcTime: 3 * 60 * 60 * 1000,
