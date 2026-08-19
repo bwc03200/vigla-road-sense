@@ -550,7 +550,24 @@ export function MapView() {
   // P1: selecting a restaurant → auto-zoom on the cluster, then route directly.
   const mapRef = useRef<L.Map | null>(null);
   const [poiRouting, setPoiRouting] = useState(false);
+  const [poiPopup, setPoiPopup] = useState<{
+    list: typeof inViewFastfoods;
+    index: number;
+  } | null>(null);
+  const openPoiPopup = useCallback(
+    (poi: (typeof inViewFastfoods)[number]) => {
+      const list = inViewFastfoods.length ? inViewFastfoods : [poi];
+      const index = Math.max(
+        0,
+        list.findIndex((p) => p.id === poi.id),
+      );
+      console.log("🍔 [POPUP OPEN]", poi.name, `${index + 1}/${list.length}`);
+      setPoiPopup({ list, index });
+    },
+    [inViewFastfoods],
+  );
   const handleFastfoodSelect = useCallback(
+
     async (poi: (typeof inViewFastfoods)[number]) => {
       const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
       const lats = cluster.map((r) => r.latitude);
