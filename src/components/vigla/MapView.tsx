@@ -687,6 +687,8 @@ export function MapView() {
     <>
     <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
       <ViewportTracker onChange={setViewport} />
+      <ZoomIndicator />
+
       <InteractionTracker />
 
       <TileLayer
