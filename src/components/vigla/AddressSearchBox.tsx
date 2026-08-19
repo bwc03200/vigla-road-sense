@@ -91,7 +91,7 @@ export function AddressSearchBox({
         if (!res.ok) throw new Error("nominatim");
         let list = (await res.json()) as NominatimResult[];
         // Nothing nearby? widen the search so the field is never a dead end.
-        if (list.length === 0 && position) {
+        if (list.length === 0 && anchor) {
           url.searchParams.delete("bounded");
           const wide = await fetch(url.toString(), {
             signal: ctrl.signal,
@@ -109,7 +109,7 @@ export function AddressSearchBox({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, position]);
+  }, [query]);
 
   const panel = dark
     ? "bg-[#14171b] text-white ring-white/10"
