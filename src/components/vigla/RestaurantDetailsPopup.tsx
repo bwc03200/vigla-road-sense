@@ -346,7 +346,7 @@ export function RestaurantDetailsPopup({
               <button
                 type="button"
                 onClick={() => {
-                  window.location.href = `tel:${details.phone}`;
+                  window.location.href = `tel:${phoneNumber}`;
                 }}
                 className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-green-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
               >
@@ -355,15 +355,16 @@ export function RestaurantDetailsPopup({
               </button>
             )}
             {hasWebsite && (
-              <a
-                href={details.website?.startsWith("http") ? details.website : `https://${details.website}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => {
+                  window.open(websiteUrl, "_blank", "noopener,noreferrer");
+                }}
                 className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
               >
                 <Globe className="h-5 w-5" />
                 Site web
-              </a>
+              </button>
             )}
           </div>
         )}
