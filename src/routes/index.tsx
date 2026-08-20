@@ -9,6 +9,7 @@ import { useHazards } from "@/hooks/useHazards";
 import { useOfficialRadars } from "@/hooks/useOfficialRadars";
 import { useAlerts } from "@/hooks/useAlerts";
 import { useTripTracker } from "@/hooks/useTripTracker";
+import { useTripRecorder } from "@/hooks/useTripRecorder";
 import { useCrashDetection } from "@/hooks/useCrashDetection";
 import { useEmergencyContacts } from "@/hooks/useEmergencyContacts";
 import { useConvoy } from "@/hooks/useConvoy";
@@ -41,6 +42,7 @@ import { ConvoyReactionBar, ConvoyMessageBubbles } from "@/components/vigla/Conv
 import { EmergencyContactsScreen } from "@/components/vigla/EmergencyContactsScreen";
 import { RoadbookList } from "@/components/vigla/RoadbookList";
 import { HistoryList } from "@/components/vigla/HistoryList";
+import { TripHistoryList } from "@/components/vigla/TripHistoryList";
 import { SettingsScreen } from "@/components/vigla/SettingsScreen";
 import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
@@ -121,6 +123,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   useRoadbooks(userId);
   useConvoy(userId);
   const tracker = useTripTracker(userId);
+  useTripRecorder(userId);
 
   const patchNavigation = useVigla((s) => s.patchNavigation);
   useAlerts((label, distance) => {
@@ -205,6 +208,12 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
           <div className="h-full overflow-y-auto pt-6">
             <h2 className="px-4 text-lg font-semibold">{t("roadbooks.title")}</h2>
             <RoadbookList userId={userId} />
+          </div>
+        )}
+        {tab === "history" && (
+          <div className="h-full overflow-y-auto pt-6">
+            <h2 className="px-4 text-lg font-semibold">{t("tripHistory.title")}</h2>
+            <TripHistoryList userId={userId} onReplayed={() => setTab("map")} />
           </div>
         )}
         {tab === "convoy" && (

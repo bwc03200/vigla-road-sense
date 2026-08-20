@@ -19,8 +19,22 @@
     "map": "Carte",
     "report": "Signaler",
     "roadbooks": "Roadbooks",
+    "history": "Historique",
     "convoy": "Convoi",
     "profile": "Profil"
+  },
+  "tripHistory": {
+    "empty": "Aucun trajet historisé",
+    "replay": "Rejouer",
+    "delete": "Supprimer",
+    "clearAll": "Tout effacer",
+    "searchPlaceholder": "Rechercher une destination",
+    "confirmDelete": "Supprimer ce trajet ?",
+    "confirmClear": "Effacer tout l'historique ?",
+    "deleted": "Trajet supprimé",
+    "cleared": "Historique effacé",
+    "myPosition": "Ma position",
+    "title": "Historique des trajets"
   },
   "hazard": {
     "types": {

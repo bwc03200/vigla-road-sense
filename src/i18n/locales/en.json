@@ -19,8 +19,22 @@
     "map": "Map",
     "report": "Report",
     "roadbooks": "Roadbooks",
+    "history": "History",
     "convoy": "Convoy",
     "profile": "Profile"
+  },
+  "tripHistory": {
+    "empty": "No saved trips",
+    "replay": "Replay",
+    "delete": "Delete",
+    "clearAll": "Clear all",
+    "searchPlaceholder": "Search a destination",
+    "confirmDelete": "Delete this trip?",
+    "confirmClear": "Clear the whole history?",
+    "deleted": "Trip deleted",
+    "cleared": "History cleared",
+    "myPosition": "My location",
+    "title": "Trip history"
   },
   "hazard": {
     "types": {

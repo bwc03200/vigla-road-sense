@@ -1,12 +1,13 @@
 import { useTranslation } from "react-i18next";
-import { Map, AlertTriangle, BookOpen, Users, User } from "lucide-react";
+import { Map, AlertTriangle, BookOpen, Users, User, History } from "lucide-react";
 
-export type Tab = "map" | "report" | "roadbooks" | "convoy" | "profile";
+export type Tab = "map" | "report" | "roadbooks" | "history" | "convoy" | "profile";
 
 const TAB_ORDER: { id: Tab; icon: React.ComponentType<{ className?: string }>; key: string }[] = [
   { id: "map", icon: Map, key: "map" },
   { id: "report", icon: AlertTriangle, key: "report" },
   { id: "roadbooks", icon: BookOpen, key: "roadbooks" },
+  { id: "history", icon: History, key: "history" },
   { id: "convoy", icon: Users, key: "convoy" },
   { id: "profile", icon: User, key: "profile" },
 ];
