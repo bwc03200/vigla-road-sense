@@ -164,6 +164,8 @@
     "distance": "Distance",
     "alerts": "Alertes",
     "itinerary": "Itinéraire",
+    "maneuvers": "Manœuvres",
+    "turnByTurn": "Instructions détaillées",
     "stops": "étapes",
     "resumeCaption": "Trajet en cours",
     "resumeQuestion": "Reprendre le trajet vers {{label}} ?",
