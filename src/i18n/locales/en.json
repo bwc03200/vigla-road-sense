@@ -609,5 +609,12 @@
   },
   "distances": {
     "km": "km"
+  },
+  "layers": {
+    "title": "Layers",
+    "fastfoods": "Restaurants",
+    "signals": "Traffic signals",
+    "radars": "Speed cameras",
+    "hazards": "Hazard reports"
   }
 }
