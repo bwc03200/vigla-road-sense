@@ -110,6 +110,14 @@ export function RestaurantDetailsPopup({
   const hasWebsite = !!details?.website;
   const typeLabel = poi.brand?.replace("_", " ") ?? "Fast-food";
 
+  const phoneNumber = details?.phone?.replace(/\s/g, "") ?? "";
+  const websiteUrl = (() => {
+    const raw = details?.website?.trim() ?? "";
+    if (!raw) return "";
+    if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
+    return `https://${raw}`;
+  })();
+
   return (
     <div
       role="dialog"
