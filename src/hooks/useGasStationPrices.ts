@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const CACHE_KEY = "vigla:fuel-prices-cache";
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
 const RADIUS_KM = 25;
+const LIMIT = 300;
 const API =
   "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records";
 
