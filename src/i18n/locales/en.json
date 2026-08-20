@@ -164,6 +164,8 @@
     "distance": "Distance",
     "alerts": "Alerts",
     "itinerary": "Itinerary",
+    "maneuvers": "maneuvers",
+    "turnByTurn": "Turn-by-turn",
     "stops": "stops",
     "resumeCaption": "Trip in progress",
     "resumeQuestion": "Resume trip to {{label}}?",
