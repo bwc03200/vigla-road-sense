@@ -155,7 +155,7 @@ export function useGasStationPrices(
         const rows = (data.results ?? [])
           .map(toEntry)
           .filter((e): e is FuelPriceEntry => e !== null);
-        console.log("⛽ [P11-E] prix chargés", rows.length);
+        console.log("⛽ [P11-E] prix chargés", rows.length, "premier:", rows[0]?.lat, rows[0]?.lng, rows[0]?.name);
         setEntries(rows);
         const now = Date.now();
         setFetchedAt(now);
