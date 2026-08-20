@@ -734,11 +734,14 @@ export function MapView() {
   // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
   const { addWaypoint } = useRouteWaypoint();
   const addingWaypointRef = useRef(false);
+  // Immediate visual feedback: black dot where the user tapped.
+  const [tapPoint, setTapPoint] = useState<[number, number] | null>(null);
   const addWaypointAt = useCallback(
     async (lat: number, lng: number) => {
       if (addingWaypointRef.current) return;
       addingWaypointRef.current = true;
-      console.log("🎯 [P6] POLYLINE CLICKED:", { lat, lng, ts: new Date().toISOString() });
+      setTapPoint([lat, lng]);
+      toast.info("🎯 Tap détecté sur la route", { duration: 1200 });
       try {
         const res = await addWaypoint({
           name: t("map.waypoint", { defaultValue: "Étape" }),
@@ -746,7 +749,10 @@ export function MapView() {
           lng,
           type: "waypoint",
         });
-        console.log("📍 [P6] WAYPOINT RESULT:", res ? { eta: res.eta, distance: res.distance } : null);
+        if (!res) setTapPoint(null);
+      } catch {
+        setTapPoint(null);
+        toast.error("❌ Erreur création waypoint");
       } finally {
         addingWaypointRef.current = false;
       }
