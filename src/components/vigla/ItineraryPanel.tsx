@@ -96,13 +96,19 @@ export function ItineraryPanel() {
     <div className="pointer-events-none fixed inset-x-0 bottom-16 z-30 flex justify-center px-3 pb-3 md:bottom-4 md:justify-end">
       <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-border bg-background/95 shadow-[0_16px_40px_rgba(15,23,42,0.18)] backdrop-blur-md">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div className="text-sm font-semibold">{t("navigation.itinerary")}</div>
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold">{t("navigation.itinerary")}</span>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+              Waypoints: {route.waypoints.filter((w) => w.type !== "destination").length}
+            </span>
+          </div>
           <div className="text-xs text-muted-foreground">
             {items.length > 0
               ? `${route.waypoints.length} ${t("navigation.stops")}`
               : `${steps.length} ${t("navigation.maneuvers")}`}
           </div>
         </div>
+
         <div className="max-h-[32vh] space-y-1 overflow-y-auto p-2 scrollbar-thin">
           {items.map((item, i) => (
             <WaypointRow
