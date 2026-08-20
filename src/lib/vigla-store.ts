@@ -5,6 +5,21 @@ import { DEFAULT_HAZARD_FILTERS, HAZARD_FILTER_KEYS } from "@/types/vigla";
 const HAZARD_FILTERS_LS_KEY = "vigla:hazardFilters";
 const SIGNALS_LS_KEY = "vigla:showTrafficSignals";
 const FASTFOODS_LS_KEY = "vigla:showFastfoods";
+const RADARS_LS_KEY = "vigla:showOfficialRadars";
+const HAZARDS_LS_KEY = "vigla:showHazards";
+
+function loadBoolLS(key: string): boolean {
+  if (typeof window === "undefined") return true;
+  return window.localStorage.getItem(key) !== "false";
+}
+
+function saveBoolLS(key: string, v: boolean) {
+  try {
+    window.localStorage.setItem(key, String(v));
+  } catch {
+    /* ignore */
+  }
+}
 
 function loadShowFastfoods(): boolean {
   if (typeof window === "undefined") return true;
