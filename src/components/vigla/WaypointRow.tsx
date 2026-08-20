@@ -90,6 +90,32 @@ export function WaypointRow({
           ETA {formatEta(durationS)}
         </div>
       </div>
+
+      {showMenu && onDelete && (
+        <div className="absolute right-2 top-full z-50 mt-1 flex flex-col gap-1 rounded-xl border border-border bg-popover p-1 shadow-lg">
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={async () => {
+              setDeleting(true);
+              await onDelete(waypoint.id);
+              setShowMenu(false);
+              setDeleting(false);
+            }}
+            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+          >
+            <Trash2 className="h-4 w-4" />
+            Supprimer
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowMenu(false)}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
     </div>
   );
 }
