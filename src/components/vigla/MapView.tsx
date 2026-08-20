@@ -968,6 +968,7 @@ export function MapView() {
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
           <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
+          <RouteTapCatcher coords={route.coords} onTapRoute={addWaypointAt} />
         </>
       )}
       {navigation && navActive && route && (
