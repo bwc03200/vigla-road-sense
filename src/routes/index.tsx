@@ -112,6 +112,10 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
     setLoggerUser(userId);
     return () => setLoggerUser(null);
   }, [userId]);
+  useEffect(() => {
+    initRouteStoreBridge();
+  }, []);
+
   useGeolocation();
   useServiceWorker();
   useOnlineStatus();
