@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 const CACHE_KEY = "vigla:fuel-prices-cache";
 const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
 const RADIUS_KM = 25;
+const LIMIT = 300;
 const API =
   "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records";
 
@@ -134,11 +135,13 @@ export function useGasStationPrices(
     }
     requestedRef.current = true;
 
+    const geomLiteral = `GEOM'POINT(${center.lng} ${center.lat})'`;
     const url =
-      `${API}?limit=100&select=id,geom,adresse,ville,gazole_prix,gazole_maj,sp95_prix,sp95_maj,e10_prix,e10_maj` +
+      `${API}?limit=${LIMIT}&select=id,geom,adresse,ville,gazole_prix,gazole_maj,sp95_prix,sp95_maj,e10_prix,e10_maj` +
       `&where=${encodeURIComponent(
-        `within_distance(geom, GEOM'POINT(${center.lng} ${center.lat})', ${RADIUS_KM}km)`,
-      )}`;
+        `within_distance(geom, ${geomLiteral}, ${RADIUS_KM}km)`,
+      )}` +
+      `&order_by=${encodeURIComponent(`distance(geom, ${geomLiteral})`)}`;
 
     let cancelled = false;
     setLoading(true);
@@ -152,7 +155,7 @@ export function useGasStationPrices(
         const rows = (data.results ?? [])
           .map(toEntry)
           .filter((e): e is FuelPriceEntry => e !== null);
-        console.log("⛽ [P11-E] prix chargés", rows.length);
+        console.log("⛽ [P11-E] prix chargés", rows.length, "premier:", rows[0]?.lat, rows[0]?.lng, rows[0]?.name);
         setEntries(rows);
         const now = Date.now();
         setFetchedAt(now);
@@ -171,17 +174,20 @@ export function useGasStationPrices(
     };
   }, [enabled, center?.lat, center?.lng]);
 
-  /** Nearest price record within 300 m of a fuel POI (SIRET-level match). */
+  /** Nearest price record within 500 m of a fuel POI (coordinate-level match). */
   const findPrice = useCallback(
     (lat: number, lng: number): FuelPriceEntry | null => {
       let best: FuelPriceEntry | null = null;
-      let bestD = 300;
+      let bestD = 500;
       for (const e of entries) {
         const d = distanceM(lat, lng, e.lat, e.lng);
         if (d < bestD) {
           bestD = d;
           best = e;
         }
+      }
+      if (!best) {
+        console.log("⛽ [P11-E] aucun prix proche pour", lat, lng, "(chargés:", entries.length, ")");
       }
       return best;
     },
