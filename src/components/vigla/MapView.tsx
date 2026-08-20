@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
@@ -367,7 +367,6 @@ function RouteTapCatcher({
           bestLatLng = c;
         }
       }
-      console.log("🖱️ [P6] map click", { px: best.toFixed(1), hit: best <= 28 });
       if (best <= 28 && bestLatLng) {
         onTapRoute(e.latlng.lat, e.latlng.lng);
       }
@@ -735,11 +734,14 @@ export function MapView() {
   // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
   const { addWaypoint } = useRouteWaypoint();
   const addingWaypointRef = useRef(false);
+  // Immediate visual feedback: black dot where the user tapped.
+  const [tapPoint, setTapPoint] = useState<[number, number] | null>(null);
   const addWaypointAt = useCallback(
     async (lat: number, lng: number) => {
       if (addingWaypointRef.current) return;
       addingWaypointRef.current = true;
-      console.log("🎯 [P6] POLYLINE CLICKED:", { lat, lng, ts: new Date().toISOString() });
+      setTapPoint([lat, lng]);
+      toast.info("🎯 Tap détecté sur la route", { duration: 1200 });
       try {
         const res = await addWaypoint({
           name: t("map.waypoint", { defaultValue: "Étape" }),
@@ -747,7 +749,10 @@ export function MapView() {
           lng,
           type: "waypoint",
         });
-        console.log("📍 [P6] WAYPOINT RESULT:", res ? { eta: res.eta, distance: res.distance } : null);
+        if (!res) setTapPoint(null);
+      } catch {
+        setTapPoint(null);
+        toast.error("❌ Erreur création waypoint");
       } finally {
         addingWaypointRef.current = false;
       }
@@ -761,6 +766,19 @@ export function MapView() {
     },
     [addWaypointAt],
   );
+
+  // Toast once when a route polyline becomes tappable.
+  const routeReadyRef = useRef(false);
+  useEffect(() => {
+    const hasRoute = (route?.coords?.length ?? 0) > 1;
+    if (hasRoute && !routeReadyRef.current) {
+      routeReadyRef.current = true;
+      toast.info("🔵 Itinéraire prêt — tapez la route pour ajouter une étape", { duration: 2500 });
+    } else if (!hasRoute) {
+      routeReadyRef.current = false;
+      setTapPoint(null);
+    }
+  }, [route?.coords]);
 
   // Click-to-route on a fuel station: direct route to the pump.
   const handleGasStationSelect = useCallback(
@@ -996,6 +1014,14 @@ export function MapView() {
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <RouteTapCatcher coords={navigation.remainingCoords} onTapRoute={addWaypointAt} />
         </>
+      )}
+      {/* Immediate black dot feedback on tap (P6). */}
+      {tapPoint && (
+        <CircleMarker
+          center={tapPoint}
+          radius={8}
+          pathOptions={{ color: "#000000", fillColor: "#000000", weight: 2, opacity: 1, fillOpacity: 0.8 }}
+        />
       )}
       {/* Intermediate waypoints added by tapping the route (P6). */}
       {route?.waypoints
