@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useVigla } from "@/lib/vigla-store";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { haversine } from "@/lib/geo";
 import { WaypointRow } from "./WaypointRow";
 import { StepRow } from "./StepRow";
