@@ -256,3 +256,11 @@ export const DEFAULT_HAZARD_FILTERS: HazardFilters = {
 
 
 
+
+export interface GasStation {
+  id: string;
+  latitude: number;
+  longitude: number;
+  name: string | null;
+  brand: string | null;
+}
