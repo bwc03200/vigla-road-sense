@@ -256,16 +256,9 @@ export function RestaurantDetailsPopup({
                     Téléphone
                   </dt>
                   <dd className="mt-1 text-sm font-medium text-foreground">
-                    {details?.phone ? (
-                      <a
-                        href={`tel:${phoneNumber}`}
-                        className="inline-flex min-h-[44px] items-center text-vigla-orange underline"
-                      >
-                        {details.phone}
-                      </a>
-                    ) : (
-                      "Chargement…"
-                    )}
+                    {loading && !details?.phone
+                      ? "Chargement…"
+                      : (details?.phone ?? "Non renseigné")}
                   </dd>
                 </div>
               </div>
