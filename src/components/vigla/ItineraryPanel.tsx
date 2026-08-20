@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useVigla } from "@/lib/vigla-store";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { haversine } from "@/lib/geo";
 import { WaypointRow } from "./WaypointRow";
 import { StepRow } from "./StepRow";
@@ -24,6 +25,7 @@ export function ItineraryPanel() {
   const route = useVigla((s) => s.route);
   const navigation = useVigla((s) => s.navigation);
   const currentStepRef = useRef<HTMLDivElement | null>(null);
+  const { removeWaypoint } = useRouteWaypoint();
 
   const items = useMemo(() => {
     if (!route || route.waypoints.length === 0) return [];
@@ -110,6 +112,7 @@ export function ItineraryPanel() {
               distanceM={item.distanceM}
               durationS={item.durationS}
               isCurrent={i === currentIndex}
+              onDelete={removeWaypoint}
             />
           ))}
 

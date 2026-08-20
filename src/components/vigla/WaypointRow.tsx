@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RouteWaypoint } from "@/types/vigla";
 
@@ -7,6 +9,7 @@ interface WaypointRowProps {
   distanceM: number;
   durationS: number;
   isCurrent: boolean;
+  onDelete?: (id: string) => void;
 }
 
 function formatDistance(m: number) {
@@ -27,15 +30,46 @@ export function WaypointRow({
   distanceM,
   durationS,
   isCurrent,
+  onDelete,
 }: WaypointRowProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  const startPress = () => {
+    if (!onDelete) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      navigator.vibrate?.(20);
+      setShowMenu(true);
+    }, 500);
+  };
+  const endPress = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors",
+        "relative flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors select-none",
         isCurrent
           ? "bg-success/15 ring-1 ring-success/30"
           : "hover:bg-muted/80",
       )}
+      onMouseDown={startPress}
+      onMouseUp={endPress}
+      onMouseLeave={endPress}
+      onTouchStart={startPress}
+      onTouchEnd={endPress}
+      onTouchCancel={endPress}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="flex min-w-0 items-center gap-3">
         <span
@@ -56,6 +90,32 @@ export function WaypointRow({
           ETA {formatEta(durationS)}
         </div>
       </div>
+
+      {showMenu && onDelete && (
+        <div className="absolute right-2 top-full z-50 mt-1 flex flex-col gap-1 rounded-xl border border-border bg-popover p-1 shadow-lg">
+          <button
+            type="button"
+            disabled={deleting}
+            onClick={async () => {
+              setDeleting(true);
+              await onDelete(waypoint.id);
+              setShowMenu(false);
+              setDeleting(false);
+            }}
+            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
+          >
+            <Trash2 className="h-4 w-4" />
+            Supprimer
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowMenu(false)}
+            className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
+          >
+            Annuler
+          </button>
+        </div>
+      )}
     </div>
   );
 }
