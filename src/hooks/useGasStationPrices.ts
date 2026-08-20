@@ -174,17 +174,20 @@ export function useGasStationPrices(
     };
   }, [enabled, center?.lat, center?.lng]);
 
-  /** Nearest price record within 300 m of a fuel POI (SIRET-level match). */
+  /** Nearest price record within 500 m of a fuel POI (coordinate-level match). */
   const findPrice = useCallback(
     (lat: number, lng: number): FuelPriceEntry | null => {
       let best: FuelPriceEntry | null = null;
-      let bestD = 300;
+      let bestD = 500;
       for (const e of entries) {
         const d = distanceM(lat, lng, e.lat, e.lng);
         if (d < bestD) {
           bestD = d;
           best = e;
         }
+      }
+      if (!best) {
+        console.log("⛽ [P11-E] aucun prix proche pour", lat, lng, "(chargés:", entries.length, ")");
       }
       return best;
     },
