@@ -106,11 +106,9 @@ export function RestaurantDetailsPopup({
     ? haversine(userPosition.lat, userPosition.lng, poi.latitude, poi.longitude)
     : null;
 
-  const hasPhone = !!details?.phone;
   const hasWebsite = !!details?.website;
   const typeLabel = poi.brand?.replace("_", " ") ?? "Fast-food";
 
-  const phoneNumber = details?.phone?.replace(/\s/g, "") ?? "";
   const websiteUrl = (() => {
     const raw = details?.website?.trim() ?? "";
     if (!raw) return "";
