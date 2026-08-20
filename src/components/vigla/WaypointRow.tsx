@@ -30,15 +30,46 @@ export function WaypointRow({
   distanceM,
   durationS,
   isCurrent,
+  onDelete,
 }: WaypointRowProps) {
+  const [showMenu, setShowMenu] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+  }, []);
+
+  const startPress = () => {
+    if (!onDelete) return;
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => {
+      navigator.vibrate?.(20);
+      setShowMenu(true);
+    }, 500);
+  };
+  const endPress = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors",
+        "relative flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors select-none",
         isCurrent
           ? "bg-success/15 ring-1 ring-success/30"
           : "hover:bg-muted/80",
       )}
+      onMouseDown={startPress}
+      onMouseUp={endPress}
+      onMouseLeave={endPress}
+      onTouchStart={startPress}
+      onTouchEnd={endPress}
+      onTouchCancel={endPress}
+      onContextMenu={(e) => e.preventDefault()}
     >
       <div className="flex min-w-0 items-center gap-3">
         <span
