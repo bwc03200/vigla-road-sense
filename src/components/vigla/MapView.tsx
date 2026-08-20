@@ -340,6 +340,41 @@ function TapToDestination({ onPick }: { onPick: (lat: number, lng: number) => vo
   return null;
 }
 
+/**
+ * P6 fallback: some browsers don't hit-test fully transparent SVG strokes, so a
+ * tap "on" the route can reach the map instead of the polyline. This catches
+ * map clicks that land within ~28px of the route and treats them as route taps.
+ */
+function RouteTapCatcher({
+  coords,
+  onTapRoute,
+}: {
+  coords: [number, number][];
+  onTapRoute: (lat: number, lng: number) => void;
+}) {
+  const map = useMap();
+  useMapEvents({
+    click: (e) => {
+      if (coords.length < 2) return;
+      const p = map.latLngToContainerPoint(e.latlng);
+      let best = Infinity;
+      let bestLatLng: [number, number] | null = null;
+      for (const c of coords) {
+        const q = map.latLngToContainerPoint({ lat: c[0], lng: c[1] });
+        const d = Math.hypot(q.x - p.x, q.y - p.y);
+        if (d < best) {
+          best = d;
+          bestLatLng = c;
+        }
+      }
+      console.log("🖱️ [P6] map click", { px: best.toFixed(1), hit: best <= 28 });
+      if (best <= 28 && bestLatLng) {
+        onTapRoute(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
+}
 
 function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
   const map = useMap();
@@ -700,23 +735,31 @@ export function MapView() {
   // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
   const { addWaypoint } = useRouteWaypoint();
   const addingWaypointRef = useRef(false);
-  const handleRouteClick = useCallback(
-    async (e: L.LeafletMouseEvent) => {
-      L.DomEvent.stopPropagation(e);
+  const addWaypointAt = useCallback(
+    async (lat: number, lng: number) => {
       if (addingWaypointRef.current) return;
       addingWaypointRef.current = true;
+      console.log("🎯 [P6] POLYLINE CLICKED:", { lat, lng, ts: new Date().toISOString() });
       try {
-        await addWaypoint({
+        const res = await addWaypoint({
           name: t("map.waypoint", { defaultValue: "Étape" }),
-          lat: e.latlng.lat,
-          lng: e.latlng.lng,
+          lat,
+          lng,
           type: "waypoint",
         });
+        console.log("📍 [P6] WAYPOINT RESULT:", res ? { eta: res.eta, distance: res.distance } : null);
       } finally {
         addingWaypointRef.current = false;
       }
     },
     [addWaypoint, t],
+  );
+  const handleRouteClick = useCallback(
+    (e: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(e);
+      void addWaypointAt(e.latlng.lat, e.latlng.lng);
+    },
+    [addWaypointAt],
   );
 
   // Click-to-route on a fuel station: direct route to the pump.
@@ -918,13 +961,14 @@ export function MapView() {
           {/* Invisible wide hit area so tapping the route is easy on mobile. */}
           <Polyline
             positions={route.coords}
-            pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+            pathOptions={{ color: "#000000", weight: 26, opacity: 0.01, interactive: true }}
             bubblingMouseEvents={false}
             eventHandlers={{ click: handleRouteClick }}
           />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
           <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
+          <RouteTapCatcher coords={route.coords} onTapRoute={addWaypointAt} />
         </>
       )}
       {navigation && navActive && route && (
@@ -943,13 +987,14 @@ export function MapView() {
               />
               <Polyline
                 positions={navigation.remainingCoords}
-                pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+                pathOptions={{ color: "#000000", weight: 26, opacity: 0.01, interactive: true }}
                 bubblingMouseEvents={false}
                 eventHandlers={{ click: handleRouteClick }}
               />
             </>
           )}
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
+          <RouteTapCatcher coords={navigation.remainingCoords} onTapRoute={addWaypointAt} />
         </>
       )}
       {/* Intermediate waypoints added by tapping the route (P6). */}
