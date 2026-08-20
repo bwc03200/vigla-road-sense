@@ -186,6 +186,93 @@ export function useRouteWaypoint() {
     }
   }, []);
 
-  return { addWaypoint, routeDirectToPOI };
+  /**
+   * P7-REMOVE-WAYPOINT: removes a waypoint from the active route and
+   * recalculates the remaining itinerary.
+   */
+  const removeWaypoint = useCallback(async (waypointId: string) => {
+    const { position, route, hazards, navigation, setRoute, setNavigation } =
+      useVigla.getState();
+    if (!route) return null;
+
+    const nextWaypoints = (route.waypoints ?? []).filter((w) => w.id !== waypointId);
+    const removed = (route.waypoints ?? []).find((w) => w.id === waypointId);
+    if (!removed) return null;
+
+    if (nextWaypoints.length === 0) {
+      setRoute(null);
+      setNavigation(null);
+      toast.success(`🗑️ ${removed.name} supprimé`, {
+        description: "Itinéraire effacé",
+      });
+      return null;
+    }
+
+    if (!position) {
+      toast.error("Position GPS indisponible");
+      return null;
+    }
+
+    try {
+      // Ensure the last waypoint is the destination.
+      const hasDestination = nextWaypoints.some((w) => w.type === "destination");
+      if (!hasDestination) {
+        nextWaypoints[nextWaypoints.length - 1] = {
+          ...nextWaypoints[nextWaypoints.length - 1],
+          type: "destination",
+        };
+      }
+      const destinationWaypoint =
+        nextWaypoints.find((w) => w.type === "destination") ??
+        nextWaypoints[nextWaypoints.length - 1];
+      const destination = {
+        lat: destinationWaypoint.lat,
+        lng: destinationWaypoint.lon,
+        label: destinationWaypoint.name,
+      };
+
+      const points: [number, number][] = [
+        [position.lat, position.lng],
+        ...nextWaypoints.map((w) => [w.lat, w.lon] as [number, number]),
+      ];
+
+      const result = await fetchOsrmRouteVia(points);
+      const newRoute = buildRouteState(destination, result, hazards, nextWaypoints);
+      setRoute(newRoute);
+
+      if (navigation && !navigation.arrived) {
+        setNavigation({
+          routeCoords: newRoute.coords,
+          remainingCoords: newRoute.coords,
+          consumedCoords: [],
+          steps: newRoute.steps,
+          currentStepIndex: 0,
+          distanceRemainingM: newRoute.distanceM,
+          durationRemainingS: newRoute.durationS,
+          distanceToNextManeuverM: newRoute.steps[0]?.distanceMeters ?? 0,
+          offRouteM: 0,
+          offRouteSince: null,
+          recalculating: false,
+          arrived: false,
+          startedAt: navigation.startedAt,
+          alertsReceived: navigation.alertsReceived,
+        });
+      }
+
+      const eta = formatEta(newRoute.durationS);
+      const distance = formatDistance(newRoute.distanceM);
+      console.log("🗑️ [WAYPOINT REMOVED]", { removed: removed.name, eta, distance });
+      toast.success(`🗑️ ${removed.name} supprimé`, {
+        description: `ETA: ${eta} • ${distance}`,
+      });
+      return { eta, distance, route: newRoute };
+    } catch (error) {
+      console.log("🗑️ [WAYPOINT REMOVE ERROR]", error);
+      toast.error("Erreur", { description: "Recalcul impossible" });
+      return null;
+    }
+  }, []);
+
+  return { addWaypoint, routeDirectToPOI, removeWaypoint };
 }
 
