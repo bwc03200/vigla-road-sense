@@ -322,7 +322,7 @@ export function RestaurantDetailsPopup({
                   <dd className="mt-1 text-sm font-medium text-foreground">
                     {details?.website ? (
                       <a
-                        href={details.website.startsWith("http") ? details.website : `https://${details.website}`}
+                        href={websiteUrl}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex min-h-[44px] items-center break-all text-vigla-orange underline"
