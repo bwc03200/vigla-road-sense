@@ -899,7 +899,7 @@ export function MapView() {
           isLoading={fastfoodsLoading}
           isFailing={isFailing}
           onRetry={retryManually}
-          onSelect={openPoiPopup}
+          onSelect={openPoiPreview}
           userPosition={position}
         />
       </div>
