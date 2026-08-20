@@ -367,7 +367,6 @@ function RouteTapCatcher({
           bestLatLng = c;
         }
       }
-      console.log("🖱️ [P6] map click", { px: best.toFixed(1), hit: best <= 28 });
       if (best <= 28 && bestLatLng) {
         onTapRoute(e.latlng.lat, e.latlng.lng);
       }
