@@ -335,13 +335,16 @@ export function RestaurantDetailsPopup({
         {(hasPhone || hasWebsite) && (
           <div className={`mt-5 grid gap-3 ${hasPhone && hasWebsite ? "grid-cols-2" : "grid-cols-1"}`}>
             {hasPhone && (
-              <a
-                href={`tel:${details.phone}`}
+              <button
+                type="button"
+                onClick={() => {
+                  window.location.href = `tel:${details.phone}`;
+                }}
                 className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-green-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
               >
                 <Phone className="h-5 w-5" />
                 Appeler
-              </a>
+              </button>
             )}
             {hasWebsite && (
               <a
