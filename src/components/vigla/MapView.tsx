@@ -340,6 +340,41 @@ function TapToDestination({ onPick }: { onPick: (lat: number, lng: number) => vo
   return null;
 }
 
+/**
+ * P6 fallback: some browsers don't hit-test fully transparent SVG strokes, so a
+ * tap "on" the route can reach the map instead of the polyline. This catches
+ * map clicks that land within ~28px of the route and treats them as route taps.
+ */
+function RouteTapCatcher({
+  coords,
+  onTapRoute,
+}: {
+  coords: [number, number][];
+  onTapRoute: (lat: number, lng: number) => void;
+}) {
+  const map = useMap();
+  useMapEvents({
+    click: (e) => {
+      if (coords.length < 2) return;
+      const p = map.latLngToContainerPoint(e.latlng);
+      let best = Infinity;
+      let bestLatLng: [number, number] | null = null;
+      for (const c of coords) {
+        const q = map.latLngToContainerPoint({ lat: c[0], lng: c[1] });
+        const d = Math.hypot(q.x - p.x, q.y - p.y);
+        if (d < best) {
+          best = d;
+          bestLatLng = c;
+        }
+      }
+      console.log("🖱️ [P6] map click", { px: best.toFixed(1), hit: best <= 28 });
+      if (best <= 28 && bestLatLng) {
+        onTapRoute(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
+}
 
 function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
   const map = useMap();
