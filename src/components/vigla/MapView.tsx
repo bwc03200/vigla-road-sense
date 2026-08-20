@@ -13,6 +13,8 @@ import { PoiLayerToggles } from "@/components/vigla/PoiLayerToggles";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
 import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
+import { useGasStations, MIN_ZOOM_FOR_GAS_STATIONS } from "@/hooks/useGasStations";
+import { GasStationMarkers } from "@/components/vigla/GasStationMarkers";
 import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
@@ -495,6 +497,32 @@ export function MapView() {
     );
   }, [trafficSignals, signalBBox, showSignals]);
 
+  // Fuel stations (Overpass amenity=fuel) — same viewport-driven pattern.
+  const showGasStations = useVigla((s) => s.showGasStations);
+  const gasStations = useVigla((s) => s.gasStations);
+  const gasBBox = useMemo(() => {
+    if (!viewport || viewport.zoom < MIN_ZOOM_FOR_GAS_STATIONS) return null;
+    const latPad = (viewport.north - viewport.south) * 0.15;
+    const lngPad = (viewport.east - viewport.west) * 0.15;
+    return {
+      south: viewport.south - latPad,
+      north: viewport.north + latPad,
+      west: viewport.west - lngPad,
+      east: viewport.east + lngPad,
+    };
+  }, [viewport]);
+  useGasStations(gasBBox, viewport?.zoom ?? 0, showGasStations);
+  const visibleGasStations = useMemo(() => {
+    if (!showGasStations || !gasBBox) return [];
+    return gasStations.filter(
+      (g) =>
+        g.latitude <= gasBBox.north &&
+        g.latitude >= gasBBox.south &&
+        g.longitude <= gasBBox.east &&
+        g.longitude >= gasBBox.west,
+    );
+  }, [gasStations, gasBBox, showGasStations]);
+
   const showFastfoods = useVigla((s) => s.showFastfoods);
   const showOfficialRadars = useVigla((s) => s.showOfficialRadars);
   const showHazards = useVigla((s) => s.showHazards);
@@ -656,6 +684,60 @@ export function MapView() {
       }
     },
     [inViewFastfoods, position, t, hazards, setRoute, setNavigation],
+  );
+
+  // Click-to-route on a fuel station: direct route to the pump.
+  const handleGasStationSelect = useCallback(
+    async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
+      if (!position) {
+        toast.error(t("hazard.report.gpsUnavailable"));
+        return;
+      }
+      const label = station.name ?? t("layers.gasStations");
+      try {
+        const result = await fetchOsrmRoute(
+          position.lat,
+          position.lng,
+          station.latitude,
+          station.longitude,
+        );
+        const state = buildRouteState(
+          { lat: station.latitude, lng: station.longitude, label },
+          result,
+          hazards,
+          [
+            {
+              id: `destination-${Date.now()}`,
+              type: "destination",
+              name: label,
+              lat: station.latitude,
+              lon: station.longitude,
+            },
+          ],
+        );
+        setRoute(state);
+        setNavigation({
+          routeCoords: state.coords,
+          remainingCoords: state.coords,
+          consumedCoords: [],
+          steps: state.steps,
+          currentStepIndex: 0,
+          distanceRemainingM: state.distanceM,
+          durationRemainingS: state.durationS,
+          distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
+          offRouteM: 0,
+          offRouteSince: null,
+          recalculating: false,
+          arrived: false,
+          startedAt: new Date().toISOString(),
+          alertsReceived: 0,
+        });
+        toast.success(label);
+      } catch {
+        toast.error(t("route.serviceUnavailable"));
+      }
+    },
+    [position, t, hazards, setRoute, setNavigation],
   );
 
 
@@ -830,6 +912,9 @@ export function MapView() {
         <HazardMarker key={h.id} hazard={h} />
       ))}
 
+      {showGasStations && visibleGasStations.length > 0 && (
+        <GasStationMarkers stations={visibleGasStations} onSelect={handleGasStationSelect} />
+      )}
       {showOfficialRadars && <OfficialRadarCluster radars={nearbyOfficial} />}
       {showSignals && (
         <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />

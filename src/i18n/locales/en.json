@@ -615,6 +615,7 @@
     "fastfoods": "Restaurants",
     "signals": "Traffic signals",
     "radars": "Speed cameras",
-    "hazards": "Hazard reports"
+    "hazards": "Hazard reports",
+    "gasStations": "Gas stations"
   }
 }

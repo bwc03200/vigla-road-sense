@@ -7,6 +7,7 @@ const SIGNALS_LS_KEY = "vigla:showTrafficSignals";
 const FASTFOODS_LS_KEY = "vigla:showFastfoods";
 const RADARS_LS_KEY = "vigla:showOfficialRadars";
 const HAZARDS_LS_KEY = "vigla:showHazards";
+const GAS_LS_KEY = "vigla:showGasStations";
 
 function loadBoolLS(key: string): boolean {
   if (typeof window === "undefined") return true;
@@ -71,6 +72,7 @@ import type {
   EmergencyContact,
   HazardFilterKey,
   TrafficSignal,
+  GasStation,
   HazardFilters,
   HazardReport,
   OfficialRadar,
@@ -95,7 +97,9 @@ interface ViglaState {
   hazards: HazardReport[];
   officialRadars: OfficialRadar[];
   trafficSignals: TrafficSignal[];
+  gasStations: GasStation[];
   showTrafficSignals: boolean;
+  showGasStations: boolean;
   showFastfoods: boolean;
   showOfficialRadars: boolean;
   showHazards: boolean;
@@ -129,6 +133,8 @@ interface ViglaState {
   removeHazard: (id: string) => void;
   setOfficialRadars: (r: OfficialRadar[]) => void;
   setTrafficSignals: (s: TrafficSignal[]) => void;
+  setGasStations: (s: GasStation[]) => void;
+  toggleGasStations: () => void;
   toggleTrafficSignals: () => void;
   toggleFastfoods: () => void;
   toggleOfficialRadars: () => void;
@@ -179,7 +185,9 @@ export const useVigla = create<ViglaState>((set) => ({
   hazards: [],
   officialRadars: [],
   trafficSignals: [],
+  gasStations: [],
   showTrafficSignals: loadShowSignals(),
+  showGasStations: loadBoolLS(GAS_LS_KEY),
   showFastfoods: loadShowFastfoods(),
   showOfficialRadars: loadBoolLS(RADARS_LS_KEY),
   showHazards: loadBoolLS(HAZARDS_LS_KEY),
@@ -276,6 +284,13 @@ export const useVigla = create<ViglaState>((set) => ({
     set((s) => ({ hazards: s.hazards.filter((x) => x.id !== id) })),
   setOfficialRadars: (r) => set({ officialRadars: r }),
   setTrafficSignals: (v) => set({ trafficSignals: v }),
+  setGasStations: (v) => set({ gasStations: v }),
+  toggleGasStations: () =>
+    set((s) => {
+      const next = !s.showGasStations;
+      saveBoolLS(GAS_LS_KEY, next);
+      return { showGasStations: next };
+    }),
   toggleTrafficSignals: () =>
     set((s) => {
       const next = !s.showTrafficSignals;

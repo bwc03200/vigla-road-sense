@@ -615,6 +615,7 @@
     "fastfoods": "Restaurants",
     "signals": "Feux tricolores",
     "radars": "Radars fixes",
-    "hazards": "Signalements"
+    "hazards": "Signalements",
+    "gasStations": "Stations essence"
   }
 }

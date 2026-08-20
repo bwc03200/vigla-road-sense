@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Layers, Utensils, TrafficCone, Radar, AlertTriangle } from "lucide-react";
+import { Layers, Utensils, TrafficCone, Radar, AlertTriangle, Fuel } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 
 /**
@@ -17,10 +17,12 @@ export function PoiLayerToggles({ dark = false }: { dark?: boolean }) {
   const showSignals = useVigla((s) => s.showTrafficSignals);
   const showRadars = useVigla((s) => s.showOfficialRadars);
   const showHazards = useVigla((s) => s.showHazards);
+  const showGas = useVigla((s) => s.showGasStations);
   const toggleFastfoods = useVigla((s) => s.toggleFastfoods);
   const toggleSignals = useVigla((s) => s.toggleTrafficSignals);
   const toggleRadars = useVigla((s) => s.toggleOfficialRadars);
   const toggleHazards = useVigla((s) => s.toggleHazards);
+  const toggleGas = useVigla((s) => s.toggleGasStations);
 
   useEffect(() => {
     if (!open) return;
@@ -31,13 +33,14 @@ export function PoiLayerToggles({ dark = false }: { dark?: boolean }) {
     return () => document.removeEventListener("pointerdown", onDown);
   }, [open]);
 
-  const activeCount = [showFastfoods, showSignals, showRadars, showHazards].filter(Boolean).length;
+  const activeCount = [showFastfoods, showSignals, showRadars, showHazards, showGas].filter(Boolean).length;
 
   const rows = [
     { key: "fastfoods", icon: Utensils, label: t("layers.fastfoods"), value: showFastfoods, onToggle: toggleFastfoods },
     { key: "signals", icon: TrafficCone, label: t("layers.signals"), value: showSignals, onToggle: toggleSignals },
     { key: "radars", icon: Radar, label: t("layers.radars"), value: showRadars, onToggle: toggleRadars },
     { key: "hazards", icon: AlertTriangle, label: t("layers.hazards"), value: showHazards, onToggle: toggleHazards },
+    { key: "gas", icon: Fuel, label: t("layers.gasStations"), value: showGas, onToggle: toggleGas },
   ];
 
   const panelBg = dark ? "bg-[#14171b] text-slate-100 ring-[#2a2f36]" : "bg-white text-slate-900 ring-slate-200";
