@@ -961,7 +961,7 @@ export function MapView() {
           {/* Invisible wide hit area so tapping the route is easy on mobile. */}
           <Polyline
             positions={route.coords}
-            pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+            pathOptions={{ color: "#000000", weight: 26, opacity: 0.01, interactive: true }}
             bubblingMouseEvents={false}
             eventHandlers={{ click: handleRouteClick }}
           />
@@ -986,7 +986,7 @@ export function MapView() {
               />
               <Polyline
                 positions={navigation.remainingCoords}
-                pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+                pathOptions={{ color: "#000000", weight: 26, opacity: 0.01, interactive: true }}
                 bubblingMouseEvents={false}
                 eventHandlers={{ click: handleRouteClick }}
               />
