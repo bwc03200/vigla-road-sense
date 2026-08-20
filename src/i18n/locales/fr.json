@@ -609,5 +609,12 @@
   },
   "distances": {
     "km": "km"
+  },
+  "layers": {
+    "title": "Calques",
+    "fastfoods": "Restaurants",
+    "signals": "Feux tricolores",
+    "radars": "Radars fixes",
+    "hazards": "Signalements"
   }
 }

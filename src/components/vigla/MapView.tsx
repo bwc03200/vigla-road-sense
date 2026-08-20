@@ -9,6 +9,7 @@ import { haversine, projectOnPolyline } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
+import { PoiLayerToggles } from "@/components/vigla/PoiLayerToggles";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
 import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
@@ -495,6 +496,8 @@ export function MapView() {
   }, [trafficSignals, signalBBox, showSignals]);
 
   const showFastfoods = useVigla((s) => s.showFastfoods);
+  const showOfficialRadars = useVigla((s) => s.showOfficialRadars);
+  const showHazards = useVigla((s) => s.showHazards);
   // FastFoods have their own (lower) zoom threshold than traffic signals, so
   // they get their own padded bbox — otherwise the chip only appeared once the
   // user crossed the signals threshold (13), which is why it needed cycles.
@@ -854,11 +857,11 @@ export function MapView() {
 
 
 
-      {nearbyHazards.map((h) => (
+      {showHazards && nearbyHazards.map((h) => (
         <HazardMarker key={h.id} hazard={h} />
       ))}
 
-      <OfficialRadarCluster radars={nearbyOfficial} />
+      {showOfficialRadars && <OfficialRadarCluster radars={nearbyOfficial} />}
       <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
       {showFastfoods && visibleFastfoods.length > 0 && (
         <FastfoodCluster
@@ -904,6 +907,9 @@ export function MapView() {
         />
       </div>
     </MapContainer>
+    <div className="absolute right-3 top-[8.5rem] z-[700]">
+      <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
+    </div>
     {proximityAlert && (
       /* Anchored bottom-right (fixed, self-positioned): the top of the screen
          belongs to the instruction card + TopBar + hazard banner stack. */

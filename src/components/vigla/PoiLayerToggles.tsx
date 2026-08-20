@@ -59,7 +59,7 @@ export function PoiLayerToggles({ dark = false }: { dark?: boolean }) {
 
       {open && (
         <div
-          className={`absolute right-0 top-13 mt-2 w-60 overflow-hidden rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.22)] ring-1 ${panelBg}`}
+          className={`absolute right-0 top-full mt-2 w-60 overflow-hidden rounded-2xl shadow-[0_16px_40px_rgba(15,23,42,0.22)] ring-1 ${panelBg}`}
         >
           <div className={`px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wide ${dark ? "text-slate-400" : "text-slate-500"}`}>
             {t("layers.title")}
