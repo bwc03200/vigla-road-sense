@@ -22,6 +22,8 @@ export function ItineraryPanel() {
   const { t } = useTranslation();
   const position = useVigla((s) => s.position);
   const route = useVigla((s) => s.route);
+  const navigation = useVigla((s) => s.navigation);
+  const currentStepRef = useRef<HTMLDivElement | null>(null);
 
   const items = useMemo(() => {
     if (!route || route.waypoints.length === 0) return [];
@@ -42,6 +44,14 @@ export function ItineraryPanel() {
     });
   }, [route]);
 
+  const steps = useMemo(() => {
+    const s = navigation?.steps ?? route?.steps ?? [];
+    return Array.isArray(s) ? s : [];
+  }, [navigation?.steps, route?.steps]);
+
+  const currentStepIndex = navigation ? navigation.currentStepIndex : -1;
+  const distanceToNext = navigation?.distanceToNextManeuverM ?? 0;
+
   const currentIndex = useMemo(() => {
     if (!position || !route || route.waypoints.length === 0) return -1;
     let minDist = Infinity;
@@ -57,17 +67,28 @@ export function ItineraryPanel() {
   }, [position, route]);
 
   useEffect(() => {
-    if (!route || route.waypoints.length === 0) return;
+    if (!route) return;
     console.log(
       "📋 [ITINERARY DISPLAYED] —",
       route.waypoints.length,
-      "waypoints, total",
+      "waypoints,",
+      route.steps?.length ?? 0,
+      "steps, total",
       formatDistance(route.distanceM) + ",",
       formatEta(route.durationS),
     );
   }, [route]);
 
-  if (!route || route.waypoints.length === 0) return null;
+  // Keep the active maneuver visible while navigating.
+  useEffect(() => {
+    currentStepRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [currentStepIndex]);
+
+  if (!route) return null;
+  if (items.length === 0 && steps.length === 0) return null;
 
   return (
     <div className="pointer-events-none fixed inset-x-0 bottom-16 z-30 flex justify-center px-3 pb-3 md:bottom-4 md:justify-end">
@@ -75,7 +96,9 @@ export function ItineraryPanel() {
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <div className="text-sm font-semibold">{t("navigation.itinerary")}</div>
           <div className="text-xs text-muted-foreground">
-            {route.waypoints.length} {t("navigation.stops")}
+            {items.length > 0
+              ? `${route.waypoints.length} ${t("navigation.stops")}`
+              : `${steps.length} ${t("navigation.maneuvers")}`}
           </div>
         </div>
         <div className="max-h-[32vh] space-y-1 overflow-y-auto p-2 scrollbar-thin">
@@ -89,8 +112,32 @@ export function ItineraryPanel() {
               isCurrent={i === currentIndex}
             />
           ))}
+
+          {steps.length > 0 && (
+            <>
+              {items.length > 0 && (
+                <div className="px-3 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("navigation.turnByTurn")}
+                </div>
+              )}
+              {steps.map((step, i) => (
+                <StepRow
+                  key={`${i}-${step.maneuverType}`}
+                  ref={i === currentStepIndex ? currentStepRef : undefined}
+                  index={i}
+                  step={step}
+                  distanceM={
+                    i === currentStepIndex ? distanceToNext : step.distanceMeters
+                  }
+                  isCurrent={i === currentStepIndex}
+                  isDone={currentStepIndex >= 0 && i < currentStepIndex}
+                />
+              ))}
+            </>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
