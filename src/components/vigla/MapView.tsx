@@ -697,6 +697,28 @@ export function MapView() {
     [inViewFastfoods, position, t, hazards, setRoute, setNavigation],
   );
 
+  // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
+  const { addWaypoint } = useRouteWaypoint();
+  const addingWaypointRef = useRef(false);
+  const handleRouteClick = useCallback(
+    async (e: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(e);
+      if (addingWaypointRef.current) return;
+      addingWaypointRef.current = true;
+      try {
+        await addWaypoint({
+          name: t("map.waypoint", { defaultValue: "Étape" }),
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+          type: "waypoint",
+        });
+      } finally {
+        addingWaypointRef.current = false;
+      }
+    },
+    [addWaypoint, t],
+  );
+
   // Click-to-route on a fuel station: direct route to the pump.
   const handleGasStationSelect = useCallback(
     async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
