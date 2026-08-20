@@ -994,6 +994,7 @@ export function MapView() {
             </>
           )}
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
+          <RouteTapCatcher coords={navigation.remainingCoords} onTapRoute={addWaypointAt} />
         </>
       )}
       {/* Intermediate waypoints added by tapping the route (P6). */}
