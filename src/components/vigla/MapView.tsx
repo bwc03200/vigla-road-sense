@@ -26,6 +26,7 @@ import { useCityName } from "@/hooks/useCityName";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
 
@@ -55,6 +56,16 @@ function destinationIcon() {
     html: `<div style="width:32px;height:32px;border-radius:50%;background:#0F172A;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-size:16px;">📍</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 32],
+  });
+}
+
+/** Small black dot marking an intermediate waypoint added by tapping the route. */
+function waypointIcon() {
+  return L.divIcon({
+    className: "vigla-waypoint-icon",
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:#0F172A;box-shadow:0 2px 6px rgba(15,23,42,.4),0 0 0 3px #ffffff;"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
   });
 }
 
@@ -686,6 +697,28 @@ export function MapView() {
     [inViewFastfoods, position, t, hazards, setRoute, setNavigation],
   );
 
+  // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
+  const { addWaypoint } = useRouteWaypoint();
+  const addingWaypointRef = useRef(false);
+  const handleRouteClick = useCallback(
+    async (e: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(e);
+      if (addingWaypointRef.current) return;
+      addingWaypointRef.current = true;
+      try {
+        await addWaypoint({
+          name: t("map.waypoint", { defaultValue: "Étape" }),
+          lat: e.latlng.lat,
+          lng: e.latlng.lng,
+          type: "waypoint",
+        });
+      } finally {
+        addingWaypointRef.current = false;
+      }
+    },
+    [addWaypoint, t],
+  );
+
   // Click-to-route on a fuel station: direct route to the pump.
   const handleGasStationSelect = useCallback(
     async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
@@ -882,6 +915,13 @@ export function MapView() {
       {route && !navActive && (
         <>
           <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
+          {/* Invisible wide hit area so tapping the route is easy on mobile. */}
+          <Polyline
+            positions={route.coords}
+            pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+            bubblingMouseEvents={false}
+            eventHandlers={{ click: handleRouteClick }}
+          />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
           <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
@@ -896,14 +936,28 @@ export function MapView() {
             />
           )}
           {navigation.remainingCoords.length >= 2 && (
-            <Polyline
-              positions={navigation.remainingCoords}
-              pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
-            />
+            <>
+              <Polyline
+                positions={navigation.remainingCoords}
+                pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
+              />
+              <Polyline
+                positions={navigation.remainingCoords}
+                pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+                bubblingMouseEvents={false}
+                eventHandlers={{ click: handleRouteClick }}
+              />
+            </>
           )}
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
         </>
       )}
+      {/* Intermediate waypoints added by tapping the route (P6). */}
+      {route?.waypoints
+        ?.filter((w) => w.type !== "destination")
+        .map((w) => (
+          <Marker key={w.id} position={[w.lat, w.lon]} icon={waypointIcon()} />
+        ))}
 
 
 
