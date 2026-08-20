@@ -18,7 +18,7 @@ import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { RestaurantDetailsPopup } from "@/components/vigla/RestaurantDetailsPopup";
 import { ShowRestaurantPreview } from "@/components/vigla/ShowRestaurantPreview";
-import { AddressSearchBox } from "@/components/vigla/AddressSearchBox";
+
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
@@ -658,44 +658,6 @@ export function MapView() {
     [inViewFastfoods, position, t, hazards, setRoute, setNavigation],
   );
 
-  const [addressRouting, setAddressRouting] = useState(false);
-  const handleAddressSelect = useCallback(
-    async (lat: number, lng: number, label: string) => {
-      console.log("🎯 [ADDRESS SELECTED]", label);
-      if (!position) {
-        toast.error(t("hazard.report.gpsUnavailable"));
-        return;
-      }
-      setAddressRouting(true);
-      try {
-        const result = await fetchOsrmRoute(position.lat, position.lng, lat, lng);
-        const state = buildRouteState({ lat, lng, label }, result, hazards);
-        setRoute(state);
-        setNavigation({
-          routeCoords: state.coords,
-          remainingCoords: state.coords,
-          consumedCoords: [],
-          steps: state.steps,
-          currentStepIndex: 0,
-          distanceRemainingM: state.distanceM,
-          durationRemainingS: state.durationS,
-          distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
-          offRouteM: 0,
-          offRouteSince: null,
-          recalculating: false,
-          arrived: false,
-          startedAt: new Date().toISOString(),
-          alertsReceived: 0,
-        });
-        console.log("🚀 [ROUTE STARTED]", label);
-      } catch {
-        toast.error(t("route.serviceUnavailable"));
-      } finally {
-        setAddressRouting(false);
-      }
-    },
-    [position, t, hazards, setRoute, setNavigation],
-  );
 
 
   const cityName = useCityName(position?.lat, position?.lng);
@@ -889,22 +851,6 @@ export function MapView() {
             icon={convoyMemberIcon(m.display_name)}
           />
         ))}
-      <div className="pointer-events-none absolute left-3 top-[4.5rem] z-[700] flex">
-        <AddressSearchBox
-          onSelect={handleAddressSelect}
-          routing={addressRouting}
-          center={
-            viewport
-              ? {
-                  lat: (viewport.north + viewport.south) / 2,
-                  lng: (viewport.east + viewport.west) / 2,
-                }
-              : null
-          }
-          zoom={viewport?.zoom}
-          dark={motoMode || mapTheme === "dark"}
-        />
-      </div>
       {showFastfoods && (
         <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
           <SmartRestaurantsChip
