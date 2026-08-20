@@ -599,6 +599,12 @@
     "filter": "Feux tricolores",
     "ahead": "Feu dans {{distance}}"
   },
+  "fastfood": {
+    "preview": {
+      "details": "Voir détails",
+      "route": "Y aller"
+    }
+  },
   "distances": {
     "km": "km"
   }
