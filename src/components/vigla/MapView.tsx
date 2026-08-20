@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { MapContainer, TileLayer, Marker, Polyline, useMap, useMapEvents } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
 import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
