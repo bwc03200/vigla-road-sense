@@ -258,7 +258,7 @@ export function RestaurantDetailsPopup({
                   <dd className="mt-1 text-sm font-medium text-foreground">
                     {details?.phone ? (
                       <a
-                        href={`tel:${details.phone}`}
+                        href={`tel:${phoneNumber}`}
                         className="inline-flex min-h-[44px] items-center text-vigla-orange underline"
                       >
                         {details.phone}
