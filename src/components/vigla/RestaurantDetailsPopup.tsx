@@ -237,32 +237,32 @@ export function RestaurantDetailsPopup({
           </div>
 
           {/* Phone */}
-          <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10 text-green-500">
-                <Phone className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <dt className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                  Téléphone
-                </dt>
-                <dd className="mt-1 text-sm font-medium text-foreground">
-                  {details?.phone ? (
-                    <a
-                      href={`tel:${details.phone}`}
-                      className="inline-flex min-h-[44px] items-center text-vigla-orange underline"
-                    >
-                      {details.phone}
-                    </a>
-                  ) : loading ? (
-                    "Chargement…"
-                  ) : (
-                    "Non renseigné"
-                  )}
-                </dd>
+          {(details?.phone || loading) && (
+            <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-500/10 text-green-500">
+                  <Phone className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Téléphone
+                  </dt>
+                  <dd className="mt-1 text-sm font-medium text-foreground">
+                    {details?.phone ? (
+                      <a
+                        href={`tel:${details.phone}`}
+                        className="inline-flex min-h-[44px] items-center text-vigla-orange underline"
+                      >
+                        {details.phone}
+                      </a>
+                    ) : (
+                      "Chargement…"
+                    )}
+                  </dd>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Hours */}
           <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
@@ -301,67 +301,61 @@ export function RestaurantDetailsPopup({
           </div>
 
           {/* Website */}
-          <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-500">
-                <Globe className="h-5 w-5" />
-              </div>
-              <div className="min-w-0 flex-1">
-                <dt className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
-                  Site web
-                </dt>
-                <dd className="mt-1 text-sm font-medium text-foreground">
-                  {details?.website ? (
-                    <a
-                      href={details.website.startsWith("http") ? details.website : `https://${details.website}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex min-h-[44px] items-center break-all text-vigla-orange underline"
-                    >
-                      {details.website}
-                    </a>
-                  ) : loading ? (
-                    "Chargement…"
-                  ) : (
-                    "Non renseigné"
-                  )}
-                </dd>
+          {(details?.website || loading) && (
+            <div className="rounded-2xl bg-card p-4 shadow-sm ring-1 ring-border">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-500">
+                  <Globe className="h-5 w-5" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <dt className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
+                    Site web
+                  </dt>
+                  <dd className="mt-1 text-sm font-medium text-foreground">
+                    {details?.website ? (
+                      <a
+                        href={details.website.startsWith("http") ? details.website : `https://${details.website}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex min-h-[44px] items-center break-all text-vigla-orange underline"
+                      >
+                        {details.website}
+                      </a>
+                    ) : (
+                      "Chargement…"
+                    )}
+                  </dd>
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Secondary action buttons */}
-        <div className="mt-5 grid grid-cols-2 gap-3">
-          <a
-            href={hasPhone ? `tel:${details.phone}` : undefined}
-            aria-disabled={!hasPhone}
-            className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl px-4 text-sm font-bold transition active:scale-[0.98] ${
-              hasPhone
-                ? "bg-green-500 text-white shadow-sm"
-                : "cursor-not-allowed bg-muted text-muted-foreground"
-            }`}
-            onClick={(e) => !hasPhone && e.preventDefault()}
-          >
-            <Phone className="h-5 w-5" />
-            Appeler
-          </a>
-          <a
-            href={hasWebsite ? (details.website?.startsWith("http") ? details.website : `https://${details.website}`) : undefined}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-disabled={!hasWebsite}
-            className={`flex min-h-[52px] items-center justify-center gap-2 rounded-2xl px-4 text-sm font-bold transition active:scale-[0.98] ${
-              hasWebsite
-                ? "bg-cyan-500 text-white shadow-sm"
-                : "cursor-not-allowed bg-muted text-muted-foreground"
-            }`}
-            onClick={(e) => !hasWebsite && e.preventDefault()}
-          >
-            <Globe className="h-5 w-5" />
-            Site web
-          </a>
-        </div>
+        {(hasPhone || hasWebsite) && (
+          <div className={`mt-5 grid gap-3 ${hasPhone && hasWebsite ? "grid-cols-2" : "grid-cols-1"}`}>
+            {hasPhone && (
+              <a
+                href={`tel:${details.phone}`}
+                className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-green-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
+              >
+                <Phone className="h-5 w-5" />
+                Appeler
+              </a>
+            )}
+            {hasWebsite && (
+              <a
+                href={details.website?.startsWith("http") ? details.website : `https://${details.website}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
+              >
+                <Globe className="h-5 w-5" />
+                Site web
+              </a>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sticky primary action */}
