@@ -915,6 +915,13 @@ export function MapView() {
       {route && !navActive && (
         <>
           <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
+          {/* Invisible wide hit area so tapping the route is easy on mobile. */}
+          <Polyline
+            positions={route.coords}
+            pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+            bubblingMouseEvents={false}
+            eventHandlers={{ click: handleRouteClick }}
+          />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
           <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
@@ -929,14 +936,28 @@ export function MapView() {
             />
           )}
           {navigation.remainingCoords.length >= 2 && (
-            <Polyline
-              positions={navigation.remainingCoords}
-              pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
-            />
+            <>
+              <Polyline
+                positions={navigation.remainingCoords}
+                pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
+              />
+              <Polyline
+                positions={navigation.remainingCoords}
+                pathOptions={{ color: "#000000", weight: 26, opacity: 0, interactive: true }}
+                bubblingMouseEvents={false}
+                eventHandlers={{ click: handleRouteClick }}
+              />
+            </>
           )}
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
         </>
       )}
+      {/* Intermediate waypoints added by tapping the route (P6). */}
+      {route?.waypoints
+        ?.filter((w) => w.type !== "destination")
+        .map((w) => (
+          <Marker key={w.id} position={[w.lat, w.lon]} icon={waypointIcon()} />
+        ))}
 
 
 
