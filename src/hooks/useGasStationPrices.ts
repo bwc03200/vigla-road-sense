@@ -135,11 +135,13 @@ export function useGasStationPrices(
     }
     requestedRef.current = true;
 
+    const geomLiteral = `GEOM'POINT(${center.lng} ${center.lat})'`;
     const url =
-      `${API}?limit=100&select=id,geom,adresse,ville,gazole_prix,gazole_maj,sp95_prix,sp95_maj,e10_prix,e10_maj` +
+      `${API}?limit=${LIMIT}&select=id,geom,adresse,ville,gazole_prix,gazole_maj,sp95_prix,sp95_maj,e10_prix,e10_maj` +
       `&where=${encodeURIComponent(
-        `within_distance(geom, GEOM'POINT(${center.lng} ${center.lat})', ${RADIUS_KM}km)`,
-      )}`;
+        `within_distance(geom, ${geomLiteral}, ${RADIUS_KM}km)`,
+      )}` +
+      `&order_by=${encodeURIComponent(`distance(geom, ${geomLiteral})`)}`;
 
     let cancelled = false;
     setLoading(true);
