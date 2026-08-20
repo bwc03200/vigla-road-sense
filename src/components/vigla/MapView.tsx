@@ -549,13 +549,21 @@ export function MapView() {
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(inViewFastfoods, navActive);
 
-  // P1: selecting a restaurant → auto-zoom on the cluster, then route directly.
+  // P1: selecting a restaurant → small preview first, then full details or route.
   const mapRef = useRef<L.Map | null>(null);
   const [poiRouting, setPoiRouting] = useState(false);
+  const [poiPreview, setPoiPreview] = useState<(typeof inViewFastfoods)[number] | null>(null);
   const [poiPopup, setPoiPopup] = useState<{
     list: typeof inViewFastfoods;
     index: number;
   } | null>(null);
+  const openPoiPreview = useCallback(
+    (poi: (typeof inViewFastfoods)[number]) => {
+      console.log("🍔 [PREVIEW OPEN]", poi.name);
+      setPoiPreview(poi);
+    },
+    [],
+  );
   const openPoiPopup = useCallback(
     (poi: (typeof inViewFastfoods)[number]) => {
       const list = inViewFastfoods.length ? inViewFastfoods : [poi];
