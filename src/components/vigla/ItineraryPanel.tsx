@@ -110,6 +110,7 @@ export function ItineraryPanel() {
               distanceM={item.distanceM}
               durationS={item.durationS}
               isCurrent={i === currentIndex}
+              onDelete={removeWaypoint}
             />
           ))}
 
