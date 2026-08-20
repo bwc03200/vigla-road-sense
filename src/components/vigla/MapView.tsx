@@ -865,7 +865,7 @@ export function MapView() {
           pois={visibleFastfoods}
           zoom={viewport?.zoom ?? 13}
           dark={motoMode || mapTheme === "dark"}
-          onSelect={openPoiPopup}
+          onSelect={openPoiPreview}
         />
       )}
       {convoyMembers
