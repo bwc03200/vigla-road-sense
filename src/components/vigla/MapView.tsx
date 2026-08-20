@@ -738,26 +738,56 @@ export function MapView() {
   const [tapPoint, setTapPoint] = useState<[number, number] | null>(null);
   const addWaypointAt = useCallback(
     async (lat: number, lng: number) => {
-      if (addingWaypointRef.current) return;
+      if (addingWaypointRef.current) {
+        console.warn("⚠️ [P6] Waypoint creation already in progress — tap ignored");
+        return;
+      }
+      const current = useVigla.getState().route;
+      if (!current || current.coords.length < 2) {
+        console.error("❌ [P6] No active route — cannot add waypoint");
+        toast.error("❌ Aucun itinéraire actif");
+        return;
+      }
+      if (!useVigla.getState().position) {
+        console.error("❌ [P6] GPS position unavailable — cannot recalculate");
+        toast.error("❌ Position GPS indisponible");
+        return;
+      }
+
       addingWaypointRef.current = true;
       setTapPoint([lat, lng]);
+      const index = (current.waypoints ?? []).filter((w) => w.type !== "destination").length + 1;
+      const name = `Point ${index}`;
+      console.log(
+        `🎯 [P6] Route tap → lat=${lat.toFixed(5)}, lng=${lng.toFixed(5)}, creating "${name}"`,
+      );
       toast.info("🎯 Tap détecté sur la route", { duration: 1200 });
+
       try {
-        const res = await addWaypoint({
-          name: t("map.waypoint", { defaultValue: "Étape" }),
-          lat,
-          lng,
-          type: "waypoint",
-        });
-        if (!res) setTapPoint(null);
-      } catch {
+        const res = await addWaypoint({ name, lat, lng, type: "waypoint" });
+        if (res) {
+          const total =
+            (useVigla.getState().route?.waypoints ?? []).filter((w) => w.type !== "destination")
+              .length;
+          console.log(`✅ [P6] Waypoint added. Total intermediate waypoints: ${total}`, res);
+          toast.success(`📍 ${name} ajouté ! Total : ${total}`, {
+            description: `ETA: ${res.eta} • ${res.distance}`,
+            duration: 2500,
+          });
+          setTapPoint(null);
+        } else {
+          console.error("❌ [P6] addWaypoint returned null — route not updated");
+          setTapPoint(null);
+        }
+      } catch (err) {
+        console.error("❌ [P6] CRITICAL error while adding waypoint:", err);
         setTapPoint(null);
         toast.error("❌ Erreur création waypoint");
       } finally {
         addingWaypointRef.current = false;
       }
     },
-    [addWaypoint, t],
+    [addWaypoint],
   );
   const handleRouteClick = useCallback(
     (e: L.LeafletMouseEvent) => {
