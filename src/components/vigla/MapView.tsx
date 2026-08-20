@@ -700,23 +700,31 @@ export function MapView() {
   // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
   const { addWaypoint } = useRouteWaypoint();
   const addingWaypointRef = useRef(false);
-  const handleRouteClick = useCallback(
-    async (e: L.LeafletMouseEvent) => {
-      L.DomEvent.stopPropagation(e);
+  const addWaypointAt = useCallback(
+    async (lat: number, lng: number) => {
       if (addingWaypointRef.current) return;
       addingWaypointRef.current = true;
+      console.log("🎯 [P6] POLYLINE CLICKED:", { lat, lng, ts: new Date().toISOString() });
       try {
-        await addWaypoint({
+        const res = await addWaypoint({
           name: t("map.waypoint", { defaultValue: "Étape" }),
-          lat: e.latlng.lat,
-          lng: e.latlng.lng,
+          lat,
+          lng,
           type: "waypoint",
         });
+        console.log("📍 [P6] WAYPOINT RESULT:", res ? { eta: res.eta, distance: res.distance } : null);
       } finally {
         addingWaypointRef.current = false;
       }
     },
     [addWaypoint, t],
+  );
+  const handleRouteClick = useCallback(
+    (e: L.LeafletMouseEvent) => {
+      L.DomEvent.stopPropagation(e);
+      void addWaypointAt(e.latlng.lat, e.latlng.lng);
+    },
+    [addWaypointAt],
   );
 
   // Click-to-route on a fuel station: direct route to the pump.
