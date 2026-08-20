@@ -18,7 +18,7 @@ import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { RestaurantDetailsPopup } from "@/components/vigla/RestaurantDetailsPopup";
 import { ShowRestaurantPreview } from "@/components/vigla/ShowRestaurantPreview";
-import { AddressSearchBox } from "@/components/vigla/AddressSearchBox";
+
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
