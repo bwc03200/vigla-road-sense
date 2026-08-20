@@ -560,6 +560,13 @@ export function MapView() {
     list: typeof inViewFastfoods;
     index: number;
   } | null>(null);
+  // Turning the Restaurants layer off must also close any open POI card.
+  useEffect(() => {
+    if (!showFastfoods) {
+      setPoiPreview(null);
+      setPoiPopup(null);
+    }
+  }, [showFastfoods]);
   const openPoiPreview = useCallback(
     (poi: (typeof inViewFastfoods)[number]) => {
       console.log("🍔 [PREVIEW OPEN]", poi.name);
