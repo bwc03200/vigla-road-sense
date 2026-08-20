@@ -767,6 +767,19 @@ export function MapView() {
     [addWaypointAt],
   );
 
+  // Toast once when a route polyline becomes tappable.
+  const routeReadyRef = useRef(false);
+  useEffect(() => {
+    const hasRoute = (route?.coords?.length ?? 0) > 1;
+    if (hasRoute && !routeReadyRef.current) {
+      routeReadyRef.current = true;
+      toast.info("🔵 Itinéraire prêt — tapez la route pour ajouter une étape", { duration: 2500 });
+    } else if (!hasRoute) {
+      routeReadyRef.current = false;
+      setTapPoint(null);
+    }
+  }, [route?.coords]);
+
   // Click-to-route on a fuel station: direct route to the pump.
   const handleGasStationSelect = useCallback(
     async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
