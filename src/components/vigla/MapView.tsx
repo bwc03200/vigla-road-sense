@@ -970,6 +970,22 @@ export function MapView() {
       </div>
     )}
 
+    {poiPreview && (
+      <ShowRestaurantPreview
+        poi={poiPreview}
+        userPosition={position}
+        onDetails={() => {
+          setPoiPreview(null);
+          openPoiPopup(poiPreview);
+        }}
+        onRoute={() => {
+          setPoiPreview(null);
+          void handleFastfoodSelect(poiPreview);
+        }}
+        onClose={() => setPoiPreview(null)}
+      />
+    )}
+
     {poiPopup && (
       <RestaurantDetailsPopup
         pois={poiPopup.list}
