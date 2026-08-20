@@ -898,16 +898,18 @@ export function MapView() {
           dark={motoMode || mapTheme === "dark"}
         />
       </div>
-      <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
-        <SmartRestaurantsChip
-          pois={inViewFastfoods}
-          isLoading={fastfoodsLoading}
-          isFailing={isFailing}
-          onRetry={retryManually}
-          onSelect={openPoiPreview}
-          userPosition={position}
-        />
-      </div>
+      {showFastfoods && (
+        <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
+          <SmartRestaurantsChip
+            pois={inViewFastfoods}
+            isLoading={fastfoodsLoading}
+            isFailing={isFailing}
+            onRetry={retryManually}
+            onSelect={openPoiPreview}
+            userPosition={position}
+          />
+        </div>
+      )}
     </MapContainer>
     <div className="absolute right-3 top-[8.5rem] z-[700]">
       <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
