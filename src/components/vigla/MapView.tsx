@@ -1015,6 +1015,14 @@ export function MapView() {
           <RouteTapCatcher coords={navigation.remainingCoords} onTapRoute={addWaypointAt} />
         </>
       )}
+      {/* Immediate black dot feedback on tap (P6). */}
+      {tapPoint && (
+        <CircleMarker
+          center={tapPoint}
+          radius={8}
+          pathOptions={{ color: "#000000", fillColor: "#000000", weight: 2, opacity: 1, fillOpacity: 0.8 }}
+        />
+      )}
       {/* Intermediate waypoints added by tapping the route (P6). */}
       {route?.waypoints
         ?.filter((w) => w.type !== "destination")
