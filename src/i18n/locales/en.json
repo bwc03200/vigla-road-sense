@@ -599,6 +599,12 @@
     "filter": "Traffic lights",
     "ahead": "Traffic light in {{distance}}"
   },
+  "fastfood": {
+    "preview": {
+      "details": "See details",
+      "route": "Go there"
+    }
+  },
   "distances": {
     "km": "km"
   }

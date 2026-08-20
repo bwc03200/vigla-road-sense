@@ -16,6 +16,7 @@ import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
 import { RestaurantDetailsPopup } from "@/components/vigla/RestaurantDetailsPopup";
+import { ShowRestaurantPreview } from "@/components/vigla/ShowRestaurantPreview";
 import { AddressSearchBox } from "@/components/vigla/AddressSearchBox";
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
@@ -548,13 +549,21 @@ export function MapView() {
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(inViewFastfoods, navActive);
 
-  // P1: selecting a restaurant → auto-zoom on the cluster, then route directly.
+  // P1: selecting a restaurant → small preview first, then full details or route.
   const mapRef = useRef<L.Map | null>(null);
   const [poiRouting, setPoiRouting] = useState(false);
+  const [poiPreview, setPoiPreview] = useState<(typeof inViewFastfoods)[number] | null>(null);
   const [poiPopup, setPoiPopup] = useState<{
     list: typeof inViewFastfoods;
     index: number;
   } | null>(null);
+  const openPoiPreview = useCallback(
+    (poi: (typeof inViewFastfoods)[number]) => {
+      console.log("🍔 [PREVIEW OPEN]", poi.name);
+      setPoiPreview(poi);
+    },
+    [],
+  );
   const openPoiPopup = useCallback(
     (poi: (typeof inViewFastfoods)[number]) => {
       const list = inViewFastfoods.length ? inViewFastfoods : [poi];
@@ -856,7 +865,7 @@ export function MapView() {
           pois={visibleFastfoods}
           zoom={viewport?.zoom ?? 13}
           dark={motoMode || mapTheme === "dark"}
-          onSelect={openPoiPopup}
+          onSelect={openPoiPreview}
         />
       )}
       {convoyMembers
@@ -890,7 +899,7 @@ export function MapView() {
           isLoading={fastfoodsLoading}
           isFailing={isFailing}
           onRetry={retryManually}
-          onSelect={openPoiPopup}
+          onSelect={openPoiPreview}
           userPosition={position}
         />
       </div>
@@ -959,6 +968,22 @@ export function MapView() {
           {t("common.loading")}
         </div>
       </div>
+    )}
+
+    {poiPreview && (
+      <ShowRestaurantPreview
+        poi={poiPreview}
+        userPosition={position}
+        onDetails={() => {
+          setPoiPreview(null);
+          openPoiPopup(poiPreview);
+        }}
+        onRoute={() => {
+          setPoiPreview(null);
+          void handleFastfoodSelect(poiPreview);
+        }}
+        onClose={() => setPoiPreview(null)}
+      />
     )}
 
     {poiPopup && (
