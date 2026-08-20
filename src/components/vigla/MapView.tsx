@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, useMap, useMapEvents } from "react-leaflet";
@@ -1057,8 +1057,22 @@ export function MapView() {
       {route?.waypoints
         ?.filter((w) => w.type !== "destination")
         .map((w) => (
-          <Marker key={w.id} position={[w.lat, w.lon]} icon={waypointIcon()} />
+          <Fragment key={w.id}>
+            <CircleMarker
+              center={[w.lat, w.lon]}
+              radius={8}
+              pathOptions={{
+                color: "#000000",
+                fillColor: "#000000",
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.5,
+              }}
+            />
+            <Marker position={[w.lat, w.lon]} icon={waypointIcon()} />
+          </Fragment>
         ))}
+
 
 
 
