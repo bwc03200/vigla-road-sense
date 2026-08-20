@@ -862,7 +862,9 @@ export function MapView() {
       ))}
 
       {showOfficialRadars && <OfficialRadarCluster radars={nearbyOfficial} />}
-      <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
+      {showSignals && (
+        <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
+      )}
       {showFastfoods && visibleFastfoods.length > 0 && (
         <FastfoodCluster
           pois={visibleFastfoods}
