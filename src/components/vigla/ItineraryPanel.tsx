@@ -1,8 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import { WaypointRow } from "./WaypointRow";
+import { StepRow } from "./StepRow";
+
 
 function formatDistance(m: number) {
   if (!Number.isFinite(m) || m < 0) return "—";
