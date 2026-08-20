@@ -15,6 +15,8 @@ import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
 import { useTrafficSignals, MIN_ZOOM_FOR_SIGNALS } from "@/hooks/useTrafficSignals";
 import { useGasStations, MIN_ZOOM_FOR_GAS_STATIONS } from "@/hooks/useGasStations";
 import { GasStationMarkers } from "@/components/vigla/GasStationMarkers";
+import { GasStationPricePopup } from "@/components/vigla/GasStationPricePopup";
+import { useGasStationPrices } from "@/hooks/useGasStationPrices";
 import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
@@ -567,6 +569,12 @@ export function MapView() {
         g.longitude >= gasBBox.west,
     );
   }, [gasStations, gasBBox, showGasStations]);
+  // P11-E: official fuel prices + selected station popup.
+  const [gasPopup, setGasPopup] = useState<GasStation | null>(null);
+  const { findPrice } = useGasStationPrices(
+    position ? { lat: position.lat, lng: position.lng } : null,
+    showGasStations,
+  );
 
   const showFastfoods = useVigla((s) => s.showFastfoods);
   const showOfficialRadars = useVigla((s) => s.showOfficialRadars);
@@ -864,6 +872,12 @@ export function MapView() {
     [position, t, hazards, setRoute, setNavigation],
   );
 
+  // P11-E: tapping a fuel marker opens the price popup instead of routing.
+  const openGasPopup = useCallback((station: GasStation) => {
+    console.log("⛽ [P11-E] station sélectionnée", station.name ?? station.id);
+    setGasPopup(station);
+  }, []);
+
 
 
   const cityName = useCityName(position?.lat, position?.lng);
@@ -1082,7 +1096,7 @@ export function MapView() {
       ))}
 
       {showGasStations && visibleGasStations.length > 0 && (
-        <GasStationMarkers stations={visibleGasStations} onSelect={handleGasStationSelect} />
+        <GasStationMarkers stations={visibleGasStations} onSelect={openGasPopup} />
       )}
       {showOfficialRadars && <OfficialRadarCluster radars={nearbyOfficial} />}
       {showSignals && (
@@ -1215,6 +1229,18 @@ export function MapView() {
       />
     )}
 
+    {gasPopup && (
+      <GasStationPricePopup
+        station={gasPopup}
+        price={findPrice(gasPopup.latitude, gasPopup.longitude)}
+        userPosition={position ? { lat: position.lat, lng: position.lng } : null}
+        onRoute={(s) => {
+          setGasPopup(null);
+          void handleGasStationSelect(s);
+        }}
+        onClose={() => setGasPopup(null)}
+      />
+    )}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>
