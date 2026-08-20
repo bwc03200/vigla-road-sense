@@ -560,6 +560,13 @@ export function MapView() {
     list: typeof inViewFastfoods;
     index: number;
   } | null>(null);
+  // Turning the Restaurants layer off must also close any open POI card.
+  useEffect(() => {
+    if (!showFastfoods) {
+      setPoiPreview(null);
+      setPoiPopup(null);
+    }
+  }, [showFastfoods]);
   const openPoiPreview = useCallback(
     (poi: (typeof inViewFastfoods)[number]) => {
       console.log("🍔 [PREVIEW OPEN]", poi.name);
@@ -862,7 +869,9 @@ export function MapView() {
       ))}
 
       {showOfficialRadars && <OfficialRadarCluster radars={nearbyOfficial} />}
-      <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
+      {showSignals && (
+        <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
+      )}
       {showFastfoods && visibleFastfoods.length > 0 && (
         <FastfoodCluster
           pois={visibleFastfoods}
@@ -896,16 +905,18 @@ export function MapView() {
           dark={motoMode || mapTheme === "dark"}
         />
       </div>
-      <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
-        <SmartRestaurantsChip
-          pois={inViewFastfoods}
-          isLoading={fastfoodsLoading}
-          isFailing={isFailing}
-          onRetry={retryManually}
-          onSelect={openPoiPreview}
-          userPosition={position}
-        />
-      </div>
+      {showFastfoods && (
+        <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
+          <SmartRestaurantsChip
+            pois={inViewFastfoods}
+            isLoading={fastfoodsLoading}
+            isFailing={isFailing}
+            onRetry={retryManually}
+            onSelect={openPoiPreview}
+            userPosition={position}
+          />
+        </div>
+      )}
     </MapContainer>
     <div className="absolute right-3 top-[8.5rem] z-[700]">
       <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
