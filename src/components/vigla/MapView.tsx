@@ -26,6 +26,7 @@ import { useCityName } from "@/hooks/useCityName";
 import { useProximityAlerts } from "@/hooks/useProximityAlerts";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
 
@@ -55,6 +56,16 @@ function destinationIcon() {
     html: `<div style="width:32px;height:32px;border-radius:50%;background:#0F172A;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(15,23,42,.35),0 0 0 3px #ffffff;color:white;font-size:16px;">📍</div>`,
     iconSize: [32, 32],
     iconAnchor: [16, 32],
+  });
+}
+
+/** Small black dot marking an intermediate waypoint added by tapping the route. */
+function waypointIcon() {
+  return L.divIcon({
+    className: "vigla-waypoint-icon",
+    html: `<div style="width:14px;height:14px;border-radius:50%;background:#0F172A;box-shadow:0 2px 6px rgba(15,23,42,.4),0 0 0 3px #ffffff;"></div>`,
+    iconSize: [14, 14],
+    iconAnchor: [7, 7],
   });
 }
 

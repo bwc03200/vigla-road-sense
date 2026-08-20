@@ -8,7 +8,7 @@ export interface AddWaypointPayload {
   name: string;
   lat: number;
   lng: number;
-  type: "restaurant" | "hazard";
+  type: "restaurant" | "hazard" | "waypoint";
   brand?: string;
 }
 
