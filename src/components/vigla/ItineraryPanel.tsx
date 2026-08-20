@@ -25,6 +25,7 @@ export function ItineraryPanel() {
   const route = useVigla((s) => s.route);
   const navigation = useVigla((s) => s.navigation);
   const currentStepRef = useRef<HTMLDivElement | null>(null);
+  const { removeWaypoint } = useRouteWaypoint();
 
   const items = useMemo(() => {
     if (!route || route.waypoints.length === 0) return [];
