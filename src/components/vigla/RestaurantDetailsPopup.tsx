@@ -331,32 +331,18 @@ export function RestaurantDetailsPopup({
         </div>
 
         {/* Secondary action buttons */}
-        {(hasPhone || hasWebsite) && (
-          <div className={`mt-5 grid gap-3 ${hasPhone && hasWebsite ? "grid-cols-2" : "grid-cols-1"}`}>
-            {hasPhone && (
-              <button
-                type="button"
-                onClick={() => {
-                  window.location.href = `tel:${phoneNumber}`;
-                }}
-                className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-green-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
-              >
-                <Phone className="h-5 w-5" />
-                Appeler
-              </button>
-            )}
-            {hasWebsite && (
-              <button
-                type="button"
-                onClick={() => {
-                  window.open(websiteUrl, "_blank", "noopener,noreferrer");
-                }}
-                className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
-              >
-                <Globe className="h-5 w-5" />
-                Site web
-              </button>
-            )}
+        {hasWebsite && (
+          <div className="mt-5 grid grid-cols-1 gap-3">
+            <button
+              type="button"
+              onClick={() => {
+                window.open(websiteUrl, "_blank", "noopener,noreferrer");
+              }}
+              className="flex min-h-[52px] items-center justify-center gap-2 rounded-2xl bg-cyan-500 px-4 text-sm font-bold text-white shadow-sm transition active:scale-[0.98]"
+            >
+              <Globe className="h-5 w-5" />
+              Site web
+            </button>
           </div>
         )}
       </div>
