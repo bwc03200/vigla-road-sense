@@ -17,6 +17,7 @@ import { useGasStations, MIN_ZOOM_FOR_GAS_STATIONS } from "@/hooks/useGasStation
 import { GasStationMarkers } from "@/components/vigla/GasStationMarkers";
 import { GasStationPricePopup } from "@/components/vigla/GasStationPricePopup";
 import { useGasStationPrices } from "@/hooks/useGasStationPrices";
+import type { GasStation } from "@/types/vigla";
 import { useFastfoods, MIN_ZOOM_FOR_FASTFOODS } from "@/hooks/useFastfoods";
 import { FastfoodCluster } from "@/components/vigla/FastfoodCluster";
 import { SmartRestaurantsChip } from "@/components/vigla/SmartRestaurantsChip";
