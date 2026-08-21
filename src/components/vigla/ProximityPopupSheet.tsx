@@ -44,7 +44,7 @@ export function ProximityPopupSheet({
       name: poi.name,
       lat: poi.latitude,
       lng: poi.longitude,
-      type: poi.kind === "gas_station" ? "gas_station" : "restaurant",
+      type: poi.kind === "gas_station" ? "waypoint" : "restaurant",
       brand: poi.brand,
     });
     console.log(`📍 [POI ADDED] ${poi.name} added to route`);

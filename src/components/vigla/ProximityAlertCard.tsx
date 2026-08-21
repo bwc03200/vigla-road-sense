@@ -55,7 +55,7 @@ export function ProximityAlertCard({ alert, onDismiss, moto = false }: Props) {
       } ${moto ? "bottom-[220px]" : "bottom-40"}`}
     >
       <div className="flex items-start gap-3">
-        <span className="text-2xl leading-none">{BRAND_ICONS[poi.brand] ?? "🍔"}</span>
+        <span className="text-2xl leading-none">{BRAND_ICONS[poi.brand ?? "other"] ?? "🍔"}</span>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-bold text-foreground">{poi.name}</div>
           <div className="text-xs text-muted-foreground">
