@@ -631,8 +631,20 @@ export function MapView() {
   const navActive = !!navigation && !navigation.arrived;
 
   // Smart proximity alerts: POIs entering the 300 m ring during active nav.
+  const proximityPois = useMemo<ProximityPOI[]>(
+    () =>
+      inViewFastfoods.map((f) => ({
+        id: f.id,
+        latitude: f.latitude,
+        longitude: f.longitude,
+        name: f.name,
+        brand: f.brand,
+        kind: "restaurant" as const,
+      })),
+    [inViewFastfoods],
+  );
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
-    useProximityAlerts(inViewFastfoods, navActive);
+    useProximityAlerts(proximityPois, navActive);
 
   // P1: selecting a restaurant → small preview first, then full details or route.
   const mapRef = useRef<L.Map | null>(null);
