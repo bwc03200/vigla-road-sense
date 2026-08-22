@@ -355,41 +355,6 @@ function TapToDestination({ onPick }: { onPick: (lat: number, lng: number) => vo
   return null;
 }
 
-/**
- * P6 fallback: some browsers don't hit-test fully transparent SVG strokes, so a
- * tap "on" the route can reach the map instead of the polyline. This catches
- * map clicks that land within ~28px of the route and treats them as route taps.
- */
-function RouteTapCatcher({
-  coords,
-  onTapRoute,
-}: {
-  coords: [number, number][];
-  onTapRoute: (lat: number, lng: number) => void;
-}) {
-  const map = useMap();
-  useMapEvents({
-    click: (e) => {
-      if (coords.length < 2) return;
-      const p = map.latLngToContainerPoint(e.latlng);
-      let best = Infinity;
-      let bestLatLng: [number, number] | null = null;
-      for (const c of coords) {
-        const q = map.latLngToContainerPoint({ lat: c[0], lng: c[1] });
-        const d = Math.hypot(q.x - p.x, q.y - p.y);
-        if (d < best) {
-          best = d;
-          bestLatLng = c;
-        }
-      }
-      if (best <= 28 && bestLatLng) {
-        onTapRoute(e.latlng.lat, e.latlng.lng);
-      }
-    },
-  });
-  return null;
-}
-
 function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
   const map = useMap();
   useEffect(() => {
@@ -822,13 +787,19 @@ export function MapView() {
     },
     [addWaypoint],
   );
-  const handleRouteClick = useCallback(
-    (e: L.LeafletMouseEvent) => {
-      L.DomEvent.stopPropagation(e);
-      void addWaypointAt(e.latlng.lat, e.latlng.lng);
-    },
-    [addWaypointAt],
-  );
+  void addWaypointAt;
+
+  // P6 REWRITE: register the active polyline with the centralized click handler.
+  const { registerPolyline, unregisterPolyline } = useMapInteraction();
+  const activeCoords = navActive
+    ? navigation?.remainingCoords ?? null
+    : route?.coords ?? null;
+  useEffect(() => {
+    if (activeCoords && activeCoords.length > 1) {
+      registerPolyline(activeCoords);
+      return () => unregisterPolyline();
+    }
+  }, [activeCoords, registerPolyline, unregisterPolyline]);
 
   // Toast once when a route polyline becomes tappable.
   const routeReadyRef = useRef(false);
@@ -992,6 +963,7 @@ export function MapView() {
       />
       <InvalidateOnResize />
       <MapRefCapture mapRef={mapRef} />
+      <MapInteractionBridge />
       {position && !route && !navActive && (
         <FollowUser
           lat={position.lat}
