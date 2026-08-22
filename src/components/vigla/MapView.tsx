@@ -26,7 +26,8 @@ import { ShowRestaurantPreview } from "@/components/vigla/ShowRestaurantPreview"
 
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
-import { useProximityAlerts } from "@/hooks/useProximityAlerts";
+import { useProximityAlerts, type ProximityPOI } from "@/hooks/useProximityAlerts";
+import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
