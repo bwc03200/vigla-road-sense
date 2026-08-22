@@ -26,7 +26,8 @@ import { ShowRestaurantPreview } from "@/components/vigla/ShowRestaurantPreview"
 
 import { CityDisplay } from "@/components/vigla/CityDisplay";
 import { useCityName } from "@/hooks/useCityName";
-import { useProximityAlerts } from "@/hooks/useProximityAlerts";
+import { useProximityAlerts, type ProximityPOI } from "@/hooks/useProximityAlerts";
+import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
@@ -50,6 +51,17 @@ function MapRefCapture({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null
       mapRef.current = null;
     };
   }, [map, mapRef]);
+  return null;
+}
+
+/** P6: hands the Leaflet map instance to the centralized click handler. */
+function MapInteractionBridge() {
+  const map = useMap();
+  const { setMapRef } = useMapInteraction();
+  useEffect(() => {
+    setMapRef(map as never);
+    return () => setMapRef(null);
+  }, [map, setMapRef]);
   return null;
 }
 
@@ -343,41 +355,6 @@ function TapToDestination({ onPick }: { onPick: (lat: number, lng: number) => vo
   return null;
 }
 
-/**
- * P6 fallback: some browsers don't hit-test fully transparent SVG strokes, so a
- * tap "on" the route can reach the map instead of the polyline. This catches
- * map clicks that land within ~28px of the route and treats them as route taps.
- */
-function RouteTapCatcher({
-  coords,
-  onTapRoute,
-}: {
-  coords: [number, number][];
-  onTapRoute: (lat: number, lng: number) => void;
-}) {
-  const map = useMap();
-  useMapEvents({
-    click: (e) => {
-      if (coords.length < 2) return;
-      const p = map.latLngToContainerPoint(e.latlng);
-      let best = Infinity;
-      let bestLatLng: [number, number] | null = null;
-      for (const c of coords) {
-        const q = map.latLngToContainerPoint({ lat: c[0], lng: c[1] });
-        const d = Math.hypot(q.x - p.x, q.y - p.y);
-        if (d < best) {
-          best = d;
-          bestLatLng = c;
-        }
-      }
-      if (best <= 28 && bestLatLng) {
-        onTapRoute(e.latlng.lat, e.latlng.lng);
-      }
-    },
-  });
-  return null;
-}
-
 function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
   const map = useMap();
   useEffect(() => {
@@ -631,8 +608,20 @@ export function MapView() {
   const navActive = !!navigation && !navigation.arrived;
 
   // Smart proximity alerts: POIs entering the 300 m ring during active nav.
+  const proximityPois = useMemo<ProximityPOI[]>(
+    () =>
+      inViewFastfoods.map((f) => ({
+        id: f.id,
+        latitude: f.latitude,
+        longitude: f.longitude,
+        name: f.name,
+        brand: f.brand,
+        kind: "restaurant" as const,
+      })),
+    [inViewFastfoods],
+  );
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
-    useProximityAlerts(inViewFastfoods, navActive);
+    useProximityAlerts(proximityPois, navActive);
 
   // P1: selecting a restaurant → small preview first, then full details or route.
   const mapRef = useRef<L.Map | null>(null);
@@ -798,13 +787,19 @@ export function MapView() {
     },
     [addWaypoint],
   );
-  const handleRouteClick = useCallback(
-    (e: L.LeafletMouseEvent) => {
-      L.DomEvent.stopPropagation(e);
-      void addWaypointAt(e.latlng.lat, e.latlng.lng);
-    },
-    [addWaypointAt],
-  );
+  void addWaypointAt;
+
+  // P6 REWRITE: register the active polyline with the centralized click handler.
+  const { registerPolyline, unregisterPolyline } = useMapInteraction();
+  const activeCoords = navActive
+    ? navigation?.remainingCoords ?? null
+    : route?.coords ?? null;
+  useEffect(() => {
+    if (activeCoords && activeCoords.length > 1) {
+      registerPolyline(activeCoords);
+      return () => unregisterPolyline();
+    }
+  }, [activeCoords, registerPolyline, unregisterPolyline]);
 
   // Toast once when a route polyline becomes tappable.
   const routeReadyRef = useRef(false);
@@ -968,6 +963,7 @@ export function MapView() {
       />
       <InvalidateOnResize />
       <MapRefCapture mapRef={mapRef} />
+      <MapInteractionBridge />
       {position && !route && !navActive && (
         <FollowUser
           lat={position.lat}
@@ -1021,17 +1017,9 @@ export function MapView() {
       {route && !navActive && (
         <>
           <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
-          {/* Invisible wide hit area so tapping the route is easy on mobile. */}
-          <Polyline
-            positions={route.coords}
-            pathOptions={{ color: "#000000", weight: 26, opacity: 0.01, interactive: true }}
-            bubblingMouseEvents={false}
-            eventHandlers={{ click: handleRouteClick }}
-          />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
           <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
-          <RouteTapCatcher coords={route.coords} onTapRoute={addWaypointAt} />
         </>
       )}
       {navigation && navActive && route && (
@@ -1043,21 +1031,12 @@ export function MapView() {
             />
           )}
           {navigation.remainingCoords.length >= 2 && (
-            <>
-              <Polyline
-                positions={navigation.remainingCoords}
-                pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
-              />
-              <Polyline
-                positions={navigation.remainingCoords}
-                pathOptions={{ color: "#000000", weight: 26, opacity: 0.01, interactive: true }}
-                bubblingMouseEvents={false}
-                eventHandlers={{ click: handleRouteClick }}
-              />
-            </>
+            <Polyline
+              positions={navigation.remainingCoords}
+              pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
+            />
           )}
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
-          <RouteTapCatcher coords={navigation.remainingCoords} onTapRoute={addWaypointAt} />
         </>
       )}
       {/* Immediate black dot feedback on tap (P6). */}
