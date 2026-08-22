@@ -54,6 +54,17 @@ function MapRefCapture({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null
   return null;
 }
 
+/** P6: hands the Leaflet map instance to the centralized click handler. */
+function MapInteractionBridge() {
+  const map = useMap();
+  const { setMapRef } = useMapInteraction();
+  useEffect(() => {
+    setMapRef(map as never);
+    return () => setMapRef(null);
+  }, [map, setMapRef]);
+  return null;
+}
+
 function destinationIcon() {
   return L.divIcon({
     className: "vigla-destination-icon",
