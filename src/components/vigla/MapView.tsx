@@ -657,47 +657,35 @@ export function MapView() {
     },
     [inViewFastfoods],
   );
-  const handleFastfoodSelect = useCallback(
-
-    async (poi: (typeof inViewFastfoods)[number]) => {
-      const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
-      const lats = cluster.map((r) => r.latitude);
-      const lons = cluster.map((r) => r.longitude);
-      const bounds: [[number, number], [number, number]] = [
-        [Math.min(...lats), Math.min(...lons)],
-        [Math.max(...lats), Math.max(...lons)],
-      ];
-      mapRef.current?.fitBounds(bounds, {
-        padding: [50, 50],
-        maxZoom: 16,
-        animate: true,
-        duration: 0.5,
-      });
-      console.log("🎯 [POI TAPPED]", poi.name);
-
-      if (!position) {
+  /**
+   * BLOCKER FIX — single source of truth for "tap POI → route + navigation".
+   * Fetches OSRM, writes RouteState AND NavigationState so the blue nav
+   * banner appears immediately.
+   */
+  const startRouteToPoi = useCallback(
+    async (lat: number, lng: number, label: string) => {
+      const from = useVigla.getState().position;
+      if (!from) {
+        console.error("🔴 [ROUTE FAILED] no GPS position");
         toast.error(t("hazard.report.gpsUnavailable"));
-        return;
+        return null;
       }
-      setPoiRouting(true);
       try {
-        const result = await fetchOsrmRoute(
-          position.lat,
-          position.lng,
-          poi.latitude,
-          poi.longitude,
+        const result = await fetchOsrmRoute(from.lat, from.lng, lat, lng);
+        console.log(
+          `🟢 [OSRM OK] ${label} — ${(result.distanceM / 1000).toFixed(1)}km / ${Math.round(result.durationS / 60)}min / ${result.coords.length} pts`,
         );
         const state = buildRouteState(
-          { lat: poi.latitude, lng: poi.longitude, label: poi.name },
+          { lat, lng, label },
           result,
-          hazards,
+          useVigla.getState().hazards,
           [
             {
               id: `destination-${Date.now()}`,
               type: "destination",
-              name: poi.name,
-              lat: poi.latitude,
-              lon: poi.longitude,
+              name: label,
+              lat,
+              lon: lng,
             },
           ],
         );
@@ -718,16 +706,51 @@ export function MapView() {
           startedAt: new Date().toISOString(),
           alertsReceived: 0,
         });
-        console.log("🚀 [ROUTE STARTED]", poi.name);
-        setPoiPopup(null);
-      } catch {
+        console.log(
+          `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
+        );
+        console.log("🟢 [NAV BANNER] navigation active — banner visible");
+        toast.success(`🚀 ${label}`, {
+          description: `${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
+        });
+        return state;
+      } catch (err) {
+        console.error("🔴 [ROUTE FAILED]", err);
         toast.error(t("route.serviceUnavailable"));
+        return null;
+      }
+    },
+    [t, setRoute, setNavigation],
+  );
+
+  const handleFastfoodSelect = useCallback(
+    async (poi: (typeof inViewFastfoods)[number]) => {
+      const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
+      const lats = cluster.map((r) => r.latitude);
+      const lons = cluster.map((r) => r.longitude);
+      const bounds: [[number, number], [number, number]] = [
+        [Math.min(...lats), Math.min(...lons)],
+        [Math.max(...lats), Math.max(...lons)],
+      ];
+      mapRef.current?.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 16,
+        animate: true,
+        duration: 0.5,
+      });
+      console.log("🎯 [POI TAPPED]", poi.name);
+
+      setPoiRouting(true);
+      try {
+        const state = await startRouteToPoi(poi.latitude, poi.longitude, poi.name);
+        if (state) setPoiPopup(null);
       } finally {
         setPoiRouting(false);
       }
     },
-    [inViewFastfoods, position, t, hazards, setRoute, setNavigation],
+    [inViewFastfoods, startRouteToPoi],
   );
+
 
   // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
   const { addWaypoint } = useRouteWaypoint();
