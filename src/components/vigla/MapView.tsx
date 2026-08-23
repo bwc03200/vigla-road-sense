@@ -30,6 +30,7 @@ import { useProximityAlerts, type ProximityPOI } from "@/hooks/useProximityAlert
 import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
+import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
