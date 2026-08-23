@@ -30,6 +30,7 @@ import { useProximityAlerts, type ProximityPOI } from "@/hooks/useProximityAlert
 import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
+import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
@@ -657,47 +658,35 @@ export function MapView() {
     },
     [inViewFastfoods],
   );
-  const handleFastfoodSelect = useCallback(
-
-    async (poi: (typeof inViewFastfoods)[number]) => {
-      const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
-      const lats = cluster.map((r) => r.latitude);
-      const lons = cluster.map((r) => r.longitude);
-      const bounds: [[number, number], [number, number]] = [
-        [Math.min(...lats), Math.min(...lons)],
-        [Math.max(...lats), Math.max(...lons)],
-      ];
-      mapRef.current?.fitBounds(bounds, {
-        padding: [50, 50],
-        maxZoom: 16,
-        animate: true,
-        duration: 0.5,
-      });
-      console.log("🎯 [POI TAPPED]", poi.name);
-
-      if (!position) {
+  /**
+   * BLOCKER FIX — single source of truth for "tap POI → route + navigation".
+   * Fetches OSRM, writes RouteState AND NavigationState so the blue nav
+   * banner appears immediately.
+   */
+  const startRouteToPoi = useCallback(
+    async (lat: number, lng: number, label: string) => {
+      const from = useVigla.getState().position;
+      if (!from) {
+        console.error("🔴 [ROUTE FAILED] no GPS position");
         toast.error(t("hazard.report.gpsUnavailable"));
-        return;
+        return null;
       }
-      setPoiRouting(true);
       try {
-        const result = await fetchOsrmRoute(
-          position.lat,
-          position.lng,
-          poi.latitude,
-          poi.longitude,
+        const result = await fetchOsrmRoute(from.lat, from.lng, lat, lng);
+        console.log(
+          `🟢 [OSRM OK] ${label} — ${(result.distanceM / 1000).toFixed(1)}km / ${Math.round(result.durationS / 60)}min / ${result.coords.length} pts`,
         );
         const state = buildRouteState(
-          { lat: poi.latitude, lng: poi.longitude, label: poi.name },
+          { lat, lng, label },
           result,
-          hazards,
+          useVigla.getState().hazards,
           [
             {
               id: `destination-${Date.now()}`,
               type: "destination",
-              name: poi.name,
-              lat: poi.latitude,
-              lon: poi.longitude,
+              name: label,
+              lat,
+              lon: lng,
             },
           ],
         );
@@ -718,16 +707,51 @@ export function MapView() {
           startedAt: new Date().toISOString(),
           alertsReceived: 0,
         });
-        console.log("🚀 [ROUTE STARTED]", poi.name);
-        setPoiPopup(null);
-      } catch {
+        console.log(
+          `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
+        );
+        console.log("🟢 [NAV BANNER] navigation active — banner visible");
+        toast.success(`🚀 ${label}`, {
+          description: `${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
+        });
+        return state;
+      } catch (err) {
+        console.error("🔴 [ROUTE FAILED]", err);
         toast.error(t("route.serviceUnavailable"));
+        return null;
+      }
+    },
+    [t, setRoute, setNavigation],
+  );
+
+  const handleFastfoodSelect = useCallback(
+    async (poi: (typeof inViewFastfoods)[number]) => {
+      const cluster = inViewFastfoods.length ? inViewFastfoods : [poi];
+      const lats = cluster.map((r) => r.latitude);
+      const lons = cluster.map((r) => r.longitude);
+      const bounds: [[number, number], [number, number]] = [
+        [Math.min(...lats), Math.min(...lons)],
+        [Math.max(...lats), Math.max(...lons)],
+      ];
+      mapRef.current?.fitBounds(bounds, {
+        padding: [50, 50],
+        maxZoom: 16,
+        animate: true,
+        duration: 0.5,
+      });
+      console.log("🎯 [POI TAPPED]", poi.name);
+
+      setPoiRouting(true);
+      try {
+        const state = await startRouteToPoi(poi.latitude, poi.longitude, poi.name);
+        if (state) setPoiPopup(null);
       } finally {
         setPoiRouting(false);
       }
     },
-    [inViewFastfoods, position, t, hazards, setRoute, setNavigation],
+    [inViewFastfoods, startRouteToPoi],
   );
+
 
   // P6: tap anywhere on the route polyline → add an intermediate waypoint there.
   const { addWaypoint } = useRouteWaypoint();
@@ -817,56 +841,13 @@ export function MapView() {
   // Click-to-route on a fuel station: direct route to the pump.
   const handleGasStationSelect = useCallback(
     async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
-      if (!position) {
-        toast.error(t("hazard.report.gpsUnavailable"));
-        return;
-      }
       const label = station.name ?? t("layers.gasStations");
-      try {
-        const result = await fetchOsrmRoute(
-          position.lat,
-          position.lng,
-          station.latitude,
-          station.longitude,
-        );
-        const state = buildRouteState(
-          { lat: station.latitude, lng: station.longitude, label },
-          result,
-          hazards,
-          [
-            {
-              id: `destination-${Date.now()}`,
-              type: "destination",
-              name: label,
-              lat: station.latitude,
-              lon: station.longitude,
-            },
-          ],
-        );
-        setRoute(state);
-        setNavigation({
-          routeCoords: state.coords,
-          remainingCoords: state.coords,
-          consumedCoords: [],
-          steps: state.steps,
-          currentStepIndex: 0,
-          distanceRemainingM: state.distanceM,
-          durationRemainingS: state.durationS,
-          distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
-          offRouteM: 0,
-          offRouteSince: null,
-          recalculating: false,
-          arrived: false,
-          startedAt: new Date().toISOString(),
-          alertsReceived: 0,
-        });
-        toast.success(label);
-      } catch {
-        toast.error(t("route.serviceUnavailable"));
-      }
+      console.log("🎯 [POI TAPPED]", label);
+      await startRouteToPoi(station.latitude, station.longitude, label);
     },
-    [position, t, hazards, setRoute, setNavigation],
+    [t, startRouteToPoi],
   );
+
 
   // P11-E: tapping a fuel marker opens the price popup instead of routing.
   const openGasPopup = useCallback((station: GasStation) => {
@@ -1221,6 +1202,7 @@ export function MapView() {
         onClose={() => setGasPopup(null)}
       />
     )}
+    {navActive && <NavigationBannerBlue />}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>
