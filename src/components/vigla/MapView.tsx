@@ -1202,6 +1202,7 @@ export function MapView() {
         onClose={() => setGasPopup(null)}
       />
     )}
+    {navActive && <NavigationBannerBlue />}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>
