@@ -840,56 +840,13 @@ export function MapView() {
   // Click-to-route on a fuel station: direct route to the pump.
   const handleGasStationSelect = useCallback(
     async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
-      if (!position) {
-        toast.error(t("hazard.report.gpsUnavailable"));
-        return;
-      }
       const label = station.name ?? t("layers.gasStations");
-      try {
-        const result = await fetchOsrmRoute(
-          position.lat,
-          position.lng,
-          station.latitude,
-          station.longitude,
-        );
-        const state = buildRouteState(
-          { lat: station.latitude, lng: station.longitude, label },
-          result,
-          hazards,
-          [
-            {
-              id: `destination-${Date.now()}`,
-              type: "destination",
-              name: label,
-              lat: station.latitude,
-              lon: station.longitude,
-            },
-          ],
-        );
-        setRoute(state);
-        setNavigation({
-          routeCoords: state.coords,
-          remainingCoords: state.coords,
-          consumedCoords: [],
-          steps: state.steps,
-          currentStepIndex: 0,
-          distanceRemainingM: state.distanceM,
-          durationRemainingS: state.durationS,
-          distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
-          offRouteM: 0,
-          offRouteSince: null,
-          recalculating: false,
-          arrived: false,
-          startedAt: new Date().toISOString(),
-          alertsReceived: 0,
-        });
-        toast.success(label);
-      } catch {
-        toast.error(t("route.serviceUnavailable"));
-      }
+      console.log("🎯 [POI TAPPED]", label);
+      await startRouteToPoi(station.latitude, station.longitude, label);
     },
-    [position, t, hazards, setRoute, setNavigation],
+    [t, startRouteToPoi],
   );
+
 
   // P11-E: tapping a fuel marker opens the price popup instead of routing.
   const openGasPopup = useCallback((station: GasStation) => {
