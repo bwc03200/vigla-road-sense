@@ -1,3 +1,4 @@
+import { trackPoiFetch } from "@/lib/poi-timing";
 import type { TrafficSignal } from "@/types/vigla";
 import { logError, logEvent } from "@/lib/logger";
 import { getTrafficSignals } from "@/lib/traffic-signals.functions";
@@ -65,7 +66,7 @@ export async function fetchTrafficSignals(
   try {
     // Routed through a server function: direct browser calls to Overpass are
     // blocked from the app origin (`TypeError: Failed to fetch`).
-    const res = await getTrafficSignals({ data: bbox });
+    const res = await trackPoiFetch("FEUX", () => getTrafficSignals({ data: bbox }));
     if (!res.ok) throw new Error(res.error);
     const signals: TrafficSignal[] = res.signals;
     lastBBox = bbox;

@@ -1,3 +1,4 @@
+import { trackPoiFetch } from "@/lib/poi-timing";
 import { logError, logEvent } from "@/lib/logger";
 import { getGasStations } from "@/lib/gas-stations.functions";
 import type { GasStation } from "@/types/vigla";
@@ -52,7 +53,7 @@ export async function fetchGasStations(bbox: FuelBBox): Promise<GasStation[] | n
   lastRequestAt = now;
   inFlight = true;
   try {
-    const res = await getGasStations({ data: bbox });
+    const res = await trackPoiFetch("ESSENCE", () => getGasStations({ data: bbox }));
     if (!res.ok) throw new Error(res.error);
     const stations: GasStation[] = res.stations;
     lastBBox = bbox;

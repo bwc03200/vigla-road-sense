@@ -1,3 +1,4 @@
+import { trackPoiFetch } from "@/lib/poi-timing";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { getFastfoods } from "@/lib/fastfoods.functions";
@@ -70,7 +71,9 @@ export function useFastfoods(
         return cached;
       }
       console.log("🍔 [FETCH START]", settledKey, "zoom:", zoom);
-      const res = await getFastfoods({ data: { ...bbox!, zoom: Math.round(zoom) } });
+      const res = await trackPoiFetch("RESTAURANTS", () =>
+        getFastfoods({ data: { ...bbox!, zoom: Math.round(zoom) } }),
+      );
       if (!res.ok) throw new Error(res.error);
       console.log(`🍔 [RESTAURANTS_FOUND] ${res.data.length} POIs`);
       const pois = res.data as FastfoodPOI[];
