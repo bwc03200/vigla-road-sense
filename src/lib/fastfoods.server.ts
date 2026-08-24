@@ -1,3 +1,4 @@
+import { raceOverpassMirrors } from "./overpass-race.server";
 /**
  * Server-side Overpass fetch for restaurant / food POIs.
  *
@@ -157,48 +158,40 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
   const failures: string[] = [];
   let lastHost = "";
 
-  for (const url of ENDPOINTS) {
-    lastHost = new URL(url).host;
-    console.log("🍔 [MIRROR] trying", lastHost);
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: OVERPASS_HEADERS,
-        body: new URLSearchParams({ data: q }).toString(),
-        signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      const json = (await res.json()) as { elements?: OverpassElement[] };
-      const seen = new Set<string>();
-      const data: FastfoodPOI[] = (json.elements ?? [])
-        .map(toPOI)
-        .filter(
-          (p) =>
-            Number.isFinite(p.latitude) &&
-            Number.isFinite(p.longitude) &&
-            !seen.has(p.id) &&
-            seen.add(p.id) !== undefined,
-        );
-
-      console.log("🍔 [RESTAURANTS_FOUND]", {
-        mirror: lastHost,
-        area,
-        count: data.length,
-        ms: Date.now() - started,
-      });
-      if (data.length === 0) {
-        // Nothing here through this mirror — try the next one before giving up.
-        failures.push(`${lastHost}: 0 results`);
-        continue;
-      }
+  // All mirrors are queried in parallel; the first usable answer wins.
+  try {
+    const { json, mirror } = await raceOverpassMirrors({
+      endpoints: ENDPOINTS,
+      query: q,
+      timeoutMs: MIRROR_TIMEOUT_MS,
+      method: "POST",
+      label: "RESTAURANTS MIRROR",
+    });
+    lastHost = mirror;
+    const seen = new Set<string>();
+    const data: FastfoodPOI[] = ((json.elements ?? []) as OverpassElement[])
+      .map(toPOI)
+      .filter(
+        (p) =>
+          Number.isFinite(p.latitude) &&
+          Number.isFinite(p.longitude) &&
+          !seen.has(p.id) &&
+          seen.add(p.id) !== undefined,
+      );
+    console.log("🍔 [RESTAURANTS_FOUND]", {
+      mirror,
+      area,
+      count: data.length,
+      ms: Date.now() - started,
+    });
+    if (data.length > 0) {
       return { ok: true, data, fetchTime: Date.now() - started };
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.warn(`🍔 [MIRROR] ${lastHost} failed: ${msg}`);
-      failures.push(`${lastHost}: ${msg}`);
     }
+    failures.push(`${mirror}: 0 usable results`);
+  } catch (err) {
+    failures.push(err instanceof Error ? err.message : String(err));
   }
+
 
   // Every Overpass mirror is down, rate-limiting, or empty: fall back to
   // Nominatim, which serves the same OSM data through a different endpoint.

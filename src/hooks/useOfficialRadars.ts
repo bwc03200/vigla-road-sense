@@ -1,3 +1,4 @@
+import { trackPoiFetch } from "@/lib/poi-timing";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
@@ -10,6 +11,10 @@ const SESSION_KEY = "vigla:official-radars-refresh-tried";
 const REFRESH_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
 
 async function fetchRadars(): Promise<OfficialRadar[]> {
+  return trackPoiFetch("RADARS", queryRadars);
+}
+
+async function queryRadars(): Promise<OfficialRadar[]> {
   const { data, error } = await supabase
     .from("official_radars")
     .select("*")
