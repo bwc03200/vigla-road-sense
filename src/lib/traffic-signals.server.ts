@@ -34,32 +34,19 @@ const MIRROR_TIMEOUT_MS = 9000;
 
 export async function queryTrafficSignals(bbox: OverpassBBox): Promise<SignalNode[]> {
   const q = `[out:json][timeout:25];node["highway"="traffic_signals"](${bbox.south},${bbox.west},${bbox.north},${bbox.east});out skel qt 800;`;
-  const failures: string[] = [];
 
-  for (const url of ENDPOINTS) {
-    try {
-      const res = await fetch(`${url}?data=${encodeURIComponent(q)}`, {
-        method: "GET",
-        signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
-        headers: {
-          // Overpass rejects/limits clients without an identifying UA.
-          "User-Agent": "VIGLA/1.0",
-          Accept: "application/json",
-        },
-      });
+  // All mirrors are queried in parallel; the first usable answer wins.
+  const { json } = await raceOverpassMirrors({
+    endpoints: ENDPOINTS,
+    query: q,
+    timeoutMs: MIRROR_TIMEOUT_MS,
+    label: "FEUX MIRROR",
+  });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = (await res.json()) as {
-        elements?: { id: number; lat: number; lon: number }[];
-      };
-      return (data.elements ?? [])
-        .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
-        .map((e) => ({ id: `ts-${e.id}`, latitude: e.lat, longitude: e.lon }));
-    } catch (err) {
-      const host = new URL(url).host;
-      failures.push(`${host}: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-  throw new Error(`overpass unreachable — ${failures.join(" | ")}`);
+  const elements = (json.elements ?? []) as { id: number; lat: number; lon: number }[];
+  return elements
+    .filter((e) => Number.isFinite(e.lat) && Number.isFinite(e.lon))
+    .map((e) => ({ id: `ts-${e.id}`, latitude: e.lat, longitude: e.lon }));
 }
+
 
