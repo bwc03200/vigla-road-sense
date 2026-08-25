@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Fuel, Loader2, Navigation, X } from "lucide-react";
 import type { FuelPriceEntry } from "@/hooks/useGasStationPrices";
 import type { GasStation } from "@/types/vigla";
