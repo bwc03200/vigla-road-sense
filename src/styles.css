@@ -338,3 +338,16 @@ html { scroll-behavior: smooth; }
 .vigla-heading-lock .vigla-user-icon {
   rotate: 0deg;
 }
+
+/* Fixed turn marker (bottom-centre) pulse when a manoeuvre is within 500 m. */
+@keyframes vigla-turn-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.75;
+  }
+}

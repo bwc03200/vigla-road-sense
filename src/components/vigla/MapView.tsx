@@ -31,6 +31,9 @@ import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
+import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
+import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
+import { useHeadingLock } from "@/hooks/useHeadingLock";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
@@ -44,14 +47,22 @@ import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
 /** Exposes the Leaflet map instance to the outer component. */
-function MapRefCapture({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
+function MapRefCapture({
+  mapRef,
+  onMap,
+}: {
+  mapRef: React.MutableRefObject<L.Map | null>;
+  onMap?: (map: L.Map | null) => void;
+}) {
   const map = useMap();
   useEffect(() => {
     mapRef.current = map;
+    onMap?.(map);
     return () => {
       mapRef.current = null;
+      onMap?.(null);
     };
-  }, [map, mapRef]);
+  }, [map, mapRef, onMap]);
   return null;
 }
 
@@ -610,8 +621,8 @@ export function MapView() {
 
   // Smart proximity alerts: POIs entering the 300 m ring during active nav.
   const proximityPois = useMemo<ProximityPOI[]>(
-    () =>
-      inViewFastfoods.map((f) => ({
+    () => [
+      ...inViewFastfoods.map((f) => ({
         id: f.id,
         latitude: f.latitude,
         longitude: f.longitude,
@@ -619,13 +630,25 @@ export function MapView() {
         brand: f.brand,
         kind: "restaurant" as const,
       })),
-    [inViewFastfoods],
+      ...visibleGasStations.map((g) => ({
+        id: `gas-${g.id}`,
+        latitude: g.latitude,
+        longitude: g.longitude,
+        name: g.name ?? "Station essence",
+        kind: "gas_station" as const,
+      })),
+    ],
+    [inViewFastfoods, visibleGasStations],
   );
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(proximityPois, navActive);
 
   // P1: selecting a restaurant → small preview first, then full details or route.
   const mapRef = useRef<L.Map | null>(null);
+  // Heading lock: rotate the map so the direction of travel points up.
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const handleMapReady = useCallback((m: L.Map | null) => setMapInstance(m), []);
+  useHeadingLock(mapInstance, position?.heading, navActive);
   const [poiRouting, setPoiRouting] = useState(false);
   const [poiPreview, setPoiPreview] = useState<(typeof inViewFastfoods)[number] | null>(null);
   const [poiPopup, setPoiPopup] = useState<{
@@ -943,7 +966,7 @@ export function MapView() {
         maxZoom={19}
       />
       <InvalidateOnResize />
-      <MapRefCapture mapRef={mapRef} />
+      <MapRefCapture mapRef={mapRef} onMap={handleMapReady} />
       <MapInteractionBridge />
       {position && !route && !navActive && (
         <FollowUser
@@ -1097,14 +1120,31 @@ export function MapView() {
       <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
     </div>
     {proximityAlert && (
-      /* Anchored bottom-right (fixed, self-positioned): the top of the screen
-         belongs to the instruction card + TopBar + hazard banner stack. */
-      <ProximityAlertCard
-        key={proximityAlert.poi.id}
-        alert={proximityAlert}
-        onDismiss={dismissProximityAlert}
-        moto={motoMode}
-      />
+      /* Auto-shown ~3.5 s sheet: name, type, fuel price and "Ajouter à
+         l'itinéraire". Restaurants keep the compact card. */
+      proximityAlert.poi.kind === "gas_station" ? (
+        <ProximityPopupSheet
+          key={proximityAlert.poi.id}
+          alert={proximityAlert}
+          onDismiss={dismissProximityAlert}
+          moto={motoMode}
+          priceLabel={(() => {
+            const p = findPrice(
+              proximityAlert.poi.latitude,
+              proximityAlert.poi.longitude,
+            );
+            const v = p?.sp95 ?? p?.gazole;
+            return v != null ? `${v.toFixed(2)}€/L ${p?.sp95 != null ? "Essence 95" : "Diesel"}` : null;
+          })()}
+        />
+      ) : (
+        <ProximityAlertCard
+          key={proximityAlert.poi.id}
+          alert={proximityAlert}
+          onDismiss={dismissProximityAlert}
+          moto={motoMode}
+        />
+      )
     )}
     {pending && (
       <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[860] flex justify-center px-4">
@@ -1203,6 +1243,7 @@ export function MapView() {
       />
     )}
     {navActive && <NavigationBannerBlue />}
+    {navActive && <FixedTurnMarker />}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>

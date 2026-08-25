@@ -10,6 +10,8 @@ interface Props {
   moto?: boolean;
   /** Auto-close delay in ms. */
   autoCloseMs?: number;
+  /** Fuel price label, e.g. "1.59€/L Essence 95". */
+  priceLabel?: string | null;
 }
 
 /**
@@ -21,6 +23,7 @@ export function ProximityPopupSheet({
   onDismiss,
   moto = false,
   autoCloseMs = 3500,
+  priceLabel = null,
 }: Props) {
   const { addWaypoint } = useRouteWaypoint();
   const [adding, setAdding] = useState(false);
@@ -29,6 +32,14 @@ export function ProximityPopupSheet({
   const { poi, distanceM } = alert;
   const icon = poi.kind === "gas_station" ? "⛽" : "🍔";
   const typeLabel = poi.kind === "gas_station" ? "Station essence" : "Restaurant";
+
+  useEffect(() => {
+    console.log(
+      `🟢 [POPUP AUTO-SHOW: ${(autoCloseMs / 1000).toFixed(1)}s] ${poi.name}${priceLabel ? ` • ${priceLabel}` : ""}`,
+    );
+    // Log once per POI shown.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poi.id]);
 
   useEffect(() => {
     if (adding) return;
@@ -62,7 +73,10 @@ export function ProximityPopupSheet({
           <span className="text-2xl leading-none">{icon}</span>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-bold text-foreground">{poi.name}</div>
-            <div className="text-xs text-muted-foreground">{typeLabel}</div>
+            <div className="text-xs text-muted-foreground">
+              {typeLabel}
+              {priceLabel ? ` • ${priceLabel}` : ""}
+            </div>
             <div className="text-[11px] font-medium text-primary">
               À {Math.round(distanceM)}m de votre route
             </div>
