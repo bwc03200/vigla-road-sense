@@ -47,14 +47,22 @@ import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
 /** Exposes the Leaflet map instance to the outer component. */
-function MapRefCapture({ mapRef }: { mapRef: React.MutableRefObject<L.Map | null> }) {
+function MapRefCapture({
+  mapRef,
+  onMap,
+}: {
+  mapRef: React.MutableRefObject<L.Map | null>;
+  onMap?: (map: L.Map | null) => void;
+}) {
   const map = useMap();
   useEffect(() => {
     mapRef.current = map;
+    onMap?.(map);
     return () => {
       mapRef.current = null;
+      onMap?.(null);
     };
-  }, [map, mapRef]);
+  }, [map, mapRef, onMap]);
   return null;
 }
 
