@@ -621,8 +621,8 @@ export function MapView() {
 
   // Smart proximity alerts: POIs entering the 300 m ring during active nav.
   const proximityPois = useMemo<ProximityPOI[]>(
-    () =>
-      inViewFastfoods.map((f) => ({
+    () => [
+      ...inViewFastfoods.map((f) => ({
         id: f.id,
         latitude: f.latitude,
         longitude: f.longitude,
@@ -630,13 +630,25 @@ export function MapView() {
         brand: f.brand,
         kind: "restaurant" as const,
       })),
-    [inViewFastfoods],
+      ...visibleGasStations.map((g) => ({
+        id: `gas-${g.id}`,
+        latitude: g.latitude,
+        longitude: g.longitude,
+        name: g.name ?? "Station essence",
+        kind: "gas_station" as const,
+      })),
+    ],
+    [inViewFastfoods, visibleGasStations],
   );
   const { alert: proximityAlert, dismiss: dismissProximityAlert } =
     useProximityAlerts(proximityPois, navActive);
 
   // P1: selecting a restaurant → small preview first, then full details or route.
   const mapRef = useRef<L.Map | null>(null);
+  // Heading lock: rotate the map so the direction of travel points up.
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
+  const handleMapReady = useCallback((m: L.Map | null) => setMapInstance(m), []);
+  useHeadingLock(mapInstance, position?.heading, navActive);
   const [poiRouting, setPoiRouting] = useState(false);
   const [poiPreview, setPoiPreview] = useState<(typeof inViewFastfoods)[number] | null>(null);
   const [poiPopup, setPoiPopup] = useState<{
