@@ -34,6 +34,14 @@ export function ProximityPopupSheet({
   const typeLabel = poi.kind === "gas_station" ? "Station essence" : "Restaurant";
 
   useEffect(() => {
+    console.log(
+      `🟢 [POPUP AUTO-SHOW: ${(autoCloseMs / 1000).toFixed(1)}s] ${poi.name}${priceLabel ? ` • ${priceLabel}` : ""}`,
+    );
+    // Log once per POI shown.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [poi.id]);
+
+  useEffect(() => {
     if (adding) return;
     closeRef.current = setTimeout(() => onDismiss("manual"), autoCloseMs);
     return () => {
