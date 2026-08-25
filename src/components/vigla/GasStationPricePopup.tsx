@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Fuel, Loader2, Navigation, X } from "lucide-react";
 import type { FuelPriceEntry } from "@/hooks/useGasStationPrices";
 import type { GasStation } from "@/types/vigla";
@@ -61,6 +62,27 @@ export function GasStationPricePopup({
     ? distanceM(userPosition.lat, userPosition.lng, station.latitude, station.longitude)
     : null;
   const updated = agoLabel(price?.updatedAt ?? null);
+  const headline = price?.sp95 != null
+    ? `${name} • ${price.sp95.toFixed(2)}€/L Essence 95`
+    : price?.gazole != null
+      ? `${name} • ${price.gazole.toFixed(2)}€/L Gazole`
+      : name;
+
+  useEffect(() => {
+    console.log("🟢 [ESSENCE POPUP OPENED]", name);
+    if (price?.sp95 != null || price?.gazole != null) {
+      console.log(
+        `🟢 [PRICE LOADED: ${(price.sp95 ?? price.gazole)!.toFixed(2)}€/L]`,
+        price.sp95 != null ? "Essence 95" : "Gazole",
+      );
+      if (price.updatedAt) {
+        const h = Math.max(0, Math.round((Date.now() - price.updatedAt) / 3600000));
+        console.log(`🟢 [CACHE AGE: ${h}h]`);
+      }
+    } else {
+      console.log("🟢 [PRICE LOADED: n/a]");
+    }
+  }, [station.id, price?.sp95, price?.gazole, price?.updatedAt, name]);
 
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[870] flex justify-center px-4">
@@ -70,7 +92,7 @@ export function GasStationPricePopup({
             <Fuel className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-slate-900">{name}</div>
+            <div className="truncate text-sm font-semibold text-slate-900">{headline}</div>
             <div className="mt-0.5 truncate text-xs text-slate-500">
               {[price?.name, dist != null ? formatDistance(dist) : null]
                 .filter(Boolean)
