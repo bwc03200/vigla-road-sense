@@ -1133,8 +1133,8 @@ export function MapView() {
               proximityAlert.poi.latitude,
               proximityAlert.poi.longitude,
             );
-            const v = p?.e95 ?? p?.gazole;
-            return v != null ? `${v.toFixed(2)}€/L ${p?.e95 != null ? "Essence 95" : "Diesel"}` : null;
+            const v = p?.sp95 ?? p?.gazole;
+            return v != null ? `${v.toFixed(2)}€/L ${p?.sp95 != null ? "Essence 95" : "Diesel"}` : null;
           })()}
         />
       ) : (
