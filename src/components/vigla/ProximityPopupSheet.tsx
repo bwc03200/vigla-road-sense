@@ -10,6 +10,8 @@ interface Props {
   moto?: boolean;
   /** Auto-close delay in ms. */
   autoCloseMs?: number;
+  /** Fuel price label, e.g. "1.59€/L Essence 95". */
+  priceLabel?: string | null;
 }
 
 /**
