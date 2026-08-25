@@ -145,6 +145,7 @@ export function useGasStationPrices(
 
     let cancelled = false;
     setLoading(true);
+    console.log("🟢 [API CALL: prix-carburants.gouv.fr]", RADIUS_KM, "km");
     fetch(url, { headers: { Accept: "application/json" } })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
