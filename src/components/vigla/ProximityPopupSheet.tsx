@@ -23,6 +23,7 @@ export function ProximityPopupSheet({
   onDismiss,
   moto = false,
   autoCloseMs = 3500,
+  priceLabel = null,
 }: Props) {
   const { addWaypoint } = useRouteWaypoint();
   const [adding, setAdding] = useState(false);
