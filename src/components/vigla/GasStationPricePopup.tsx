@@ -92,7 +92,7 @@ export function GasStationPricePopup({
             <Fuel className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="truncate text-sm font-semibold text-slate-900">{name}</div>
+            <div className="truncate text-sm font-semibold text-slate-900">{headline}</div>
             <div className="mt-0.5 truncate text-xs text-slate-500">
               {[price?.name, dist != null ? formatDistance(dist) : null]
                 .filter(Boolean)
