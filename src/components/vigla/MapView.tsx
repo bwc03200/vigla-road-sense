@@ -966,7 +966,7 @@ export function MapView() {
         maxZoom={19}
       />
       <InvalidateOnResize />
-      <MapRefCapture mapRef={mapRef} />
+      <MapRefCapture mapRef={mapRef} onMap={handleMapReady} />
       <MapInteractionBridge />
       {position && !route && !navActive && (
         <FollowUser
@@ -1120,14 +1120,31 @@ export function MapView() {
       <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
     </div>
     {proximityAlert && (
-      /* Anchored bottom-right (fixed, self-positioned): the top of the screen
-         belongs to the instruction card + TopBar + hazard banner stack. */
-      <ProximityAlertCard
-        key={proximityAlert.poi.id}
-        alert={proximityAlert}
-        onDismiss={dismissProximityAlert}
-        moto={motoMode}
-      />
+      /* Auto-shown ~3.5 s sheet: name, type, fuel price and "Ajouter à
+         l'itinéraire". Restaurants keep the compact card. */
+      proximityAlert.poi.kind === "gas_station" ? (
+        <ProximityPopupSheet
+          key={proximityAlert.poi.id}
+          alert={proximityAlert}
+          onDismiss={dismissProximityAlert}
+          moto={motoMode}
+          priceLabel={(() => {
+            const p = findPrice(
+              proximityAlert.poi.latitude,
+              proximityAlert.poi.longitude,
+            );
+            const v = p?.e95 ?? p?.gazole;
+            return v != null ? `${v.toFixed(2)}€/L ${p?.e95 != null ? "Essence 95" : "Diesel"}` : null;
+          })()}
+        />
+      ) : (
+        <ProximityAlertCard
+          key={proximityAlert.poi.id}
+          alert={proximityAlert}
+          onDismiss={dismissProximityAlert}
+          moto={motoMode}
+        />
+      )
     )}
     {pending && (
       <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[860] flex justify-center px-4">
@@ -1226,6 +1243,7 @@ export function MapView() {
       />
     )}
     {navActive && <NavigationBannerBlue />}
+    {navActive && <FixedTurnMarker />}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>
