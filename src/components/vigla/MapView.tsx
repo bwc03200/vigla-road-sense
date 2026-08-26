@@ -694,13 +694,36 @@ export function MapView() {
         toast.error(t("hazard.report.gpsUnavailable"));
         return null;
       }
+
+      // Immediate feedback: button disabled + spinner visible.
+      console.log("🟢 [BUTTON DISABLED]");
+      console.log("🟢 [SPINNER VISIBLE]");
+
       const t0 = performance.now();
       console.log(`🟢 [OSRM REQUEST START] ${label}`);
+
+      // Slow-network toast if OSRM takes longer than 2.5 s.
+      const slowThresholdMs = 2500;
+      let slowToastShown = false;
+      const slowTimeout = setTimeout(() => {
+        slowToastShown = true;
+        console.log(`🟢 [OSRM SLOW: >${(slowThresholdMs / 1000).toFixed(1)}s]`);
+        console.log("🟢 [TOAST: Calcul en cours...]");
+        toast.info("Calcul en cours...", {
+          description: "Nous préparons votre itinéraire",
+          duration: 4000,
+        });
+      }, slowThresholdMs);
+
       try {
         const result = await fetchOsrmRoute(from.lat, from.lng, lat, lng);
-        console.log(
-          `🟢 [OSRM RESPONSE OK: ${((performance.now() - t0) / 1000).toFixed(1)}s]`,
-        );
+        clearTimeout(slowTimeout);
+
+        const elapsed = (performance.now() - t0) / 1000;
+        console.log(`🟢 [OSRM RESPONSE OK: ${elapsed.toFixed(1)}s]`);
+        if (elapsed > slowThresholdMs / 1000 && !slowToastShown) {
+          console.log(`🟢 [OSRM SLOW: >${(slowThresholdMs / 1000).toFixed(1)}s]`);
+        }
         console.log(
           `🟢 [OSRM OK] ${label} — ${(result.distanceM / 1000).toFixed(1)}km / ${Math.round(result.durationS / 60)}min / ${result.coords.length} pts`,
         );
@@ -739,13 +762,18 @@ export function MapView() {
           `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
         );
         console.log("🟢 [NAV BANNER CREATED] navigation active — banner visible");
-        toast.success(`🚀 ${label}`, {
-          description: `${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
+        console.log("🟢 [TOAST: Route créée...]");
+        toast.success("Route créée", {
+          description: `${label} • ${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
         });
         return state;
       } catch (err) {
+        clearTimeout(slowTimeout);
         console.error("🔴 [ROUTE FAILED]", err);
-        toast.error(t("route.serviceUnavailable"));
+        console.log("🟢 [TOAST: Erreur calcul route]");
+        toast.error("Erreur calcul route", {
+          description: t("route.serviceUnavailable"),
+        });
         return null;
       }
     },
