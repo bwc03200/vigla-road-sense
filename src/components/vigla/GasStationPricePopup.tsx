@@ -127,7 +127,7 @@ export function GasStationPricePopup({
           type="button"
           disabled={routing || !userPosition}
           onClick={() => {
-            console.log("🚀 [P11-E] Ajouter à l'itinéraire", {
+            console.log("🚀 [P11-E] Créer itinéraire", {
               station: name,
               lat: station.latitude,
               lng: station.longitude,
@@ -143,7 +143,7 @@ export function GasStationPricePopup({
           ) : (
             <Navigation className="h-4 w-4" />
           )}
-          Ajouter à l'itinéraire
+          Créer itinéraire
         </button>
       </div>
     </div>
