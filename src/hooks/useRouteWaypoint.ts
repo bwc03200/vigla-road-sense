@@ -261,7 +261,9 @@ export function useRouteWaypoint() {
 
       const eta = formatEta(newRoute.durationS);
       const distance = formatDistance(newRoute.distanceM);
+      console.log("🟢 [ROUTE UPDATED:", nextWaypoints.length, "waypoints ]");
       console.log("🗑️ [WAYPOINT REMOVED]", { removed: removed.name, eta, distance });
+
       toast.success(`🗑️ ${removed.name} supprimé`, {
         description: `ETA: ${eta} • ${distance}`,
       });

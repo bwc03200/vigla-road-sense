@@ -12,6 +12,9 @@ interface WaypointRowProps {
   onDelete?: (id: string) => void;
 }
 
+const REVEAL_PX = 96;
+const SWIPE_TRIGGER_PX = 48;
+
 function formatDistance(m: number) {
   if (!Number.isFinite(m) || m < 0) return "—";
   return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
@@ -32,90 +35,111 @@ export function WaypointRow({
   isCurrent,
   onDelete,
 }: WaypointRowProps) {
-  const [showMenu, setShowMenu] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [revealed, setRevealed] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startXRef = useRef<number | null>(null);
+  const draggingRef = useRef(false);
 
-  useEffect(() => () => {
-    if (timerRef.current) clearTimeout(timerRef.current);
-  }, []);
+  useEffect(() => {
+    if (!revealed) setConfirming(false);
+  }, [revealed]);
 
-  const startPress = () => {
-    if (!onDelete) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => {
-      navigator.vibrate?.(20);
-      setShowMenu(true);
-    }, 500);
+  const onPointerDown = (x: number) => {
+    if (!onDelete || deleting) return;
+    startXRef.current = x;
+    draggingRef.current = true;
   };
-  const endPress = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-      timerRef.current = null;
+
+  const onPointerMove = (x: number) => {
+    if (!draggingRef.current || startXRef.current === null) return;
+    const dx = x - startXRef.current;
+    if (dx < 0) setOffset(Math.max(dx, -REVEAL_PX));
+    else if (revealed) setOffset(Math.min(-REVEAL_PX + dx, 0));
+  };
+
+  const onPointerUp = () => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    startXRef.current = null;
+    const shouldReveal = offset <= -SWIPE_TRIGGER_PX;
+    if (shouldReveal && !revealed) {
+      console.log("🟢 [SWIPE-DELETE DETECTED]", waypoint.name);
+      navigator.vibrate?.(15);
     }
+    setRevealed(shouldReveal);
+    setOffset(shouldReveal ? -REVEAL_PX : 0);
+  };
+
+  const handleDelete = async () => {
+    if (!onDelete) return;
+    if (!confirming) {
+      setConfirming(true);
+      return;
+    }
+    setDeleting(true);
+    console.log("🟢 [OSRM RECALC START]", `removing ${waypoint.name}`);
+    await onDelete(waypoint.id);
+    setDeleting(false);
+    setRevealed(false);
+    setOffset(0);
   };
 
   return (
-    <div
-      className={cn(
-        "relative flex items-center justify-between gap-3 rounded-xl px-4 py-3 transition-colors select-none",
-        isCurrent
-          ? "bg-success/15 ring-1 ring-success/30"
-          : "hover:bg-muted/80",
-      )}
-      onMouseDown={startPress}
-      onMouseUp={endPress}
-      onMouseLeave={endPress}
-      onTouchStart={startPress}
-      onTouchEnd={endPress}
-      onTouchCancel={endPress}
-      onContextMenu={(e) => e.preventDefault()}
-    >
-      <div className="flex min-w-0 items-center gap-3">
-        <span
+    <div className="relative overflow-hidden rounded-xl">
+      {onDelete && (
+        <button
+          type="button"
+          disabled={deleting}
+          onClick={handleDelete}
           className={cn(
-            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
-            isCurrent
-              ? "bg-success text-success-foreground"
-              : "bg-primary text-primary-foreground",
+            "absolute inset-y-0 right-0 flex w-24 flex-col items-center justify-center gap-0.5 bg-destructive text-destructive-foreground transition-opacity disabled:opacity-60",
+            revealed ? "opacity-100" : "pointer-events-none opacity-0",
           )}
         >
-          {index + 1}
-        </span>
-        <span className="truncate text-sm font-medium">{waypoint.name}</span>
-      </div>
-      <div className="shrink-0 text-right">
-        <div className="text-xs font-semibold">{formatDistance(distanceM)}</div>
-        <div className="text-[11px] text-muted-foreground">
-          ETA {formatEta(durationS)}
-        </div>
-      </div>
-
-      {showMenu && onDelete && (
-        <div className="absolute right-2 top-full z-50 mt-1 flex flex-col gap-1 rounded-xl border border-border bg-popover p-1 shadow-lg">
-          <button
-            type="button"
-            disabled={deleting}
-            onClick={async () => {
-              setDeleting(true);
-              await onDelete(waypoint.id);
-              setShowMenu(false);
-              setDeleting(false);
-            }}
-            className="flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:opacity-60"
-          >
-            <Trash2 className="h-4 w-4" />
-            Supprimer
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowMenu(false)}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted"
-          >
-            Annuler
-          </button>
-        </div>
+          <Trash2 className="h-4 w-4" />
+          <span className="text-[11px] font-semibold">
+            {deleting ? "..." : confirming ? "Confirmer" : "Supprimer"}
+          </span>
+        </button>
       )}
+
+      <div
+        style={{ transform: `translateX(${offset}px)` }}
+        className={cn(
+          "relative flex select-none items-center justify-between gap-3 rounded-xl px-4 py-3",
+          draggingRef.current ? "" : "transition-[transform,background-color]",
+          isCurrent ? "bg-success/15 ring-1 ring-success/30" : "bg-background hover:bg-muted/80",
+        )}
+        onTouchStart={(e) => onPointerDown(e.touches[0].clientX)}
+        onTouchMove={(e) => onPointerMove(e.touches[0].clientX)}
+        onTouchEnd={onPointerUp}
+        onTouchCancel={onPointerUp}
+        onMouseDown={(e) => onPointerDown(e.clientX)}
+        onMouseMove={(e) => onPointerMove(e.clientX)}
+        onMouseUp={onPointerUp}
+        onMouseLeave={onPointerUp}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            className={cn(
+              "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold",
+              isCurrent
+                ? "bg-success text-success-foreground"
+                : "bg-primary text-primary-foreground",
+            )}
+          >
+            {index + 1}
+          </span>
+          <span className="truncate text-sm font-medium">{waypoint.name}</span>
+        </div>
+        <div className="shrink-0 text-right">
+          <div className="text-xs font-semibold">{formatDistance(distanceM)}</div>
+          <div className="text-[11px] text-muted-foreground">ETA {formatEta(durationS)}</div>
+        </div>
+      </div>
     </div>
   );
 }

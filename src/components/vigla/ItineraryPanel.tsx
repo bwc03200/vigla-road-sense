@@ -69,7 +69,14 @@ export function ItineraryPanel() {
   }, [position, route]);
 
   useEffect(() => {
+    console.log("🟢 [ITINERARY PANEL MOUNTED]");
+  }, []);
+
+  useEffect(() => {
     if (!route) return;
+    console.log("🟢 [WAYPOINTS RENDERED:", route.waypoints.length, "]");
+    const current = route.waypoints[currentIndex];
+    if (current) console.log("🟢 [CURRENT WAYPOINT:", current.name, "]");
     console.log(
       "📋 [ITINERARY DISPLAYED] —",
       route.waypoints.length,
@@ -79,7 +86,8 @@ export function ItineraryPanel() {
       formatDistance(route.distanceM) + ",",
       formatEta(route.durationS),
     );
-  }, [route]);
+  }, [route, currentIndex]);
+
 
   // Keep the active maneuver visible while navigating.
   useEffect(() => {
