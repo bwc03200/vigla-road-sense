@@ -69,6 +69,12 @@ export function GasStationPricePopup({
       : name;
 
   useEffect(() => {
+    console.log(`🟢 [POI TAP: ${name}]`);
+    console.log(
+      `🟢 [POPUP OPENED: nom+adresse+price+distance] ${name} | ${price?.name ?? "adresse n/a"} | ${
+        price?.sp95 != null ? `${price.sp95.toFixed(2)}€/L` : "prix n/a"
+      } | ${dist != null ? formatDistance(dist) : "distance n/a"}`,
+    );
     console.log("🟢 [ESSENCE POPUP OPENED]", name);
     if (price?.sp95 != null || price?.gazole != null) {
       console.log(
