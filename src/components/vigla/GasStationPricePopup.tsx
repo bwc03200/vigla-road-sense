@@ -69,6 +69,12 @@ export function GasStationPricePopup({
       : name;
 
   useEffect(() => {
+    console.log(`🟢 [POI TAP: ${name}]`);
+    console.log(
+      `🟢 [POPUP OPENED: nom+adresse+price+distance] ${name} | ${price?.name ?? "adresse n/a"} | ${
+        price?.sp95 != null ? `${price.sp95.toFixed(2)}€/L` : "prix n/a"
+      } | ${dist != null ? formatDistance(dist) : "distance n/a"}`,
+    );
     console.log("🟢 [ESSENCE POPUP OPENED]", name);
     if (price?.sp95 != null || price?.gazole != null) {
       console.log(
@@ -121,7 +127,7 @@ export function GasStationPricePopup({
           type="button"
           disabled={routing || !userPosition}
           onClick={() => {
-            console.log("🚀 [P11-E] Ajouter à l'itinéraire", {
+            console.log("🚀 [P11-E] Créer itinéraire", {
               station: name,
               lat: station.latitude,
               lng: station.longitude,
@@ -137,7 +143,7 @@ export function GasStationPricePopup({
           ) : (
             <Navigation className="h-4 w-4" />
           )}
-          Ajouter à l'itinéraire
+          Créer itinéraire
         </button>
       </div>
     </div>

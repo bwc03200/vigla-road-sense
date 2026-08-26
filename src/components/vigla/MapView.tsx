@@ -694,8 +694,13 @@ export function MapView() {
         toast.error(t("hazard.report.gpsUnavailable"));
         return null;
       }
+      const t0 = performance.now();
+      console.log(`🟢 [OSRM REQUEST START] ${label}`);
       try {
         const result = await fetchOsrmRoute(from.lat, from.lng, lat, lng);
+        console.log(
+          `🟢 [OSRM RESPONSE OK: ${((performance.now() - t0) / 1000).toFixed(1)}s]`,
+        );
         console.log(
           `🟢 [OSRM OK] ${label} — ${(result.distanceM / 1000).toFixed(1)}km / ${Math.round(result.durationS / 60)}min / ${result.coords.length} pts`,
         );
@@ -733,7 +738,7 @@ export function MapView() {
         console.log(
           `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
         );
-        console.log("🟢 [NAV BANNER] navigation active — banner visible");
+        console.log("🟢 [NAV BANNER CREATED] navigation active — banner visible");
         toast.success(`🚀 ${label}`, {
           description: `${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
         });
@@ -866,7 +871,12 @@ export function MapView() {
     async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
       const label = station.name ?? t("layers.gasStations");
       console.log("🎯 [POI TAPPED]", label);
-      await startRouteToPoi(station.latitude, station.longitude, label);
+      setPoiRouting(true);
+      try {
+        await startRouteToPoi(station.latitude, station.longitude, label);
+      } finally {
+        setPoiRouting(false);
+      }
     },
     [t, startRouteToPoi],
   );
@@ -1235,6 +1245,7 @@ export function MapView() {
         station={gasPopup}
         price={findPrice(gasPopup.latitude, gasPopup.longitude)}
         userPosition={position ? { lat: position.lat, lng: position.lng } : null}
+        routing={poiRouting}
         onRoute={(s) => {
           setGasPopup(null);
           void handleGasStationSelect(s);
