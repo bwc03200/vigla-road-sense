@@ -359,6 +359,57 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_trips: {
+        Row: {
+          created_at: string
+          distance_m: number
+          duration_s: number
+          end_lat: number
+          end_lng: number
+          end_name: string
+          id: string
+          is_favorite: boolean
+          start_lat: number
+          start_lng: number
+          start_name: string
+          updated_at: string
+          user_id: string
+          waypoints: Json
+        }
+        Insert: {
+          created_at?: string
+          distance_m?: number
+          duration_s?: number
+          end_lat: number
+          end_lng: number
+          end_name: string
+          id?: string
+          is_favorite?: boolean
+          start_lat: number
+          start_lng: number
+          start_name: string
+          updated_at?: string
+          user_id: string
+          waypoints?: Json
+        }
+        Update: {
+          created_at?: string
+          distance_m?: number
+          duration_s?: number
+          end_lat?: number
+          end_lng?: number
+          end_name?: string
+          id?: string
+          is_favorite?: boolean
+          start_lat?: number
+          start_lng?: number
+          start_name?: string
+          updated_at?: string
+          user_id?: string
+          waypoints?: Json
+        }
+        Relationships: []
+      }
       trip_history: {
         Row: {
           alerts_received: number
