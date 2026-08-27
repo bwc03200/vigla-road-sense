@@ -25,15 +25,19 @@ export async function raceOverpassMirrors({
   endpoints,
   query,
   timeoutMs,
-  method = "GET",
+  method = "POST",
   label,
 }: RaceOptions): Promise<RaceOutcome> {
   const started = Date.now();
-  const controller = new AbortController();
   const failures: string[] = [];
+  // One controller PER mirror: a shared one made the first timeout abort every
+  // other in-flight mirror ("The operation was aborted"), killing the race.
+  const controllers = endpoints.map(() => new AbortController());
+  const abortAll = () => controllers.forEach((c) => c.abort());
 
-  const attempts = endpoints.map(async (url) => {
+  const attempts = endpoints.map(async (url, i) => {
     const host = new URL(url).host;
+    const controller = controllers[i]!;
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     try {
       const res =
@@ -55,9 +59,9 @@ export async function raceOverpassMirrors({
             });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = (await res.json()) as { elements?: unknown[] };
-      if (!Array.isArray(json.elements) || json.elements.length === 0) {
-        throw new Error("0 results");
-      }
+      // An empty `elements` array is a VALID answer (no POI in this bbox) —
+      // treating it as a failure made whole layers error out.
+      if (!Array.isArray(json.elements)) throw new Error("malformed response");
       return { json, mirror: host, ms: Date.now() - started } satisfies RaceOutcome;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
@@ -71,11 +75,11 @@ export async function raceOverpassMirrors({
   try {
     const winner = await Promise.any(attempts);
     // Cancel the slower mirrors as soon as one answered.
-    controller.abort();
+    abortAll();
     console.log(`🟢 [${label}] ${winner.mirror} won in ${(winner.ms / 1000).toFixed(1)}s`);
     return winner;
   } catch {
-    controller.abort();
+    abortAll();
     throw new Error(`overpass unreachable — ${failures.join(" | ")}`);
   }
 }
