@@ -25,7 +25,7 @@ export async function raceOverpassMirrors({
   endpoints,
   query,
   timeoutMs,
-  method = "GET",
+  method = "POST",
   label,
 }: RaceOptions): Promise<RaceOutcome> {
   const started = Date.now();
