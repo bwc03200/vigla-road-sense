@@ -24,8 +24,8 @@ export interface SignalNode {
 // pushing a single lookup past 30s (markers never appeared while driving).
 const ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
-  "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.private.coffee/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
+  "https://overpass.osm.ch/api/interpreter",
 ];
 
 /** Per-mirror budget: fail fast instead of stalling the whole lookup. */
