@@ -116,9 +116,14 @@ export function useGasStationPrices(
   const [loading, setLoading] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const requestedRef = useRef(false);
+  // GPS ticks move the centre by centimetres; rounding to ~1 km keeps the
+  // effect deps stable so we don't re-query the API on every position update.
+  const keyLat = center ? Math.round(center.lat * 100) / 100 : null;
+  const keyLng = center ? Math.round(center.lng * 100) / 100 : null;
 
   useEffect(() => {
-    if (!enabled || !center) return;
+    if (!enabled || keyLat === null || keyLng === null) return;
+    const center = { lat: keyLat, lng: keyLng };
     const cached = readCache();
     const fresh =
       cached &&
@@ -173,7 +178,7 @@ export function useGasStationPrices(
     return () => {
       cancelled = true;
     };
-  }, [enabled, center?.lat, center?.lng]);
+  }, [enabled, keyLat, keyLng]);
 
   /** Nearest price record within 500 m of a fuel POI (coordinate-level match). */
   const findPrice = useCallback(

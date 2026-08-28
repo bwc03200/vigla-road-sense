@@ -80,6 +80,12 @@ export async function raceOverpassMirrors({
     return winner;
   } catch {
     abortAll();
+    // Some mirrors answer 500 to POST but serve GET fine (and vice versa).
+    // One automatic retry with the other verb before declaring failure.
+    if (method === "POST") {
+      console.log(`🔁 [${label}] POST échoué sur tous les miroirs — retry GET`);
+      return raceOverpassMirrors({ endpoints, query, timeoutMs, method: "GET", label });
+    }
     throw new Error(`overpass unreachable — ${failures.join(" | ")}`);
   }
 }
