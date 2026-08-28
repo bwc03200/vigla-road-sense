@@ -178,7 +178,7 @@ export function useGasStationPrices(
     return () => {
       cancelled = true;
     };
-  }, [enabled, center?.lat, center?.lng]);
+  }, [enabled, keyLat, keyLng]);
 
   /** Nearest price record within 500 m of a fuel POI (coordinate-level match). */
   const findPrice = useCallback(
