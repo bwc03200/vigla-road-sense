@@ -74,33 +74,33 @@ export async function raceOverpassMirrors({
 
   // A mirror can answer 200 with an EMPTY `elements` array while another has
   // the data (observed on overpass.osm.ch for amenity=fuel). Racing blindly
-  // let that empty answer win and the layer looked broken. So: the first
-  // NON-EMPTY answer wins; an empty answer is only used when every mirror
-  // either failed or came back empty.
-  let emptyFallback: RaceOutcome | null = null;
-  const pending = attempts.map((p) => p.catch(() => null));
-  const remaining = new Set(pending.map((p, i) => i));
-  const wrapped = pending.map((p, i) => p.then((r) => ({ r, i })));
-
-  while (remaining.size > 0) {
-    const { r, i } = await Promise.race(
-      [...remaining].map((idx) => wrapped[idx]!),
-    );
-    remaining.delete(i);
-    if (!r) continue;
-    if ((r.json.elements?.length ?? 0) > 0) {
-      abortAll();
-      console.log(`🟢 [${label}] ${r.mirror} won in ${(r.ms / 1000).toFixed(1)}s`);
-      return r;
-    }
-    emptyFallback ??= r;
-  }
-
+  // let that empty answer win and the layer looked broken. So: wait for every
+  // mirror, then pick the FIRST NON-EMPTY answer; an empty answer is only used
+  // when every mirror either failed or came back empty.
+  const settled = await Promise.allSettled(attempts);
   abortAll();
-  if (emptyFallback) {
-    console.log(`🟡 [${label}] aucun résultat (réponse vide de ${emptyFallback.mirror})`);
-    return emptyFallback;
+
+  const successes: RaceOutcome[] = [];
+  for (let i = 0; i < settled.length; i++) {
+    const result = settled[i];
+    if (result.status === "fulfilled") successes.push(result.value);
+    // failures already logged in attempts
   }
+
+  // First non-empty response wins.
+  const winner = successes.find((s) => (s.json.elements?.length ?? 0) > 0);
+  if (winner) {
+    console.log(`🟢 [${label}] ${winner.mirror} won in ${(winner.ms / 1000).toFixed(1)}s`);
+    return winner;
+  }
+
+  // Every mirror succeeded but returned empty elements: valid "no POI here".
+  if (successes.length > 0) {
+    const fallback = successes[0];
+    console.log(`🟡 [${label}] aucun résultat (réponse vide de ${fallback.mirror})`);
+    return fallback;
+  }
+
   // Some mirrors answer 500 to POST but serve GET fine (and vice versa).
   // One automatic retry with the other verb before declaring failure.
   if (method === "POST") {
