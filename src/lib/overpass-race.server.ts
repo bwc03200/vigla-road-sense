@@ -72,20 +72,41 @@ export async function raceOverpassMirrors({
     }
   });
 
-  try {
-    const winner = await Promise.any(attempts);
-    // Cancel the slower mirrors as soon as one answered.
-    abortAll();
-    console.log(`🟢 [${label}] ${winner.mirror} won in ${(winner.ms / 1000).toFixed(1)}s`);
-    return winner;
-  } catch {
-    abortAll();
-    // Some mirrors answer 500 to POST but serve GET fine (and vice versa).
-    // One automatic retry with the other verb before declaring failure.
-    if (method === "POST") {
-      console.log(`🔁 [${label}] POST échoué sur tous les miroirs — retry GET`);
-      return raceOverpassMirrors({ endpoints, query, timeoutMs, method: "GET", label });
+  // A mirror can answer 200 with an EMPTY `elements` array while another has
+  // the data (observed on overpass.osm.ch for amenity=fuel). Racing blindly
+  // let that empty answer win and the layer looked broken. So: the first
+  // NON-EMPTY answer wins; an empty answer is only used when every mirror
+  // either failed or came back empty.
+  let emptyFallback: RaceOutcome | null = null;
+  const pending = attempts.map((p) => p.catch(() => null));
+  const remaining = new Set(pending.map((p, i) => i));
+  const wrapped = pending.map((p, i) => p.then((r) => ({ r, i })));
+
+  while (remaining.size > 0) {
+    const { r, i } = await Promise.race(
+      [...remaining].map((idx) => wrapped[idx]!),
+    );
+    remaining.delete(i);
+    if (!r) continue;
+    if ((r.json.elements?.length ?? 0) > 0) {
+      abortAll();
+      console.log(`🟢 [${label}] ${r.mirror} won in ${(r.ms / 1000).toFixed(1)}s`);
+      return r;
     }
-    throw new Error(`overpass unreachable — ${failures.join(" | ")}`);
+    emptyFallback ??= r;
   }
+
+  abortAll();
+  if (emptyFallback) {
+    console.log(`🟡 [${label}] aucun résultat (réponse vide de ${emptyFallback.mirror})`);
+    return emptyFallback;
+  }
+  // Some mirrors answer 500 to POST but serve GET fine (and vice versa).
+  // One automatic retry with the other verb before declaring failure.
+  if (method === "POST") {
+    console.log(`🔁 [${label}] POST échoué sur tous les miroirs — retry GET`);
+    return raceOverpassMirrors({ endpoints, query, timeoutMs, method: "GET", label });
+  }
+  throw new Error(`overpass unreachable — ${failures.join(" | ")}`);
+
 }
