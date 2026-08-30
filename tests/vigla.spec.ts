@@ -209,3 +209,23 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
     await restoreGeo();
   });
 });
+
+test.describe("VIGLA — smoke test", () => {
+  test("should load the deployed interface without crashing", async ({ page }) => {
+    await page.goto(VIGLA_URL, { waitUntil: "domcontentloaded" });
+
+    // Wait for the React shell to render (auth or app).
+    await page.waitForSelector("body", { timeout: 20000 });
+
+    // Title should reflect VIGLA.
+    await expect(page).toHaveTitle(/VIGLA/i);
+
+    // No TanStack error boundary should be visible.
+    await expect(page.getByText("This page didn't load")).toHaveCount(0);
+
+    // The app either shows the map (authenticated session) or the auth gate.
+    const map = page.locator(".leaflet-container");
+    const authForm = page.locator("form").filter({ has: page.getByLabel(/email|mot de passe|password/i) });
+    await expect(map.or(authForm)).toBeVisible({ timeout: 20000 });
+  });
+});
