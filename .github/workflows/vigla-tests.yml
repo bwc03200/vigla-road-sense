@@ -24,8 +24,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright
-        run: npx playwright install --with-deps
+        run: npx playwright install --with-deps chromium
+
+      - name: Verify Playwright installation
+        run: |
+          echo "Playwright version:"
+          npx playwright --version
+          echo "Chromium executables:"
+          ls -la ~/.cache/ms-playwright/ || echo "❌ Playwright cache not found"
 
       - name: Setup environment
         run: |
