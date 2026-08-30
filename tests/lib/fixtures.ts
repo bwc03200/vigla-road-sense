@@ -224,17 +224,8 @@ export interface GeoFixtures {
  *   keeps GPS-driven alerts (useAlerts) reproducible.
  */
 export const test = base.extend<GeoFixtures>({
-  setMockPosition: async ({ context }, use) => {
-    await use(async (lat: number, lng: number) => {
-      await context.setGeolocation({ latitude: lat, longitude: lng });
-    });
-  },
   page: async ({ context, page }, use) => {
     await context.grantPermissions(["geolocation"]);
-    await context.setGeolocation({
-      latitude: MOCK_GEO.lat,
-      longitude: MOCK_GEO.lng,
-    });
     await page.addInitScript((initial) => {
       type SuccessCb = (pos: GeolocationPosition) => void;
       const watchers = new Map<number, SuccessCb>();
@@ -255,17 +246,6 @@ export const test = base.extend<GeoFixtures>({
           timestamp: Date.now(),
         }) as GeolocationPosition;
 
-      const notify = () => {
-        const pos = buildPosition();
-        watchers.forEach((cb) => cb(pos));
-      };
-
-      // Keep the override in sync with context.setGeolocation() calls.
-      const original = navigator.geolocation.watchPosition?.bind(
-        navigator.geolocation,
-      );
-      void original;
-
       navigator.geolocation.getCurrentPosition = (success) => {
         queueMicrotask(() => success(buildPosition()));
       };
@@ -279,27 +259,34 @@ export const test = base.extend<GeoFixtures>({
         watchers.delete(id);
       };
 
-      // Poll the real (mocked) permission-backed fix so setGeolocation()
-      // updates propagate to the app's watchers.
-      window.setInterval(async () => {
-        try {
-          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
-            const native = (
-              navigator as unknown as {
-                __viglaNativeWatch?: typeof navigator.geolocation.watchPosition;
-              }
-            ).__viglaNativeWatch;
-            void native;
-            resolve(buildPosition());
-          });
-          void pos;
-        } catch {
-          /* keep last fix */
+      // Test hook: move the mocked fix and notify every active watcher,
+      // so GPS-driven alerts stay deterministic mid-test.
+      (
+        window as unknown as {
+          __viglaSetMockPosition: (lat: number, lng: number) => void;
         }
-      }, 5000);
+      ).__viglaSetMockPosition = (lat, lng) => {
+        current = { lat, lng };
+        const pos = buildPosition();
+        watchers.forEach((cb) => cb(pos));
+      };
     }, MOCK_GEO);
     await use(page);
     await context.clearPermissions();
+  },
+  setMockPosition: async ({ page }, use) => {
+    await use(async (lat: number, lng: number) => {
+      await page.evaluate(
+        ([la, ln]) => {
+          (
+            window as unknown as {
+              __viglaSetMockPosition: (lat: number, lng: number) => void;
+            }
+          ).__viglaSetMockPosition(la, ln);
+        },
+        [lat, lng],
+      );
+    });
   },
 });
 
