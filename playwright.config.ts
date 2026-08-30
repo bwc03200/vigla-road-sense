@@ -28,9 +28,11 @@ export default defineConfig({
       use: { ...devices["Desktop Safari"] },
     },
   ],
-  webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: process.env.VIGLA_URL?.startsWith("http://localhost")
+    ? {
+        command: "npm run dev",
+        url: process.env.VIGLA_URL || "http://localhost:3000",
+        reuseExistingServer: !process.env.CI,
+      }
+    : undefined,
 });
