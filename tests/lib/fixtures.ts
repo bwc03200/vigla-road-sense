@@ -8,7 +8,7 @@
  *     tolerates its absence and then only checks that a trip exists)
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Page } from "@playwright/test";
+import { test as base, expect, type Page } from "@playwright/test";
 
 const SUPABASE_URL =
   process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"] ?? "";
@@ -200,3 +200,94 @@ export async function verifyRLSIsolation(
   if (error) return true;
   return !data || data.length === 0;
 }
+
+// ---------------------------------------------------------------------------
+// Deterministic GPS fixture
+// ---------------------------------------------------------------------------
+
+/** Fixed CI coordinate (Moulins) — same value used by the E2E suite. */
+export const MOCK_GEO = { lat: 46.5646, lng: 3.3336 } as const;
+
+export interface GeoFixtures {
+  /** Live-set the mocked GPS fix mid-test (trip tracking, alerts). */
+  setMockPosition: (lat: number, lng: number) => Promise<void>;
+}
+
+/**
+ * Extended `test` with a deterministic navigator.geolocation mock.
+ *
+ * - Grants the geolocation permission and pins a fixed coordinate, so the
+ *   app's `watchPosition` always resolves instantly (no CI timeouts).
+ * - Replaces the JS API entirely (getCurrentPosition/watchPosition) so the
+ *   app does not depend on Chromium's geolocation plumbing.
+ * - `setMockPosition` re-pins the fix and notifies active watchers, which
+ *   keeps GPS-driven alerts (useAlerts) reproducible.
+ */
+export const test = base.extend<GeoFixtures>({
+  page: async ({ context, page }, use) => {
+    await context.grantPermissions(["geolocation"]);
+    await page.addInitScript((initial) => {
+      type SuccessCb = (pos: GeolocationPosition) => void;
+      const watchers = new Map<number, SuccessCb>();
+      let nextId = 1;
+      let current = { lat: initial.lat, lng: initial.lng };
+
+      const buildPosition = (): GeolocationPosition =>
+        ({
+          coords: {
+            latitude: current.lat,
+            longitude: current.lng,
+            accuracy: 5,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: 0,
+            speed: 0,
+          },
+          timestamp: Date.now(),
+        }) as GeolocationPosition;
+
+      navigator.geolocation.getCurrentPosition = (success) => {
+        queueMicrotask(() => success(buildPosition()));
+      };
+      navigator.geolocation.watchPosition = (success) => {
+        const id = nextId++;
+        watchers.set(id, success);
+        queueMicrotask(() => success(buildPosition()));
+        return id;
+      };
+      navigator.geolocation.clearWatch = (id) => {
+        watchers.delete(id);
+      };
+
+      // Test hook: move the mocked fix and notify every active watcher,
+      // so GPS-driven alerts stay deterministic mid-test.
+      (
+        window as unknown as {
+          __viglaSetMockPosition: (lat: number, lng: number) => void;
+        }
+      ).__viglaSetMockPosition = (lat, lng) => {
+        current = { lat, lng };
+        const pos = buildPosition();
+        watchers.forEach((cb) => cb(pos));
+      };
+    }, MOCK_GEO);
+    await use(page);
+    await context.clearPermissions();
+  },
+  setMockPosition: async ({ page }, use) => {
+    await use(async (lat: number, lng: number) => {
+      await page.evaluate(
+        ([la, ln]) => {
+          (
+            window as unknown as {
+              __viglaSetMockPosition: (lat: number, lng: number) => void;
+            }
+          ).__viglaSetMockPosition(la, ln);
+        },
+        [lat, lng],
+      );
+    });
+  },
+});
+
+export { expect };
