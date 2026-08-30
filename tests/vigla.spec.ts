@@ -7,13 +7,14 @@
  *  - SUPABASE_PUBLISHABLE_KEY / VITE_SUPABASE_PUBLISHABLE_KEY
  *  - SUPABASE_SERVICE_ROLE_KEY (seeding / verification only)
  */
-import { test, expect, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import {
   cleanupTestData,
   countTrips,
+  expect,
   getTestUserId,
-  mockGeolocation,
   setOfflineMode,
+  test,
   verifyAlertExists,
   verifyRLSIsolation,
   verifyTripExists,

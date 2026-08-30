@@ -8,7 +8,7 @@
  *     tolerates its absence and then only checks that a trip exists)
  */
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import type { Page } from "@playwright/test";
+import { test as base, expect, type Page } from "@playwright/test";
 
 const SUPABASE_URL =
   process.env["SUPABASE_URL"] ?? process.env["VITE_SUPABASE_URL"] ?? "";
