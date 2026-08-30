@@ -102,8 +102,11 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
     const context = await browser.newContext();
     const tab1 = await context.newPage();
     const tab2 = await context.newPage();
+    // Raw contexts bypass the auto fixture: mock GPS explicitly.
+    await mockGeolocation(tab1, MOULINS_LAT, MOULINS_LNG);
+    await mockGeolocation(tab2, MOULINS_LAT, MOULINS_LNG);
 
-    const restore1 = await openApp(tab1);
+    await openApp(tab1);
     await openApp(tab2);
 
     await createAlert(tab1, "Tab Sync");
@@ -114,12 +117,11 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
     );
     expect(synced).toBe(true);
 
-    await restore1();
     await context.close();
   });
 
   test("should delete alert from Supabase", async ({ page }) => {
-    const restoreGeo = await openApp(page);
+    await openApp(page);
     await createAlert(page, "Delete Me");
     await waitForSync(() => verifyAlertExists(userId, "Delete Me"), 5000);
 
@@ -128,13 +130,12 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
 
     const stillExists = await verifyAlertExists(userId, "Delete Me");
     expect(stillExists).toBe(false);
-    await restoreGeo();
   });
 
   test("should handle offline alerts and sync when back online", async ({
     page,
   }) => {
-    const restoreGeo = await openApp(page);
+    await openApp(page);
 
     setOfflineMode(page, true);
     await createAlert(page, "Offline Alert");
@@ -146,7 +147,6 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
       5000,
     );
     expect(synced).toBe(true);
-    await restoreGeo();
   });
 
   test("should enforce Row Level Security", async ({ browser }) => {
