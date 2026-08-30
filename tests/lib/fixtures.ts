@@ -200,3 +200,107 @@ export async function verifyRLSIsolation(
   if (error) return true;
   return !data || data.length === 0;
 }
+
+// ---------------------------------------------------------------------------
+// Deterministic GPS fixture
+// ---------------------------------------------------------------------------
+
+/** Fixed CI coordinate (Moulins) — same value used by the E2E suite. */
+export const MOCK_GEO = { lat: 46.5646, lng: 3.3336 } as const;
+
+export interface GeoFixtures {
+  /** Live-set the mocked GPS fix mid-test (trip tracking, alerts). */
+  setMockPosition: (lat: number, lng: number) => Promise<void>;
+}
+
+/**
+ * Extended `test` with a deterministic navigator.geolocation mock.
+ *
+ * - Grants the geolocation permission and pins a fixed coordinate, so the
+ *   app's `watchPosition` always resolves instantly (no CI timeouts).
+ * - Replaces the JS API entirely (getCurrentPosition/watchPosition) so the
+ *   app does not depend on Chromium's geolocation plumbing.
+ * - `setMockPosition` re-pins the fix and notifies active watchers, which
+ *   keeps GPS-driven alerts (useAlerts) reproducible.
+ */
+export const test = base.extend<GeoFixtures>({
+  setMockPosition: async ({ context }, use) => {
+    await use(async (lat: number, lng: number) => {
+      await context.setGeolocation({ latitude: lat, longitude: lng });
+    });
+  },
+  page: async ({ context, page }, use) => {
+    await context.grantPermissions(["geolocation"]);
+    await context.setGeolocation({
+      latitude: MOCK_GEO.lat,
+      longitude: MOCK_GEO.lng,
+    });
+    await page.addInitScript((initial) => {
+      type SuccessCb = (pos: GeolocationPosition) => void;
+      const watchers = new Map<number, SuccessCb>();
+      let nextId = 1;
+      let current = { lat: initial.lat, lng: initial.lng };
+
+      const buildPosition = (): GeolocationPosition =>
+        ({
+          coords: {
+            latitude: current.lat,
+            longitude: current.lng,
+            accuracy: 5,
+            altitude: null,
+            altitudeAccuracy: null,
+            heading: 0,
+            speed: 0,
+          },
+          timestamp: Date.now(),
+        }) as GeolocationPosition;
+
+      const notify = () => {
+        const pos = buildPosition();
+        watchers.forEach((cb) => cb(pos));
+      };
+
+      // Keep the override in sync with context.setGeolocation() calls.
+      const original = navigator.geolocation.watchPosition?.bind(
+        navigator.geolocation,
+      );
+      void original;
+
+      navigator.geolocation.getCurrentPosition = (success) => {
+        queueMicrotask(() => success(buildPosition()));
+      };
+      navigator.geolocation.watchPosition = (success) => {
+        const id = nextId++;
+        watchers.set(id, success);
+        queueMicrotask(() => success(buildPosition()));
+        return id;
+      };
+      navigator.geolocation.clearWatch = (id) => {
+        watchers.delete(id);
+      };
+
+      // Poll the real (mocked) permission-backed fix so setGeolocation()
+      // updates propagate to the app's watchers.
+      window.setInterval(async () => {
+        try {
+          const pos = await new Promise<GeolocationPosition>((resolve, reject) => {
+            const native = (
+              navigator as unknown as {
+                __viglaNativeWatch?: typeof navigator.geolocation.watchPosition;
+              }
+            ).__viglaNativeWatch;
+            void native;
+            resolve(buildPosition());
+          });
+          void pos;
+        } catch {
+          /* keep last fix */
+        }
+      }, 5000);
+    }, MOCK_GEO);
+    await use(page);
+    await context.clearPermissions();
+  },
+});
+
+export { expect };
