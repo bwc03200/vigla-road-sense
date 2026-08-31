@@ -13,6 +13,7 @@ import {
   countTrips,
   expect,
   getTestUserId,
+  mockGeolocation,
   setOfflineMode,
   test,
   verifyAlertExists,
@@ -155,26 +156,27 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
 
     const context1 = await browser.newContext();
     const page1 = await context1.newPage();
-    const restore1 = await openApp(page1);
+    await mockGeolocation(page1, MOULINS_LAT, MOULINS_LNG);
+    await openApp(page1);
     await createAlert(page1, "Private");
     await waitForSync(() => verifyAlertExists(user1Id, "Private"), 5000);
 
     const context2 = await browser.newContext();
     const page2 = await context2.newPage();
+    await mockGeolocation(page2, MOULINS_LAT, MOULINS_LNG);
     await openApp(page2);
     await expect(page2.getByText("Private", { exact: false })).toHaveCount(0);
 
     const isolated = await verifyRLSIsolation(user1Id, user2Id);
     expect(isolated).toBe(true);
 
-    await restore1();
     await cleanupTestData(user2Id);
     await context1.close();
     await context2.close();
   });
 
   test("should save alert with acceptable latency", async ({ page }) => {
-    const restoreGeo = await openApp(page);
+    await openApp(page);
 
     const start = Date.now();
     await createAlert(page, "Latency Check");
@@ -182,19 +184,20 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
     const latency = Date.now() - start;
 
     expect(latency).toBeLessThan(3000);
-    await restoreGeo();
   });
 
-  test("should save trip history after navigation", async ({ page }) => {
-    const restoreGeo = await openApp(page);
+  test("should save trip history after navigation", async ({
+    page,
+    setMockPosition,
+  }) => {
+    await openApp(page);
 
     // Drive a short synthetic leg so the trip tracker crosses its 100 m floor.
-    const context = page.context();
     for (let i = 1; i <= 10; i += 1) {
-      await context.setGeolocation({
-        latitude: MOULINS_LAT + i * 0.0009,
-        longitude: MOULINS_LNG + i * 0.0009,
-      });
+      await setMockPosition(
+        MOULINS_LAT + i * 0.0009,
+        MOULINS_LNG + i * 0.0009,
+      );
       await page.waitForTimeout(400);
     }
 
@@ -202,8 +205,6 @@ test.describe("VIGLA — persistence, realtime and RLS", () => {
     const trips = await countTrips(userId);
     expect(trips).toBeGreaterThan(0);
     expect(await verifyTripExists(userId, "")).toBe(true);
-
-    await restoreGeo();
   });
 });
 
