@@ -989,19 +989,14 @@ export function MapView() {
       <InteractionTracker />
 
       <TileLayer
-        key={motoMode ? "moto-dark" : mapTheme}
-        url={
-          motoMode
-            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            : mapTheme === "dark"
-            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-        }
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
-        subdomains={["a", "b", "c", "d"]}
+        key="osm"
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        subdomains={["a", "b", "c"]}
         keepBuffer={tileKeepBuffer}
         updateWhenIdle={saveData}
         maxZoom={19}
+        minZoom={2}
       />
       <InvalidateOnResize />
       <MapRefCapture mapRef={mapRef} onMap={handleMapReady} />
