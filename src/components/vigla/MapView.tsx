@@ -763,16 +763,17 @@ export function MapView() {
           `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
         );
         console.log("🟢 [NAV BANNER CREATED] navigation active — banner visible");
-        console.log("🟢 [TOAST: Route créée...]");
-        toast.success("Route créée", {
+        console.log("🟢 [TOAST: Route créée ✓]");
+        toast.success("Route créée ✓", {
           description: `${label} • ${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
         });
+        vibrateConfirm();
         return state;
       } catch (err) {
         clearTimeout(slowTimeout);
         console.error("🔴 [ROUTE FAILED]", err);
-        console.log("🟢 [TOAST: Erreur calcul route]");
-        toast.error("Erreur calcul route", {
+        console.log("🟢 [TOAST: Erreur calcul]");
+        toast.error("Erreur calcul", {
           description: t("route.serviceUnavailable"),
         });
         return null;
