@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 /**
  * P11-E — Fuel prices from the free public dataset
@@ -7,14 +8,30 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * Purely additive: nothing in navigation / routing depends on it. When the API
  * is unreachable we simply keep the last cache (or no price at all) and the UI
  * degrades gracefully to "prix non disponible".
+ *
+ * Performance strategy:
+ * - Stations (Overpass) and prices (data.gouv) load in PARALLEL — separate
+ *   hooks, no waiting on each other; a slow price API never blocks markers.
+ * - localStorage cache per area cell, TTL 24h → 2nd visit on the same zone
+ *   resolves in <100 ms.
+ * - Adaptive timeout: ~2.5s in dense (urban) viewports, ~5s in rural ones.
+ * - On timeout with no cache: graceful fallback toast "Tarifs indisponibles".
  */
 
-const CACHE_KEY = "vigla:fuel-prices-cache";
-const CACHE_TTL_MS = 30 * 60 * 1000; // 30 min
+const CACHE_PREFIX = "vigla_essence_cache_";
+const LEGACY_CACHE_KEY = "vigla:fuel-prices-cache";
+const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
 const RADIUS_KM = 25;
 const LIMIT = 300;
 const API =
   "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/records";
+
+export interface FuelBBox {
+  south: number;
+  west: number;
+  north: number;
+  east: number;
+}
 
 export interface FuelPriceEntry {
   /** SIRET of the station (dataset primary id). */
@@ -27,27 +44,56 @@ export interface FuelPriceEntry {
   updatedAt: number | null;
 }
 
-interface CacheShape {
-  center: { lat: number; lng: number };
+interface AreaCache {
   fetchedAt: number;
   entries: FuelPriceEntry[];
 }
 
-function readCache(): CacheShape | null {
+function cacheKeyFor(lat: number, lng: number): string {
+  return `${CACHE_PREFIX}${lat}_${lng}`;
+}
+
+function readAreaCache(key: string): AreaCache | null {
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(key);
     if (!raw) return null;
-    return JSON.parse(raw) as CacheShape;
+    const parsed = JSON.parse(raw) as AreaCache;
+    if (!Array.isArray(parsed?.entries)) return null;
+    if (Date.now() - parsed.fetchedAt >= CACHE_TTL_MS) return null;
+    return parsed;
   } catch {
     return null;
   }
 }
 
-function writeCache(c: CacheShape) {
+function writeAreaCache(key: string, entries: FuelPriceEntry[]) {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(c));
+    localStorage.setItem(
+      key,
+      JSON.stringify({ fetchedAt: Date.now(), entries } satisfies AreaCache),
+    );
   } catch {
     /* quota */
+  }
+}
+
+/** Last-known-good cache written by older versions — used as fallback only. */
+function readLegacyCache(center: { lat: number; lng: number }): FuelPriceEntry[] | null {
+  try {
+    const raw = localStorage.getItem(LEGACY_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      center?: { lat: number; lng: number };
+      fetchedAt?: number;
+      entries?: FuelPriceEntry[];
+    };
+    if (!parsed?.entries?.length || !parsed.center || !parsed.fetchedAt) return null;
+    if (Date.now() - parsed.fetchedAt >= CACHE_TTL_MS) return null;
+    if (distanceM(parsed.center.lat, parsed.center.lng, center.lat, center.lng) > 15000)
+      return null;
+    return parsed.entries;
+  } catch {
+    return null;
   }
 }
 
@@ -60,6 +106,18 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number) {
   const h =
     Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+/**
+ * Adaptive timeout from the visible bbox: a small viewport (dense urban area)
+ * gets a short 2.5s budget; a large rural bbox gets 5s so far-away zones
+ * (e.g. Clermont-Ferrand from Cusset) still resolve without endless waiting.
+ */
+function getAdaptiveTimeout(bbox: FuelBBox | null): number {
+  if (!bbox) return 2500;
+  const area = Math.abs(bbox.north - bbox.south) * Math.abs(bbox.east - bbox.west);
+  // < ~0.05°² ≈ zoomed-in city block level → dense; larger → rural
+  return area < 0.05 ? 2500 : 5000;
 }
 
 function num(v: unknown): number | null {
@@ -105,40 +163,49 @@ function toEntry(r: ApiRecord): FuelPriceEntry | null {
 }
 
 /**
- * Loads fuel prices around `center` (cached 30 min in localStorage) and
- * exposes a matcher resolving an Overpass fuel POI to its price record.
+ * Loads fuel prices around `center` (cached 24h per area cell) and exposes a
+ * matcher resolving an Overpass fuel POI to its price record. Pass the current
+ * `bbox` for an adaptive fetch timeout (2.5s dense / 5s rural).
  */
 export function useGasStationPrices(
   center: { lat: number; lng: number } | null,
   enabled = true,
+  bbox: FuelBBox | null = null,
 ) {
   const [entries, setEntries] = useState<FuelPriceEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
-  const requestedRef = useRef(false);
+  const requestedKeysRef = useRef<Set<string>>(new Set());
+  const timedOutToastShownRef = useRef(false);
   // GPS ticks move the centre by centimetres; rounding to ~1 km keeps the
   // effect deps stable so we don't re-query the API on every position update.
   const keyLat = center ? Math.round(center.lat * 100) / 100 : null;
   const keyLng = center ? Math.round(center.lng * 100) / 100 : null;
+  const timeoutMs = getAdaptiveTimeout(bbox);
 
   useEffect(() => {
     if (!enabled || keyLat === null || keyLng === null) return;
     const center = { lat: keyLat, lng: keyLng };
-    const cached = readCache();
-    const fresh =
-      cached &&
-      Date.now() - cached.fetchedAt < CACHE_TTL_MS &&
-      distanceM(cached.center.lat, cached.center.lng, center.lat, center.lng) < 15000;
+    const key = cacheKeyFor(keyLat, keyLng);
 
-    if (cached?.entries?.length) {
+    // 1️⃣ CACHE FIRST (<100 ms on a revisited area)
+    const cached = readAreaCache(key);
+    if (cached) {
       setEntries(cached.entries);
       setFetchedAt(cached.fetchedAt);
-    }
-    if (fresh || requestedRef.current) {
-      if (fresh) console.log("⛽ [P11-E] prix en cache", cached?.entries.length ?? 0);
+      console.log("⛽ [CACHE HIT] Essence prices from localStorage", cached.entries.length);
       return;
     }
-    requestedRef.current = true;
+    // Legacy single-cell cache from older builds, still usable as fallback.
+    const legacy = readLegacyCache(center);
+    if (legacy) {
+      setEntries(legacy);
+    }
+
+    // 2️⃣ Skip duplicate in-flight requests for the same cell; stations load
+    // in parallel in their own hook, so prices never block markers.
+    if (requestedKeysRef.current.has(key)) return;
+    requestedKeysRef.current.add(key);
 
     const geomLiteral = `GEOM'POINT(${center.lng} ${center.lat})'`;
     const url =
@@ -150,8 +217,19 @@ export function useGasStationPrices(
 
     let cancelled = false;
     setLoading(true);
-    console.log("🟢 [API CALL: prix-carburants.gouv.fr]", RADIUS_KM, "km");
-    fetch(url, { headers: { Accept: "application/json" } })
+    console.log(
+      "🟢 [API CALL: prix-carburants.gouv.fr]",
+      RADIUS_KM,
+      "km — timeout",
+      timeoutMs,
+      "ms",
+    );
+
+    // 3️⃣ ADAPTIVE TIMEOUT — no infinite waiting, UX stays fast everywhere.
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+
+    fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<{ results?: ApiRecord[] }>;
@@ -161,24 +239,44 @@ export function useGasStationPrices(
         const rows = (data.results ?? [])
           .map(toEntry)
           .filter((e): e is FuelPriceEntry => e !== null);
-        console.log("⛽ [P11-E] prix chargés", rows.length, "premier:", rows[0]?.lat, rows[0]?.lng, rows[0]?.name);
+        console.log(
+          "⛽ [ESSENCE FETCHED]",
+          rows.length,
+          "prices,",
+          timeoutMs,
+          "ms budget",
+        );
         setEntries(rows);
-        const now = Date.now();
-        setFetchedAt(now);
-        writeCache({ center, fetchedAt: now, entries: rows });
+        setFetchedAt(Date.now());
+        // 4️⃣ CACHE RESULT (24h) — 2nd visit on the same zone is instant.
+        writeAreaCache(key, rows);
       })
       .catch((err) => {
-        requestedRef.current = false;
-        console.log("⛽ [P11-E] prix indisponibles", String(err));
+        requestedKeysRef.current.delete(key);
+        if (cancelled) return;
+        const isTimeout = err instanceof DOMException && err.name === "AbortError";
+        console.log(
+          "⛽ [P11-E] prix indisponibles",
+          isTimeout ? `timeout ${timeoutMs}ms` : String(err),
+        );
+        // 5️⃣ GRACEFUL FALLBACK — keep whatever cache we showed; only toast
+        // when we have nothing at all to display.
+        if (!legacy && !timedOutToastShownRef.current) {
+          timedOutToastShownRef.current = true;
+          toast.warning("Tarifs indisponibles pour cette région");
+        }
       })
       .finally(() => {
+        window.clearTimeout(timer);
         if (!cancelled) setLoading(false);
       });
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
+      controller.abort();
     };
-  }, [enabled, keyLat, keyLng]);
+  }, [enabled, keyLat, keyLng, timeoutMs]);
 
   /** Nearest price record within 500 m of a fuel POI (coordinate-level match). */
   const findPrice = useCallback(
