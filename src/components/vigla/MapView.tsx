@@ -903,12 +903,13 @@ export function MapView() {
       console.log("🎯 [POI TAPPED]", label);
       setPoiRouting(true);
       try {
-        await startRouteToPoi(station.latitude, station.longitude, label);
+        const state = await startRouteToPoi(station.latitude, station.longitude, label);
+        if (state) setGasPopup(null);
       } finally {
         setPoiRouting(false);
       }
     },
-    [t, startRouteToPoi],
+    [t, startRouteToPoi, setGasPopup],
   );
 
 
