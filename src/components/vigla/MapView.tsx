@@ -7,6 +7,7 @@ import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, projectOnPolyline } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import { vibrateConfirm } from "@/lib/haptics";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { PoiLayerToggles } from "@/components/vigla/PoiLayerToggles";
@@ -762,16 +763,17 @@ export function MapView() {
           `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
         );
         console.log("🟢 [NAV BANNER CREATED] navigation active — banner visible");
-        console.log("🟢 [TOAST: Route créée...]");
-        toast.success("Route créée", {
+        console.log("🟢 [TOAST: Route créée ✓]");
+        toast.success("Route créée ✓", {
           description: `${label} • ${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
         });
+        vibrateConfirm();
         return state;
       } catch (err) {
         clearTimeout(slowTimeout);
         console.error("🔴 [ROUTE FAILED]", err);
-        console.log("🟢 [TOAST: Erreur calcul route]");
-        toast.error("Erreur calcul route", {
+        console.log("🟢 [TOAST: Erreur calcul]");
+        toast.error("Erreur calcul", {
           description: t("route.serviceUnavailable"),
         });
         return null;
@@ -901,12 +903,13 @@ export function MapView() {
       console.log("🎯 [POI TAPPED]", label);
       setPoiRouting(true);
       try {
-        await startRouteToPoi(station.latitude, station.longitude, label);
+        const state = await startRouteToPoi(station.latitude, station.longitude, label);
+        if (state) setGasPopup(null);
       } finally {
         setPoiRouting(false);
       }
     },
-    [t, startRouteToPoi],
+    [t, startRouteToPoi, setGasPopup],
   );
 
 
@@ -1270,7 +1273,6 @@ export function MapView() {
         userPosition={position ? { lat: position.lat, lng: position.lng } : null}
         routing={poiRouting}
         onRoute={(s) => {
-          setGasPopup(null);
           void handleGasStationSelect(s);
         }}
         onClose={() => setGasPopup(null)}
