@@ -7,11 +7,6 @@ const TILE_HOSTS = [
   "a.tile.openstreetmap.org",
   "b.tile.openstreetmap.org",
   "c.tile.openstreetmap.org",
-  "basemaps.cartocdn.com",
-  "a.basemaps.cartocdn.com",
-  "b.basemaps.cartocdn.com",
-  "c.basemaps.cartocdn.com",
-  "d.basemaps.cartocdn.com",
 ];
 const MAX_TILE_ENTRIES = 800;
 
