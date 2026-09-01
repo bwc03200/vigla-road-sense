@@ -7,6 +7,7 @@ import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine, projectOnPolyline } from "@/lib/geo";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import { vibrateConfirm } from "@/lib/haptics";
 import { UserMarker } from "@/components/vigla/UserMarker";
 import { ZoomControls } from "@/components/vigla/ZoomControls";
 import { PoiLayerToggles } from "@/components/vigla/PoiLayerToggles";
