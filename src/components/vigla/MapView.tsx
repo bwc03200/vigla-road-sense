@@ -1273,7 +1273,6 @@ export function MapView() {
         userPosition={position ? { lat: position.lat, lng: position.lng } : null}
         routing={poiRouting}
         onRoute={(s) => {
-          setGasPopup(null);
           void handleGasStationSelect(s);
         }}
         onClose={() => setGasPopup(null)}
