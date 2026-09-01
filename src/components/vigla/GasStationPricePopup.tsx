@@ -125,8 +125,10 @@ export function GasStationPricePopup({
 
         <button
           type="button"
+          aria-busy={routing}
           disabled={routing || !userPosition}
           onClick={() => {
+            if (routing) return;
             console.log("🚀 [P11-E] Créer itinéraire", {
               station: name,
               lat: station.latitude,
@@ -136,7 +138,7 @@ export function GasStationPricePopup({
             });
             onRoute(station);
           }}
-          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#FF6B35] text-sm font-semibold text-white shadow-[0_8px_24px_rgba(255,107,53,0.35)] transition active:scale-[0.98] disabled:opacity-60"
+          className="mt-3 flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-[#FF6B35] text-sm font-semibold text-white shadow-[0_8px_24px_rgba(255,107,53,0.35)] transition active:scale-[0.98] disabled:opacity-60 disabled:active:scale-100"
         >
           {routing ? (
             <Loader2 className="h-4 w-4 animate-spin" />
