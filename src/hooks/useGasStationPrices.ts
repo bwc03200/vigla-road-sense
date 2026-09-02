@@ -109,15 +109,63 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number) {
 }
 
 /**
- * Adaptive timeout from the visible bbox: a small viewport (dense urban area)
- * gets a short 2.5s budget; a large rural bbox gets 5s so far-away zones
- * (e.g. Clermont-Ferrand from Cusset) still resolve without endless waiting.
+ * Adaptive timeout from the visible bbox, tuned to match radar fetch
+ * reactivity: 1.5s in dense urban viewports, 2.5s MAX in rural ones.
+ * No endless waiting — popup prices appear in ~1-2s like other POI layers.
  */
 function getAdaptiveTimeout(bbox: FuelBBox | null): number {
-  if (!bbox) return 2500;
+  if (!bbox) return 1500;
   const area = Math.abs(bbox.north - bbox.south) * Math.abs(bbox.east - bbox.west);
   // < ~0.05°² ≈ zoomed-in city block level → dense; larger → rural
-  return area < 0.05 ? 2500 : 5000;
+  return area < 0.05 ? 1500 : 2500;
+}
+
+/**
+ * Fallback source: the legacy "flux instantané" dataset (v1) on the same
+ * open-data platform. Different table/schema, so records need light mapping.
+ * Used only when the primary v2 dataset times out or errors.
+ */
+const FALLBACK_API =
+  "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane/records";
+
+interface FallbackRecord {
+  id?: string | number;
+  geom?: { lat?: number; lon?: number } | null;
+  adresse?: string;
+  ville?: string;
+  price_gazole?: number | string;
+  price_sp95?: number | string;
+  price_e10?: number | string;
+  update?: string;
+}
+
+function fallbackToEntry(r: FallbackRecord): FuelPriceEntry | null {
+  const lat = r.geom?.lat;
+  const lng = r.geom?.lon;
+  if (typeof lat !== "number" || typeof lng !== "number") return null;
+  const sp95 = num(r.price_sp95) ?? num(r.price_e10);
+  return {
+    siret: String(r.id ?? `${lat},${lng}`),
+    lat,
+    lng,
+    name: [r.adresse, r.ville].filter(Boolean).join(", ") || null,
+    sp95,
+    gazole: num(r.price_gazole),
+    updatedAt: ts(r.update),
+  };
+}
+
+/** Stale-while-revalidate: read cache even past TTL (fallback when API down). */
+function readStaleAreaCache(key: string): AreaCache | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AreaCache;
+    if (!Array.isArray(parsed?.entries) || parsed.entries.length === 0) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
 }
 
 function num(v: unknown): number | null {
