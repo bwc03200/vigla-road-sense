@@ -565,6 +565,7 @@ export function MapView() {
   const { findPrice } = useGasStationPrices(
     position ? { lat: position.lat, lng: position.lng } : null,
     showGasStations,
+    gasBBox,
   );
 
   const showFastfoods = useVigla((s) => s.showFastfoods);
