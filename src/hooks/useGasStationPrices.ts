@@ -283,10 +283,11 @@ export function useGasStationPrices(
         return r.json() as Promise<{ results?: ApiRecord[] }>;
       })
       .then((data) => {
-        if (cancelled) return;
+        if (cancelled) return null;
         const rows = (data.results ?? [])
           .map(toEntry)
           .filter((e): e is FuelPriceEntry => e !== null);
+        if (rows.length === 0) throw new Error("empty primary response");
         console.log(
           "⛽ [ESSENCE FETCHED]",
           rows.length,
@@ -294,10 +295,53 @@ export function useGasStationPrices(
           timeoutMs,
           "ms budget",
         );
+        return rows;
+      })
+      .catch(async (primaryErr) => {
+        // 3️⃣-bis FALLBACK SOURCE — legacy flux-instantané dataset (v1).
+        if (cancelled) return null;
+        console.log(
+          "⛽ [P11-E] source primaire KO, essai fallback v1:",
+          primaryErr instanceof DOMException && primaryErr.name === "AbortError"
+            ? `timeout ${timeoutMs}ms`
+            : String(primaryErr),
+        );
+        const fbUrl =
+          `${FALLBACK_API}?limit=${LIMIT}` +
+          `&where=${encodeURIComponent(
+            `within_distance(geom, ${geomLiteral}, ${RADIUS_KM}km)`,
+          )}`;
+        try {
+          const r = await fetch(fbUrl, {
+            headers: { Accept: "application/json" },
+            signal: controller.signal,
+          });
+          if (!r.ok) throw new Error(`HTTP ${r.status}`);
+          const data = (await r.json()) as { results?: FallbackRecord[] };
+          const rows = (data.results ?? [])
+            .map(fallbackToEntry)
+            .filter((e): e is FuelPriceEntry => e !== null);
+          if (rows.length === 0) return null;
+          console.log("⛽ [ESSENCE FETCHED:FALLBACK v1]", rows.length, "prices");
+          return rows;
+        } catch (fbErr) {
+          console.log("⛽ [P11-E] fallback v1 KO:", String(fbErr));
+          return null;
+        }
+      })
+      .then((rows) => {
+        if (cancelled || rows === null) return;
         setEntries(rows);
         setFetchedAt(Date.now());
         // 4️⃣ CACHE RESULT (24h) — 2nd visit on the same zone is instant.
         writeAreaCache(key, rows);
+        requestedKeysRef.current.delete(key);
+      })
+      .catch(() => {
+        /* unreachable — inner catches handle all errors */
+      })
+      .then(() => {
+        // no-op sequencing
       })
       .catch((err) => {
         requestedKeysRef.current.delete(key);
@@ -307,8 +351,15 @@ export function useGasStationPrices(
           "⛽ [P11-E] prix indisponibles",
           isTimeout ? `timeout ${timeoutMs}ms` : String(err),
         );
-        // 5️⃣ GRACEFUL FALLBACK — keep whatever cache we showed; only toast
-        // when we have nothing at all to display.
+        // 5️⃣ GRACEFUL FALLBACK — keep whatever cache we showed; otherwise
+        // reuse a STALE cache (past TTL) before ever showing "indisponibles".
+        const stale = readStaleAreaCache(key);
+        if (stale) {
+          console.log("⛽ [CACHE STALE HIT]", stale.entries.length, "prix (cache expiré réutilisé)");
+          setEntries(stale.entries);
+          setFetchedAt(stale.fetchedAt);
+          return;
+        }
         if (!legacy && !timedOutToastShownRef.current) {
           timedOutToastShownRef.current = true;
           toast.warning("Tarifs indisponibles pour cette région");
