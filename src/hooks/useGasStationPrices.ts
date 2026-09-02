@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 const CACHE_PREFIX = "vigla_essence_cache_";
 const LEGACY_CACHE_KEY = "vigla:fuel-prices-cache";
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1h MAX — never show stale fuel prices
 const RADIUS_KM = 25;
 const LIMIT = 300;
 const API =
@@ -114,58 +114,56 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number) {
  * No endless waiting — popup prices appear in ~1-2s like other POI layers.
  */
 function getAdaptiveTimeout(bbox: FuelBBox | null): number {
-  if (!bbox) return 1500;
+  // BASELINE: radars appear in ~1500 ms. Fuel prices must never feel slower.
+  if (!bbox) return 800;
   const area = Math.abs(bbox.north - bbox.south) * Math.abs(bbox.east - bbox.west);
   // < ~0.05°² ≈ zoomed-in city block level → dense; larger → rural
-  return area < 0.05 ? 1500 : 2500;
+  return area < 0.05 ? 800 : 1000;
 }
 
 /**
- * Fallback source: the legacy "flux instantané" dataset (v1) on the same
- * open-data platform. Different table/schema, so records need light mapping.
- * Used only when the primary v2 dataset times out or errors.
+ * TRUE second source — independent provider (api.prix-carburants.2aaz.fr),
+ * a different host/infrastructure than data.economie.gouv.fr, so a platform
+ * outage on the primary does not take the fallback down with it.
  */
-const FALLBACK_API =
-  "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane/records";
+const FALLBACK_API = "https://api.prix-carburants.2aaz.fr/stations/around";
 
-interface FallbackRecord {
-  id?: string | number;
-  geom?: { lat?: number; lon?: number } | null;
-  adresse?: string;
-  ville?: string;
-  price_gazole?: number | string;
-  price_sp95?: number | string;
-  price_e10?: number | string;
+interface FallbackFuel {
+  name?: string;
+  price?: number | string;
   update?: string;
 }
 
+interface FallbackRecord {
+  id?: string | number;
+  Latitude?: number | string;
+  Longitude?: number | string;
+  latitude?: number | string;
+  longitude?: number | string;
+  Address?: { street_line?: string; city_line?: string } | null;
+  Fuels?: FallbackFuel[] | null;
+}
+
 function fallbackToEntry(r: FallbackRecord): FuelPriceEntry | null {
-  const lat = r.geom?.lat;
-  const lng = r.geom?.lon;
-  if (typeof lat !== "number" || typeof lng !== "number") return null;
-  const sp95 = num(r.price_sp95) ?? num(r.price_e10);
+  const lat = Number(r.Latitude ?? r.latitude);
+  const lng = Number(r.Longitude ?? r.longitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  const fuels = r.Fuels ?? [];
+  const pick = (needle: string) =>
+    fuels.find((f) => (f.name ?? "").toLowerCase().includes(needle));
+  const sp95 = pick("sp95") ?? pick("e10") ?? pick("95");
+  const gazole = pick("gazole") ?? pick("diesel");
+  const updated = ts(sp95?.update) ?? ts(gazole?.update);
   return {
     siret: String(r.id ?? `${lat},${lng}`),
     lat,
     lng,
-    name: [r.adresse, r.ville].filter(Boolean).join(", ") || null,
-    sp95,
-    gazole: num(r.price_gazole),
-    updatedAt: ts(r.update),
+    name:
+      [r.Address?.street_line, r.Address?.city_line].filter(Boolean).join(", ") || null,
+    sp95: num(sp95?.price),
+    gazole: num(gazole?.price),
+    updatedAt: updated,
   };
-}
-
-/** Stale-while-revalidate: read cache even past TTL (fallback when API down). */
-function readStaleAreaCache(key: string): AreaCache | null {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as AreaCache;
-    if (!Array.isArray(parsed?.entries) || parsed.entries.length === 0) return null;
-    return parsed;
-  } catch {
-    return null;
-  }
 }
 
 function num(v: unknown): number | null {
