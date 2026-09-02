@@ -20,7 +20,7 @@ import { toast } from "sonner";
 
 const CACHE_PREFIX = "vigla_essence_cache_";
 const LEGACY_CACHE_KEY = "vigla:fuel-prices-cache";
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1h MAX — never show stale fuel prices
 const RADIUS_KM = 25;
 const LIMIT = 300;
 const API =
@@ -114,10 +114,11 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number) {
  * No endless waiting — popup prices appear in ~1-2s like other POI layers.
  */
 function getAdaptiveTimeout(bbox: FuelBBox | null): number {
-  if (!bbox) return 1500;
+  // BASELINE: radars appear in ~1500 ms. Fuel prices must never feel slower.
+  if (!bbox) return 800;
   const area = Math.abs(bbox.north - bbox.south) * Math.abs(bbox.east - bbox.west);
   // < ~0.05°² ≈ zoomed-in city block level → dense; larger → rural
-  return area < 0.05 ? 1500 : 2500;
+  return area < 0.05 ? 800 : 1000;
 }
 
 /**
