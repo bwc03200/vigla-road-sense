@@ -330,27 +330,16 @@ export function useGasStationPrices(
         }
       })
       .then((rows) => {
-        if (cancelled || rows === null) return;
-        setEntries(rows);
-        setFetchedAt(Date.now());
-        // 4️⃣ CACHE RESULT (24h) — 2nd visit on the same zone is instant.
-        writeAreaCache(key, rows);
-        requestedKeysRef.current.delete(key);
-      })
-      .catch(() => {
-        /* unreachable — inner catches handle all errors */
-      })
-      .then(() => {
-        // no-op sequencing
-      })
-      .catch((err) => {
-        requestedKeysRef.current.delete(key);
         if (cancelled) return;
-        const isTimeout = err instanceof DOMException && err.name === "AbortError";
-        console.log(
-          "⛽ [P11-E] prix indisponibles",
-          isTimeout ? `timeout ${timeoutMs}ms` : String(err),
-        );
+        if (rows !== null) {
+          setEntries(rows);
+          setFetchedAt(Date.now());
+          // 4️⃣ CACHE RESULT (24h) — 2nd visit on the same zone is instant.
+          writeAreaCache(key, rows);
+          return;
+        }
+        requestedKeysRef.current.delete(key);
+        console.log("⛽ [P11-E] prix indisponibles (primaire + fallback KO)");
         // 5️⃣ GRACEFUL FALLBACK — keep whatever cache we showed; otherwise
         // reuse a STALE cache (past TTL) before ever showing "indisponibles".
         const stale = readStaleAreaCache(key);
