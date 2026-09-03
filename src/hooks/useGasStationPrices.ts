@@ -269,7 +269,10 @@ export function useGasStationPrices(
     if (cached) {
       setEntries(cached.entries);
       setFetchedAt(cached.fetchedAt);
-      console.log("⛽ [CACHE HIT] Essence prices from localStorage", cached.entries.length);
+      const ageMin = Math.round((Date.now() - cached.fetchedAt) / 60000);
+      console.log(
+        `⛽ [CACHE HIT] ${cached.entries.length} prix depuis localStorage (age=${ageMin}min)`,
+      );
       return;
     }
     // Legacy single-cell cache from older builds, still usable as fallback.
@@ -317,11 +320,7 @@ export function useGasStationPrices(
           .filter((e): e is FuelPriceEntry => e !== null);
         if (rows.length === 0) throw new Error("empty primary response");
         console.log(
-          "⛽ [ESSENCE FETCHED]",
-          rows.length,
-          "prices,",
-          timeoutMs,
-          "ms budget",
+          `⛽ [FETCH OK:PRIMARY] ${rows.length} prix (${timeoutMs}ms budget)`,
         );
         return rows;
       })
