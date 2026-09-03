@@ -21,7 +21,8 @@
     "roadbooks": "Roadbooks",
     "history": "Historique",
     "convoy": "Convoi",
-    "profile": "Profil"
+    "profile": "Profil",
+    "foot": "Piéton"
   },
   "tripHistory": {
     "empty": "Aucun trajet historisé",
