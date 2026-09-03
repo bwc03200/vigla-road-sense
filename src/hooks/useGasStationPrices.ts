@@ -328,7 +328,7 @@ export function useGasStationPrices(
         // 3️⃣-bis FALLBACK SOURCE — legacy flux-instantané dataset (v1).
         if (cancelled) return null;
         console.log(
-          "⛽ [P11-E] source primaire KO, essai fallback v1:",
+          "⛽ [FAIL:PRIMARY] essai fallback v1 →",
           primaryErr instanceof DOMException && primaryErr.name === "AbortError"
             ? `timeout ${timeoutMs}ms`
             : String(primaryErr),
@@ -349,10 +349,10 @@ export function useGasStationPrices(
             .map(fallbackToEntry)
             .filter((e): e is FuelPriceEntry => e !== null);
           if (rows.length === 0) return null;
-          console.log("⛽ [ESSENCE FETCHED:FALLBACK v1]", rows.length, "prices");
+          console.log(`⛽ [FETCH OK:FALLBACK v1] ${rows.length} prix`);
           return rows;
         } catch (fbErr) {
-          console.log("⛽ [P11-E] fallback v1 KO:", String(fbErr));
+          console.log("⛽ [FAIL:FALLBACK]", String(fbErr));
           return null;
         }
       })
