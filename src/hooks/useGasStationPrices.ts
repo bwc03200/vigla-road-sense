@@ -77,6 +77,26 @@ function writeAreaCache(key: string, entries: FuelPriceEntry[]) {
   }
 }
 
+/**
+ * Read a STALE cache (past TTL) as a graceful fallback.
+ * Only used if both primary + fallback APIs fail completely.
+ * Shows old prices over no prices.
+ */
+function readStaleAreaCache(key: string): AreaCache | null {
+  try {
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as AreaCache;
+    if (!Array.isArray(parsed?.entries) || parsed.entries.length === 0) return null;
+    // DO NOT validate TTL here — return ANY cache, even if 30+ days old
+    console.log(`⛽ [CACHE STALE HIT] Found ${parsed.entries.length} stale entries`);
+    return parsed;
+  } catch (e) {
+    console.warn("⛽ [CACHE READ ERROR]:", e);
+    return null;
+  }
+}
+
 /** Last-known-good cache written by older versions — used as fallback only. */
 function readLegacyCache(center: { lat: number; lng: number }): FuelPriceEntry[] | null {
   try {
@@ -115,10 +135,14 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number) {
  */
 function getAdaptiveTimeout(bbox: FuelBBox | null): number {
   // BASELINE: radars appear in ~1500 ms. Fuel prices must never feel slower.
-  if (!bbox) return 800;
+  if (!bbox) return 1500;
   const area = Math.abs(bbox.north - bbox.south) * Math.abs(bbox.east - bbox.west);
   // < ~0.05°² ≈ zoomed-in city block level → dense; larger → rural
-  return area < 0.05 ? 800 : 1000;
+  const t = area < 0.05 ? 1500 : 2500;
+  console.log(
+    `⛽ [TIMEOUT BASELINE] Radars ~1500ms → gas timeout ${t}ms (${area < 0.05 ? "dense" : "rural"})`,
+  );
+  return t;
 }
 
 /**
