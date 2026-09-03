@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
-import { Map, AlertTriangle, BookOpen, Users, User, History } from "lucide-react";
+import { Map, AlertTriangle, BookOpen, Users, User, History, Footprints } from "lucide-react";
+import { useFootModeStore } from "@/lib/foot-mode-store";
 
 export type Tab = "map" | "report" | "roadbooks" | "history" | "convoy" | "profile";
 
@@ -20,6 +21,9 @@ export function BottomTabs({
   onChange: (t: Tab) => void;
 }) {
   const { t } = useTranslation();
+  const isFootMode = useFootModeStore((s) => s.isFootMode);
+  const toggleFootMode = useFootModeStore((s) => s.toggleFootMode);
+
   return (
     <nav
       aria-label={t("tabs.map")}
@@ -49,7 +53,23 @@ export function BottomTabs({
           );
         })}
 
+        <button
+          type="button"
+          onClick={toggleFootMode}
+          aria-label={t("tabs.foot")}
+          aria-pressed={isFootMode}
+          className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition ${
+            isFootMode ? "text-blue-600" : "text-slate-500"
+          }`}
+        >
+          <Footprints
+            aria-hidden="true"
+            className={`h-5 w-5 ${isFootMode ? "text-blue-600 scale-110" : ""} transition`}
+          />
+          <span className="text-[10px] font-semibold">{t("tabs.foot")}</span>
+        </button>
       </div>
     </nav>
   );
 }
+
