@@ -999,7 +999,8 @@ export function MapView() {
         subdomains={["a", "b", "c"]}
         keepBuffer={tileKeepBuffer}
         updateWhenIdle={saveData}
-        maxZoom={19}
+        maxZoom={21}
+        maxNativeZoom={19}
         minZoom={2}
       />
       <InvalidateOnResize />
