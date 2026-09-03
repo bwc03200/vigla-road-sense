@@ -190,9 +190,15 @@ function fallbackToEntry(r: FallbackRecord): FuelPriceEntry | null {
   };
 }
 
+/** Plausible pump price only: 0.50 €–3.00 €/L. Out-of-range → rejected. */
 function num(v: unknown): number | null {
   const n = typeof v === "string" ? Number(v) : typeof v === "number" ? v : NaN;
-  return Number.isFinite(n) && n > 0 ? n : null;
+  if (!Number.isFinite(n)) return null;
+  if (n < 0.5 || n > 3) {
+    console.warn(`⛽ [PRICE REJECTED] ${n} €/L hors plage 0.50–3.00`);
+    return null;
+  }
+  return n;
 }
 
 function ts(v: unknown): number | null {
