@@ -21,7 +21,8 @@
     "roadbooks": "Roadbooks",
     "history": "History",
     "convoy": "Convoy",
-    "profile": "Profile"
+    "profile": "Profile",
+    "foot": "Foot"
   },
   "tripHistory": {
     "empty": "No saved trips",
