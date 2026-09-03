@@ -366,7 +366,7 @@ export function useGasStationPrices(
           return;
         }
         requestedKeysRef.current.delete(key);
-        console.log("⛽ [P11-E] prix indisponibles (primaire + fallback KO)");
+        console.log("⛽ [FAIL:ALL] prix indisponibles (primaire + fallback KO)");
         // 5️⃣ GRACEFUL FALLBACK — keep whatever cache we showed; otherwise
         // reuse a STALE cache (past TTL) before ever showing "indisponibles".
         const stale = readStaleAreaCache(key);
