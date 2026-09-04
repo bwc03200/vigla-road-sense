@@ -1,8 +1,19 @@
 import type { HazardReport, RouteState, RouteStep } from "@/types/vigla";
 import { distanceToPolyline } from "./geo";
 import i18n from "@/i18n/i18n";
+import { useFootModeStore } from "@/lib/foot-mode-store";
 
 const ROUTE_HAZARD_RADIUS_M = 500;
+
+export type RoutingProfile = "car" | "foot";
+
+/** Average walking speed (m/s) ≈ 5 km/h, used to estimate foot durations. */
+const FOOT_SPEED_MPS = 1.4;
+
+/** Current OSRM profile derived from the foot-mode toggle. */
+export function getRoutingProfile(): RoutingProfile {
+  return useFootModeStore.getState().isFootMode ? "foot" : "car";
+}
 
 // NOTE: the public OSRM demo server does not reliably serve localized step
 // text via a language query param, so we build instructions ourselves from
