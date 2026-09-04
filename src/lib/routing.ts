@@ -171,12 +171,28 @@ export async function fetchOsrmRouteVia(
       duration: Number.isFinite(leg?.duration) ? leg.duration : 0,
     });
   }
+  const distanceM = r0.distance ?? 0;
+  let durationS = r0.duration ?? 0;
+  if (profile === "foot") {
+    if (footEstimated) {
+      // Walking-speed estimate from the (identical) car geometry.
+      durationS = Math.round(distanceM / FOOT_SPEED_MPS);
+      for (const leg of legs) {
+        leg.duration = Math.round(leg.distance / FOOT_SPEED_MPS);
+      }
+    }
+    console.log(`[DURATION FOOT] ${durationS}s (${Math.round(durationS / 60)} min)`);
+  } else {
+    console.log(`[DURATION CAR] ${durationS}s (${Math.round(durationS / 60)} min)`);
+  }
+  console.log(`[DISTANCE] ${Math.round(distanceM)}m`);
   return {
     coords,
-    distanceM: r0.distance ?? 0,
-    durationS: r0.duration ?? 0,
+    distanceM,
+    durationS,
     steps,
     legs,
+    profile,
   };
 }
 
