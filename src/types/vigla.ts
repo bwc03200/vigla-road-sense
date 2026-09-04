@@ -90,6 +90,11 @@ export interface RouteState {
   hazardIds: string[];
   steps: RouteStep[];
   legs: RouteLeg[];
+  /** OSRM profile used for durationS/distanceM ("car" default, "foot" in foot mode). */
+  profile?: "car" | "foot";
+  /** Foot-mode duplicates (seconds / meters) for the itinerary panel. */
+  footDurationS?: number;
+  footDistanceM?: number;
 }
 
 export interface ActiveNavigation {

@@ -82,7 +82,13 @@ export function StartTripBar() {
               {route.destination.label}
             </div>
             <div className="mt-0.5 text-xs text-slate-500">
-              {(route.distanceM / 1000).toFixed(1)} km ·{" "}
+              {route.profile === "foot" ? (
+                <span className="mr-1 font-semibold text-blue-600">
+                  🚶 {t("route.onFoot")} ·
+                </span>
+              ) : null}
+              {t("route.distance")} {(route.distanceM / 1000).toFixed(1)}{" "}
+              {t("common.km")} · {t("route.duration")}{" "}
               {formatDuration(route.durationS, t("common.min"))}
               {route.hazardIds.length > 0 &&
                 t("route.hazardsSuffix", { n: route.hazardIds.length })}

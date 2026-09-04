@@ -124,7 +124,10 @@
     "hazardsOnRoute": "{{n}} hazard(s) on this route",
     "at": "at {{distance}}",
     "startTrip": "Start trip",
-    "hazardsSuffix": " · {{n}} hazard(s)"
+    "hazardsSuffix": " · {{n}} hazard(s)",
+    "duration": "Duration",
+    "distance": "Distance",
+    "onFoot": "On foot"
   },
   "generator": {
     "quickRide": "Quick Ride",

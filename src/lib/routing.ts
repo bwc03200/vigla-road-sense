@@ -1,8 +1,19 @@
 import type { HazardReport, RouteState, RouteStep } from "@/types/vigla";
 import { distanceToPolyline } from "./geo";
 import i18n from "@/i18n/i18n";
+import { useFootModeStore } from "@/lib/foot-mode-store";
 
 const ROUTE_HAZARD_RADIUS_M = 500;
+
+export type RoutingProfile = "car" | "foot";
+
+/** Average walking speed (m/s) ≈ 5 km/h, used to estimate foot durations. */
+const FOOT_SPEED_MPS = 1.4;
+
+/** Current OSRM profile derived from the foot-mode toggle. */
+export function getRoutingProfile(): RoutingProfile {
+  return useFootModeStore.getState().isFootMode ? "foot" : "car";
+}
 
 // NOTE: the public OSRM demo server does not reliably serve localized step
 // text via a language query param, so we build instructions ourselves from
@@ -65,6 +76,8 @@ export interface OsrmRouteResult {
   durationS: number;
   steps: RouteStep[];
   legs: Array<{ distance: number; duration: number }>;
+  /** Profile actually used for the returned durations (optional for legacy callers). */
+  profile?: RoutingProfile;
 }
 
 export async function fetchOsrmRoute(
@@ -83,6 +96,16 @@ export async function fetchOsrmRoute(
   );
 }
 
+async function fetchOsrmRaw(
+  osrmProfile: "driving" | "foot",
+  path: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${path}?overview=full&geometries=geojson&steps=true`;
+  console.log(`[OSRM REQUEST] /route/v1/${osrmProfile}/${path.slice(0, 80)}…`);
+  return fetch(url, { signal });
+}
+
 /** Route through an ordered list of [lat, lng] points (origin, vias…, destination). */
 export async function fetchOsrmRouteVia(
   points: [number, number][],
@@ -90,8 +113,23 @@ export async function fetchOsrmRouteVia(
 ): Promise<OsrmRouteResult> {
   if (points.length < 2) throw new Error("no-route");
   const path = points.map(([lat, lng]) => `${lng},${lat}`).join(";");
-  const url = `https://router.project-osrm.org/route/v1/driving/${path}?overview=full&geometries=geojson&steps=true`;
-  const res = await fetch(url, { signal });
+  const profile = getRoutingProfile();
+  console.log(
+    profile === "foot"
+      ? "[FOOT MODE ROUTING] Profile changed to foot"
+      : "[FOOT MODE OFF] Profile back to car",
+  );
+
+  let res = await fetchOsrmRaw(profile === "foot" ? "foot" : "driving", path, signal);
+  let footEstimated = false;
+  if (!res.ok && profile === "foot") {
+    // The public OSRM demo server only serves the "driving" profile. Fall back
+    // to it and scale the duration to walking speed so foot mode still works
+    // without surfacing network errors.
+    console.log("[FOOT MODE ROUTING] Foot profile unavailable, estimating from car geometry");
+    res = await fetchOsrmRaw("driving", path, signal);
+    footEstimated = true;
+  }
   if (!res.ok) throw new Error("osrm");
   const data = await res.json();
   const r0 = data?.routes?.[0];
@@ -133,12 +171,28 @@ export async function fetchOsrmRouteVia(
       duration: Number.isFinite(leg?.duration) ? leg.duration : 0,
     });
   }
+  const distanceM = r0.distance ?? 0;
+  let durationS = r0.duration ?? 0;
+  if (profile === "foot") {
+    if (footEstimated) {
+      // Walking-speed estimate from the (identical) car geometry.
+      durationS = Math.round(distanceM / FOOT_SPEED_MPS);
+      for (const leg of legs) {
+        leg.duration = Math.round(leg.distance / FOOT_SPEED_MPS);
+      }
+    }
+    console.log(`[DURATION FOOT] ${durationS}s (${Math.round(durationS / 60)} min)`);
+  } else {
+    console.log(`[DURATION CAR] ${durationS}s (${Math.round(durationS / 60)} min)`);
+  }
+  console.log(`[DISTANCE] ${Math.round(distanceM)}m`);
   return {
     coords,
-    distanceM: r0.distance ?? 0,
-    durationS: r0.duration ?? 0,
+    distanceM,
+    durationS,
     steps,
     legs,
+    profile,
   };
 }
 
@@ -161,7 +215,7 @@ export function buildRouteState(
   hazards: HazardReport[],
   waypoints: RouteState["waypoints"] = [],
 ): RouteState {
-  return {
+  const route: RouteState = {
     destination,
     waypoints,
     coords: result.coords,
@@ -173,5 +227,16 @@ export function buildRouteState(
       distanceM: leg.distance,
       durationS: leg.duration,
     })),
+    profile: result.profile,
   };
+  if (result.profile === "foot") {
+    // Foot-specific copies for the itinerary panel (distance is identical to
+    // the car geometry, only the duration differs).
+    route.footDurationS = result.durationS;
+    route.footDistanceM = result.distanceM;
+    console.log(
+      `[ROUTE STATE UPDATED] footDuration: ${route.footDurationS}s, footDistance: ${route.footDistanceM}m set`,
+    );
+  }
+  return route;
 }
