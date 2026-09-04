@@ -20,9 +20,10 @@ export function useFootRouting() {
       return;
     }
 
+    console.log(`🚶 [FOOT MODE TOGGLE] isFootMode: ${isFootMode}`);
     console.log(`[TOGGLE SUCCESS] isFootMode: ${isFootMode}`);
 
-    const { route, position, hazards, navigation, setRoute, setNavigation } =
+    const { route, position, hazards, navigation, setRouteWithFootSteps } =
       useVigla.getState();
     if (!route || !position) return;
 
@@ -38,7 +39,7 @@ export function useFootRouting() {
       points.push([route.destination.lat, route.destination.lng]);
     }
 
-    console.log(`[FOOT MODE ROUTING] Recalculating route with profile: ${profile}`);
+    console.log(`🚶 [FOOT MODE ROUTING] Recalculating route with profile: ${profile}`);
 
     let cancelled = false;
     (async () => {
@@ -46,29 +47,40 @@ export function useFootRouting() {
         const result = await fetchOsrmRouteVia(points);
         if (cancelled) return;
         const newRoute = buildRouteState(route.destination, result, hazards, waypoints);
-        setRoute(newRoute);
+        const footSteps = profile === "foot" ? newRoute.steps : [];
+        console.log(
+          `🚶 [FOOT MODE STEPS] Extracted ${footSteps.length} step(s) from OSRM (${profile})`,
+        );
+
+        const nextNavigation =
+          navigation && !navigation.arrived
+            ? {
+                ...navigation,
+                routeCoords: newRoute.coords,
+                remainingCoords: newRoute.coords,
+                consumedCoords: [],
+                steps: newRoute.steps,
+                currentStepIndex: 0,
+                distanceRemainingM: newRoute.distanceM,
+                durationRemainingS: newRoute.durationS,
+                distanceToNextManeuverM: newRoute.steps[0]?.distanceMeters ?? 0,
+                offRouteM: 0,
+                offRouteSince: null,
+                recalculating: false,
+              }
+            : navigation;
+
+        // Atomic: route + navigation + footModeSteps land in ONE setState so
+        // footModeSteps can never disappear between renders.
+        setRouteWithFootSteps(newRoute, nextNavigation, footSteps);
+        console.log(
+          `🚶 [FOOT MODE STATE] Atomic update — profile: ${newRoute.profile}, duration: ${newRoute.durationS}s, distance: ${newRoute.distanceM}m, steps: ${footSteps.length}`,
+        );
         console.log(
           `[ROUTE STATE UPDATED] profile: ${newRoute.profile}, duration: ${newRoute.durationS}s, distance: ${newRoute.distanceM}m`,
         );
-
-        if (navigation && !navigation.arrived) {
-          setNavigation({
-            ...navigation,
-            routeCoords: newRoute.coords,
-            remainingCoords: newRoute.coords,
-            consumedCoords: [],
-            steps: newRoute.steps,
-            currentStepIndex: 0,
-            distanceRemainingM: newRoute.distanceM,
-            durationRemainingS: newRoute.durationS,
-            distanceToNextManeuverM: newRoute.steps[0]?.distanceMeters ?? 0,
-            offRouteM: 0,
-            offRouteSince: null,
-            recalculating: false,
-          });
-        }
       } catch (error) {
-        console.log("[FOOT MODE ROUTING] Recalculation failed:", error);
+        console.log("🚶 [FOOT MODE ERROR] Recalculation failed:", error);
       }
     })();
 

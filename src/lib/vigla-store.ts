@@ -78,6 +78,7 @@ import type {
   OfficialRadar,
   Roadbook,
   RouteState,
+  RouteStep,
   UserPreferences,
 } from "@/types/vigla";
 
@@ -108,6 +109,8 @@ interface ViglaState {
   geoError: string | null;
   route: RouteState | null;
   navigation: ActiveNavigation | null;
+  /** Foot-mode turn-by-turn steps (kept in sync atomically with route/navigation). */
+  footModeSteps: RouteStep[];
 
   // v3
   crashState: CrashState;
@@ -145,6 +148,12 @@ interface ViglaState {
   setGeoError: (e: string | null) => void;
   setRoute: (r: RouteState | null) => void;
   setNavigation: (n: ActiveNavigation | null) => void;
+  /** Atomic update: route + navigation + footModeSteps in a single setState. */
+  setRouteWithFootSteps: (
+    r: RouteState | null,
+    n: ActiveNavigation | null,
+    footSteps: RouteStep[],
+  ) => void;
   patchNavigation: (patch: Partial<ActiveNavigation>) => void;
 
   setCrashState: (s: CrashState) => void;
@@ -196,6 +205,7 @@ export const useVigla = create<ViglaState>((set) => ({
   geoError: null,
   route: null,
   navigation: null,
+  footModeSteps: [],
 
   crashState: { status: "idle" },
   crashDetectionEnabled: savedCrashEnabled,
@@ -341,6 +351,8 @@ export const useVigla = create<ViglaState>((set) => ({
   setGeoError: (e) => set({ geoError: e }),
   setRoute: (r) => set({ route: r }),
   setNavigation: (n) => set({ navigation: n }),
+  setRouteWithFootSteps: (r, n, footSteps) =>
+    set({ route: r, navigation: n, footModeSteps: footSteps }),
   patchNavigation: (patch) =>
     set((s) => (s.navigation ? { navigation: { ...s.navigation, ...patch } } : {})),
 
