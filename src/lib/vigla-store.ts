@@ -78,6 +78,7 @@ import type {
   OfficialRadar,
   Roadbook,
   RouteState,
+  RouteStep,
   UserPreferences,
 } from "@/types/vigla";
 
