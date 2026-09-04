@@ -76,6 +76,8 @@ export interface OsrmRouteResult {
   durationS: number;
   steps: RouteStep[];
   legs: Array<{ distance: number; duration: number }>;
+  /** Profile actually used for the returned durations. */
+  profile: RoutingProfile;
 }
 
 export async function fetchOsrmRoute(
@@ -94,6 +96,16 @@ export async function fetchOsrmRoute(
   );
 }
 
+async function fetchOsrmRaw(
+  osrmProfile: "driving" | "foot",
+  path: string,
+  signal?: AbortSignal,
+): Promise<Response> {
+  const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${path}?overview=full&geometries=geojson&steps=true`;
+  console.log(`[OSRM REQUEST] /route/v1/${osrmProfile}/${path.slice(0, 80)}…`);
+  return fetch(url, { signal });
+}
+
 /** Route through an ordered list of [lat, lng] points (origin, vias…, destination). */
 export async function fetchOsrmRouteVia(
   points: [number, number][],
@@ -101,8 +113,23 @@ export async function fetchOsrmRouteVia(
 ): Promise<OsrmRouteResult> {
   if (points.length < 2) throw new Error("no-route");
   const path = points.map(([lat, lng]) => `${lng},${lat}`).join(";");
-  const url = `https://router.project-osrm.org/route/v1/driving/${path}?overview=full&geometries=geojson&steps=true`;
-  const res = await fetch(url, { signal });
+  const profile = getRoutingProfile();
+  console.log(
+    profile === "foot"
+      ? "[FOOT MODE ROUTING] Profile changed to foot"
+      : "[FOOT MODE OFF] Profile back to car",
+  );
+
+  let res = await fetchOsrmRaw(profile === "foot" ? "foot" : "driving", path, signal);
+  let footEstimated = false;
+  if (!res.ok && profile === "foot") {
+    // The public OSRM demo server only serves the "driving" profile. Fall back
+    // to it and scale the duration to walking speed so foot mode still works
+    // without surfacing network errors.
+    console.log("[FOOT MODE ROUTING] Foot profile unavailable, estimating from car geometry");
+    res = await fetchOsrmRaw("driving", path, signal);
+    footEstimated = true;
+  }
   if (!res.ok) throw new Error("osrm");
   const data = await res.json();
   const r0 = data?.routes?.[0];
