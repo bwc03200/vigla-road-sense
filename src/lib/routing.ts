@@ -76,8 +76,8 @@ export interface OsrmRouteResult {
   durationS: number;
   steps: RouteStep[];
   legs: Array<{ distance: number; duration: number }>;
-  /** Profile actually used for the returned durations. */
-  profile: RoutingProfile;
+  /** Profile actually used for the returned durations (optional for legacy callers). */
+  profile?: RoutingProfile;
 }
 
 export async function fetchOsrmRoute(
