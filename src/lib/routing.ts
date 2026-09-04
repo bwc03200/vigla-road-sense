@@ -215,7 +215,7 @@ export function buildRouteState(
   hazards: HazardReport[],
   waypoints: RouteState["waypoints"] = [],
 ): RouteState {
-  return {
+  const route: RouteState = {
     destination,
     waypoints,
     coords: result.coords,
@@ -227,5 +227,16 @@ export function buildRouteState(
       distanceM: leg.distance,
       durationS: leg.duration,
     })),
+    profile: result.profile,
   };
+  if (result.profile === "foot") {
+    // Foot-specific copies for the itinerary panel (distance is identical to
+    // the car geometry, only the duration differs).
+    route.footDurationS = result.durationS;
+    route.footDistanceM = result.distanceM;
+    console.log(
+      `[ROUTE STATE UPDATED] footDuration: ${route.footDurationS}s, footDistance: ${route.footDistanceM}m set`,
+    );
+  }
+  return route;
 }
