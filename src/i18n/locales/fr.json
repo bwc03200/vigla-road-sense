@@ -124,7 +124,10 @@
     "hazardsOnRoute": "{{n}} zone(s) de danger sur cet itinéraire",
     "at": "à {{distance}}",
     "startTrip": "Démarrer le trajet",
-    "hazardsSuffix": " · {{n}} zone(s) de danger"
+    "hazardsSuffix": " · {{n}} zone(s) de danger",
+    "duration": "Durée",
+    "distance": "Distance",
+    "onFoot": "À pied"
   },
   "generator": {
     "quickRide": "Quick Ride",
