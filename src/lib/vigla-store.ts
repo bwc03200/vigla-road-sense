@@ -148,6 +148,12 @@ interface ViglaState {
   setGeoError: (e: string | null) => void;
   setRoute: (r: RouteState | null) => void;
   setNavigation: (n: ActiveNavigation | null) => void;
+  /** Atomic update: route + navigation + footModeSteps in a single setState. */
+  setRouteWithFootSteps: (
+    r: RouteState | null,
+    n: ActiveNavigation | null,
+    footSteps: RouteStep[],
+  ) => void;
   patchNavigation: (patch: Partial<ActiveNavigation>) => void;
 
   setCrashState: (s: CrashState) => void;
