@@ -109,6 +109,8 @@ interface ViglaState {
   geoError: string | null;
   route: RouteState | null;
   navigation: ActiveNavigation | null;
+  /** Foot-mode turn-by-turn steps (kept in sync atomically with route/navigation). */
+  footModeSteps: RouteStep[];
 
   // v3
   crashState: CrashState;
