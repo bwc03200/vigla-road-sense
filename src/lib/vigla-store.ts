@@ -214,6 +214,8 @@ export const useVigla = create<ViglaState>((set) => ({
   route: null,
   navigation: null,
   footModeSteps: [],
+  isFootMode: false,
+
 
   crashState: { status: "idle" },
   crashDetectionEnabled: savedCrashEnabled,
