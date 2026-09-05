@@ -111,6 +111,9 @@ interface ViglaState {
   navigation: ActiveNavigation | null;
   /** Foot-mode turn-by-turn steps (kept in sync atomically with route/navigation). */
   footModeSteps: RouteStep[];
+  /** Foot-mode toggle mirrored from the persisted foot-mode store. */
+  isFootMode: boolean;
+
 
   // v3
   crashState: CrashState;
