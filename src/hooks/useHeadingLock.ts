@@ -17,11 +17,26 @@ export function useHeadingLock(
 ) {
   const targetRef = useRef(0);
   const lastTargetAtRef = useRef(0);
+  // Easing duration for the current transition (ms): slow while tracking a
+  // live heading, fast (1s) for the north-up reset when GPS heading drops.
+  const easeMsRef = useRef(2500);
 
   // Track the desired bearing (freeze on last known value when GPS drops).
   useEffect(() => {
     if (!enabled) return;
-    if (heading == null || !Number.isFinite(heading)) return;
+    if (heading == null || !Number.isFinite(heading)) {
+      // GPS heading lost: after 2s, ease the map back to north-up over 1s
+      // instead of leaving it frozen at the last bearing.
+      const timer = window.setTimeout(() => {
+        if (targetRef.current === 0) return;
+        easeMsRef.current = 1000;
+        targetRef.current = 0;
+        lastTargetAtRef.current = Date.now();
+        console.log("🧭 [NAV HEADING] GPS heading lost > 2s • smooth reset to 0°");
+      }, 2000);
+      return () => window.clearTimeout(timer);
+    }
+    easeMsRef.current = 2500;
     const now = Date.now();
     const delta = Math.abs(((heading - targetRef.current + 540) % 360) - 180);
     if (now - lastTargetAtRef.current < 200 && delta < 15) return;
@@ -60,7 +75,7 @@ export function useHeadingLock(
         to = target;
         startedAt = now;
       }
-      const p = Math.min(1, (now - startedAt) / 2500);
+      const p = Math.min(1, (now - startedAt) / easeMsRef.current);
       const diff = ((to - from + 540) % 360) - 180;
       current = from + diff * easeInOutQuad(p);
       const rot = -current;

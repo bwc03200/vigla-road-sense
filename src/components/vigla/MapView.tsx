@@ -36,6 +36,8 @@ import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
 import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
 import { useHeadingLock } from "@/hooks/useHeadingLock";
 import { useFootRouting } from "@/hooks/useFootRouting";
+import { useFootModeStore } from "@/lib/foot-mode-store";
+import { FootModePanel } from "@/components/vigla/FootModePanel";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
@@ -654,6 +656,7 @@ export function MapView() {
   useHeadingLock(mapInstance, position?.heading, navActive);
   // Recalculates the active route with the car/foot OSRM profile on toggle.
   useFootRouting();
+  const isFootMode = useFootModeStore((s) => s.isFootMode);
   const [poiRouting, setPoiRouting] = useState(false);
   const [poiPreview, setPoiPreview] = useState<(typeof inViewFastfoods)[number] | null>(null);
   const [poiPopup, setPoiPopup] = useState<{
@@ -1120,10 +1123,10 @@ export function MapView() {
         <HazardMarker key={h.id} hazard={h} />
       ))}
 
-      {showGasStations && visibleGasStations.length > 0 && (
+      {!isFootMode && showGasStations && visibleGasStations.length > 0 && (
         <GasStationMarkers stations={visibleGasStations} onSelect={openGasPopup} />
       )}
-      {showOfficialRadars && <OfficialRadarCluster radars={nearbyOfficial} />}
+      {!isFootMode && showOfficialRadars && <OfficialRadarCluster radars={nearbyOfficial} />}
       {showSignals && (
         <OfficialRadarCluster radars={visibleSignals} variant="signal" dark={motoMode} />
       )}
@@ -1284,6 +1287,7 @@ export function MapView() {
       />
     )}
     {navActive && <NavigationBannerBlue />}
+    {navActive && isFootMode && <FootModePanel />}
     {navActive && <FixedTurnMarker />}
     {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
