@@ -157,7 +157,12 @@ interface ViglaState {
     n: ActiveNavigation | null,
     footSteps: RouteStep[],
   ) => void;
+  /** Direct foot-mode steps setter (non-atomic; prefer setRouteWithFootSteps). */
+  setFootModeSteps: (steps: RouteStep[]) => void;
+  /** Toggle/mirror the persisted foot-mode state into the main store. */
+  setIsFootMode: (active: boolean) => void;
   patchNavigation: (patch: Partial<ActiveNavigation>) => void;
+
 
   setCrashState: (s: CrashState) => void;
   setCrashDetectionEnabled: (v: boolean) => void;
