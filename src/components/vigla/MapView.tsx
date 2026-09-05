@@ -36,8 +36,8 @@ import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
 import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
 import { useHeadingLock } from "@/hooks/useHeadingLock";
 import { useFootRouting } from "@/hooks/useFootRouting";
-import { useFootModeStore } from "@/lib/foot-mode-store";
 import { FootModePanel } from "@/components/vigla/FootModePanel";
+
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
