@@ -363,8 +363,11 @@ export const useVigla = create<ViglaState>((set) => ({
   setNavigation: (n) => set({ navigation: n }),
   setRouteWithFootSteps: (r, n, footSteps) =>
     set({ route: r, navigation: n, footModeSteps: footSteps }),
+  setFootModeSteps: (steps) => set({ footModeSteps: steps }),
+  setIsFootMode: (active) => set({ isFootMode: active }),
   patchNavigation: (patch) =>
     set((s) => (s.navigation ? { navigation: { ...s.navigation, ...patch } } : {})),
+
 
   setCrashState: (s) => set({ crashState: s }),
   setCrashDetectionEnabled: (v) => {
