@@ -36,8 +36,8 @@ import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
 import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
 import { useHeadingLock } from "@/hooks/useHeadingLock";
 import { useFootRouting } from "@/hooks/useFootRouting";
-import { useFootModeStore } from "@/lib/foot-mode-store";
 import { FootModePanel } from "@/components/vigla/FootModePanel";
+
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 
 
@@ -656,7 +656,7 @@ export function MapView() {
   useHeadingLock(mapInstance, position?.heading, navActive);
   // Recalculates the active route with the car/foot OSRM profile on toggle.
   useFootRouting();
-  const isFootMode = useFootModeStore((s) => s.isFootMode);
+  const isFootMode = useVigla((s) => s.isFootMode);
   const [poiRouting, setPoiRouting] = useState(false);
   const [poiPreview, setPoiPreview] = useState<(typeof inViewFastfoods)[number] | null>(null);
   const [poiPopup, setPoiPopup] = useState<{

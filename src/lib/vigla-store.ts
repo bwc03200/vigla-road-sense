@@ -111,6 +111,9 @@ interface ViglaState {
   navigation: ActiveNavigation | null;
   /** Foot-mode turn-by-turn steps (kept in sync atomically with route/navigation). */
   footModeSteps: RouteStep[];
+  /** Foot-mode toggle mirrored from the persisted foot-mode store. */
+  isFootMode: boolean;
+
 
   // v3
   crashState: CrashState;
@@ -154,7 +157,12 @@ interface ViglaState {
     n: ActiveNavigation | null,
     footSteps: RouteStep[],
   ) => void;
+  /** Direct foot-mode steps setter (non-atomic; prefer setRouteWithFootSteps). */
+  setFootModeSteps: (steps: RouteStep[]) => void;
+  /** Toggle/mirror the persisted foot-mode state into the main store. */
+  setIsFootMode: (active: boolean) => void;
   patchNavigation: (patch: Partial<ActiveNavigation>) => void;
+
 
   setCrashState: (s: CrashState) => void;
   setCrashDetectionEnabled: (v: boolean) => void;
@@ -206,6 +214,8 @@ export const useVigla = create<ViglaState>((set) => ({
   route: null,
   navigation: null,
   footModeSteps: [],
+  isFootMode: false,
+
 
   crashState: { status: "idle" },
   crashDetectionEnabled: savedCrashEnabled,
@@ -353,8 +363,11 @@ export const useVigla = create<ViglaState>((set) => ({
   setNavigation: (n) => set({ navigation: n }),
   setRouteWithFootSteps: (r, n, footSteps) =>
     set({ route: r, navigation: n, footModeSteps: footSteps }),
+  setFootModeSteps: (steps) => set({ footModeSteps: steps }),
+  setIsFootMode: (active) => set({ isFootMode: active }),
   patchNavigation: (patch) =>
     set((s) => (s.navigation ? { navigation: { ...s.navigation, ...patch } } : {})),
+
 
   setCrashState: (s) => set({ crashState: s }),
   setCrashDetectionEnabled: (v) => {
