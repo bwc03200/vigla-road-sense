@@ -755,23 +755,34 @@ export function MapView() {
             },
           ],
         );
-        setRoute(state);
-        setNavigation({
-          routeCoords: state.coords,
-          remainingCoords: state.coords,
-          consumedCoords: [],
-          steps: state.steps,
-          currentStepIndex: 0,
-          distanceRemainingM: state.distanceM,
-          durationRemainingS: state.durationS,
-          distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
-          offRouteM: 0,
-          offRouteSince: null,
-          recalculating: false,
-          arrived: false,
-          startedAt: new Date().toISOString(),
-          alertsReceived: 0,
+        // 🟢 [EXTRACT FOOT STEPS]
+        const footSteps = isFootModeNow ? state.steps : [];
+        if (isFootModeNow) {
+          console.log(`📋 [FOOT STEPS EXTRACTED] ${footSteps.length} steps`);
+        }
+        // 🟢 [ATOMIC STATE WRITE] — single setState so route, navigation and
+        // footModeSteps can never be read out of sync by FootModePanel.
+        useVigla.setState({
+          route: state,
+          footModeSteps: footSteps,
+          navigation: {
+            routeCoords: state.coords,
+            remainingCoords: state.coords,
+            consumedCoords: [],
+            steps: state.steps,
+            currentStepIndex: 0,
+            distanceRemainingM: state.distanceM,
+            durationRemainingS: state.durationS,
+            distanceToNextManeuverM: state.steps[0]?.distanceMeters ?? 0,
+            offRouteM: 0,
+            offRouteSince: null,
+            recalculating: false,
+            arrived: false,
+            startedAt: new Date().toISOString(),
+            alertsReceived: 0,
+          },
         });
+        console.log("🟢 [ATOMIC STATE WRITE] route + navigation + footModeSteps synced");
         console.log(
           `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
         );
