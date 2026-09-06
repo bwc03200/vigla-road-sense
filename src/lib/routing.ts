@@ -86,6 +86,7 @@ export async function fetchOsrmRoute(
   toLat: number,
   toLng: number,
   signal?: AbortSignal,
+  options?: { profile?: RoutingProfile },
 ): Promise<OsrmRouteResult> {
   return fetchOsrmRouteVia(
     [
@@ -93,6 +94,7 @@ export async function fetchOsrmRoute(
       [toLat, toLng],
     ],
     signal,
+    options,
   );
 }
 
