@@ -724,7 +724,13 @@ export function MapView() {
       }, slowThresholdMs);
 
       try {
-        const result = await fetchOsrmRoute(from.lat, from.lng, lat, lng);
+        // 🟢 [FOOT MODE ROUTING START]
+        const isFootModeNow = useVigla.getState().isFootMode;
+        const profile = isFootModeNow ? "foot" : "car";
+        console.log(`🗺️ [OSRM PROFILE] ${profile.toUpperCase()}`);
+        const result = await fetchOsrmRoute(from.lat, from.lng, lat, lng, undefined, {
+          profile,
+        });
         clearTimeout(slowTimeout);
 
         const elapsed = (performance.now() - t0) / 1000;
