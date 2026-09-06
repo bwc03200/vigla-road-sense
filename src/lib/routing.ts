@@ -112,10 +112,11 @@ async function fetchOsrmRaw(
 export async function fetchOsrmRouteVia(
   points: [number, number][],
   signal?: AbortSignal,
+  options?: { profile?: RoutingProfile },
 ): Promise<OsrmRouteResult> {
   if (points.length < 2) throw new Error("no-route");
   const path = points.map(([lat, lng]) => `${lng},${lat}`).join(";");
-  const profile = getRoutingProfile();
+  const profile = options?.profile ?? getRoutingProfile();
   console.log(
     profile === "foot"
       ? "[FOOT MODE ROUTING] Profile changed to foot"
