@@ -14,6 +14,7 @@ import { PushNotificationsRow } from "@/components/vigla/PushNotificationsRow";
 import { refreshOfficialRadars } from "@/hooks/useOfficialRadars";
 
 import { setLanguage, currentLang, type Lang } from "@/i18n/i18n";
+import { markLanguageManual } from "@/hooks/useBelgiumDetection";
 import type { AlertLeadTime, UserPreferences } from "@/types/vigla";
 
 interface Props {
@@ -87,9 +88,11 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
           options={[
             { value: "fr", label: "Français" },
             { value: "en", label: "English" },
+            { value: "nl", label: "Nederlands" },
           ]}
           onChange={(v) => {
             setLanguage(v as Lang);
+            markLanguageManual();
             // trigger a light re-render for consumers using currentLang() only
             i18n.emit("languageChanged", v);
           }}

@@ -3,8 +3,9 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import fr from "./locales/fr.json";
 import en from "./locales/en.json";
+import nl from "./locales/nl.json";
 
-export const SUPPORTED_LANGS = ["fr", "en"] as const;
+export const SUPPORTED_LANGS = ["fr", "en", "nl"] as const;
 export type Lang = (typeof SUPPORTED_LANGS)[number];
 
 const isBrowser = typeof window !== "undefined";
@@ -18,9 +19,10 @@ if (!i18n.isInitialized) {
     resources: {
       fr: { translation: fr },
       en: { translation: en },
+      nl: { translation: nl },
     },
     lng: isBrowser ? undefined : "fr",
-    fallbackLng: "fr",
+    fallbackLng: { nl: ["en"], default: ["fr"] },
     supportedLngs: SUPPORTED_LANGS as unknown as string[],
     nonExplicitSupportedLngs: true,
     interpolation: { escapeValue: false },

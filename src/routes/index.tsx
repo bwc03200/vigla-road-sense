@@ -20,6 +20,7 @@ import { useOfflineHazardSync } from "@/hooks/useOfflineHazardSync";
 import { useServiceWorker } from "@/hooks/useServiceWorker";
 import { usePersistActiveNavigation, useResumePrompt } from "@/hooks/useNavigationResume";
 import { useVigla } from "@/lib/vigla-store";
+import { useBelgiumDetection } from "@/hooks/useBelgiumDetection";
 import { initRouteStoreBridge } from "@/hooks/useRouteStore";
 
 import { installGlobalErrorLogging, setLoggerUser } from "@/lib/logger";
@@ -119,6 +120,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   }, []);
 
   useGeolocation();
+  useBelgiumDetection();
   useServiceWorker();
   useOnlineStatus();
   useOfflineHazardSync();
