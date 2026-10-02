@@ -621,5 +621,14 @@
     "radars": "Speed cameras",
     "hazards": "Hazard reports",
     "gasStations": "Gas stations"
+  },
+  "country": {
+    "belgium": "Belgium",
+    "france": "France"
+  },
+  "region": {
+    "flanders": "Flanders",
+    "wallonia": "Wallonia",
+    "brussels": "Brussels"
   }
 }

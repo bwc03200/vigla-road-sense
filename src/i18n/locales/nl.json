@@ -1,0 +1,9 @@
+{
+  "common": { "cancel": "Annuleren", "close": "Sluiten", "save": "Opslaan", "back": "Terug", "retry": "Opnieuw", "delete": "Verwijderen", "loading": "Laden…", "confirm": "Bevestigen", "yes": "Ja", "no": "Nee", "unknownError": "Onbekende fout", "min": "min", "km": "km", "days": "dag(en)" },
+  "tabs": { "map": "Kaart", "report": "Melden", "roadbooks": "Roadbooks", "history": "Geschiedenis", "convoy": "Konvooi", "profile": "Profiel", "foot": "Te voet" },
+  "map": { "clear": "Weg vrij", "routeActive": "Actieve route — weg vrij", "in": "over {{distance}}", "offline": "Offline modus actief", "zoomIn": "Inzoomen", "zoomOut": "Uitzoomen", "fitRoute": "Centreren op route", "recenter": "Mijn locatie", "pickedPoint": "Gekozen punt", "setAsDestination": "Als bestemming instellen" },
+  "hazard": { "types": { "radar_fixe": "Flitspaal", "radar_mobile": "Mobiele flitser", "accident": "Ongeluk", "travaux": "Wegwerk", "obstacle": "Obstakel", "ralentissement": "File", "gravillons": "Losse steentjes", "chute_huile": "Olie op de weg", "animal_sauvage": "Wild dier", "chaussee_deformee": "Beschadigd wegdek" } },
+  "geoError": { "title": "Locatie niet beschikbaar", "denied": "Locatietoegang geweigerd. Sta het toe in je browser.", "unsupported": "Je toestel ondersteunt geen locatie.", "unavailable": "Je locatie kan niet worden bepaald." },
+  "country": { "belgium": "België", "france": "Frankrijk" },
+  "region": { "flanders": "Vlaanderen", "wallonia": "Wallonië", "brussels": "Brussel", "switched": "Taal aangepast aan {{region}}" }
+}

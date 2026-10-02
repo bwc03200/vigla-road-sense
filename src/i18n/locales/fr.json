@@ -621,5 +621,14 @@
     "radars": "Radars fixes",
     "hazards": "Signalements",
     "gasStations": "Stations essence"
+  },
+  "country": {
+    "belgium": "Belgique",
+    "france": "France"
+  },
+  "region": {
+    "flanders": "Flandre",
+    "wallonia": "Wallonie",
+    "brussels": "Bruxelles"
   }
 }
