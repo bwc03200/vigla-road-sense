@@ -30,7 +30,7 @@ const MIRROR_TIMEOUT_MS = 9000;
 
 export async function queryGasStations(bbox: FuelBBox): Promise<FuelNode[]> {
   const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
-  const q = `[out:json][timeout:25];(node["amenity"="fuel"](${b});way["amenity"="fuel"](${b});relation["amenity"="fuel"](${b}););out center 300;`;
+  const q = `[out:json][timeout:25];(node["amenity"="fuel"](${b});way["amenity"="fuel"](${b});relation["amenity"="fuel"](${b}););out center 500;`;
 
   // All mirrors are queried in parallel; the first usable answer wins.
   const { json } = await raceOverpassMirrors({
