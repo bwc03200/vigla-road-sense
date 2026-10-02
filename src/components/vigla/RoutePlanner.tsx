@@ -51,7 +51,8 @@ export function RoutePlanner({ onClose }: { onClose: () => void }) {
         url.searchParams.set("format", "json");
         url.searchParams.set("limit", "6");
         url.searchParams.set("addressdetails", "0");
-        if (position) url.searchParams.set("countrycodes", "fr");
+        url.searchParams.set("countrycodes", "fr,be");
+        url.searchParams.set("accept-language", "fr,nl");
         const res = await fetch(url.toString(), {
           signal: ctrl.signal,
           headers: { Accept: "application/json" },

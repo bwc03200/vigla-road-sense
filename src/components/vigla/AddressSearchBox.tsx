@@ -73,7 +73,9 @@ export function AddressSearchBox({
         const url = new URL("https://nominatim.openstreetmap.org/search");
         url.searchParams.set("q", query.trim());
         url.searchParams.set("format", "json");
-        url.searchParams.set("limit", "6");
+        url.searchParams.set("limit", "8");
+        url.searchParams.set("countrycodes", "fr,be");
+        url.searchParams.set("accept-language", "fr,nl");
         const anchor = anchorRef.current;
         if (anchor) {
           const d = bboxDeltaForZoom(zoomRef.current);
