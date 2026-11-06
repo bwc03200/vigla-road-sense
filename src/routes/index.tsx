@@ -46,6 +46,7 @@ import { RoadbookList } from "@/components/vigla/RoadbookList";
 import { HistoryList } from "@/components/vigla/HistoryList";
 import { TripHistoryList } from "@/components/vigla/TripHistoryList";
 import { SettingsScreen } from "@/components/vigla/SettingsScreen";
+import { PageNavigation } from "@/components/vigla/PageNavigation";
 import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, LogOut, Navigation, Settings as SettingsIcon } from "lucide-react";
@@ -112,6 +113,14 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   const [tab, setTab] = useState<Tab>("map");
   const [showRoute, setShowRoute] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  function selectTab(next: Tab) {
+    setShowSettings(false);
+    setShowRoute(false);
+    setTab(next);
+  }
+  const pageTitle = showSettings ? t("settings.title") : tab === "report" ? t("hazard.report.title")
+    : tab === "roadbooks" ? t("roadbooks.title") : tab === "history" ? t("tripHistory.title")
+    : tab === "convoy" ? t("convoy.title") : t("tabs.profile");
   useEffect(() => {
     installGlobalErrorLogging();
     setLoggerUser(userId);
@@ -161,7 +170,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
       <main className="fixed inset-x-0 top-0 bottom-16" style={{ height: "calc(100dvh - 4rem)" }}>
         <h1 className="sr-only">VIGLA</h1>
 
-        {tab === "map" && (
+        <div hidden={tab !== "map" || showSettings} className={tab === "map" && !showSettings ? "h-full vigla-map-return" : "h-full"}>
           <MapTabContainer>
             <MapView />
             <TopBar />
@@ -190,7 +199,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
               }}
             >
               <StartTripBar />
-              <NavigationOverlay onReport={() => setTab("report")} onHistory={() => setTab("history")} />
+              <NavigationOverlay onReport={() => selectTab("report")} onHistory={() => selectTab("history")} />
             </NavigationErrorBoundary>
             {navActive && convoy && <ConvoyReactionBar userId={userId} />}
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
@@ -204,35 +213,36 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
             )}
           </MapTabContainer>
 
-        )}
+        </div>
 
+        {(tab !== "map" || showSettings) && (
+          <PageNavigation key={showSettings ? "settings" : tab} title={pageTitle} onBack={() => selectTab("map")}>
+          {showSettings ? (
+            <SettingsScreen userId={userId} email={email} onBack={() => selectTab("map")} embedded />
+          ) : <>
         {tab === "report" && (
-          <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">{t("hazard.report.title")}</h2>
+          <div className="pt-6">
             <p className="px-4 text-sm text-muted-foreground">{t("hazard.report.subtitle")}</p>
-            <ReportGrid onReported={() => setTab("map")} />
+            <ReportGrid onReported={() => selectTab("map")} />
           </div>
         )}
         {tab === "roadbooks" && (
-          <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">{t("roadbooks.title")}</h2>
+          <div className="pt-6">
             <RoadbookList userId={userId} />
           </div>
         )}
         {tab === "history" && (
-          <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">{t("tripHistory.title")}</h2>
-            <TripHistoryList userId={userId} onReplayed={() => setTab("map")} />
+          <div className="pt-6">
+            <TripHistoryList userId={userId} onReplayed={() => selectTab("map")} />
           </div>
         )}
         {tab === "convoy" && (
-          <div className="h-full overflow-y-auto pt-6">
-            <h2 className="px-4 text-lg font-semibold">{t("convoy.title")}</h2>
+          <div className="pt-6">
             <ConvoyPanel userId={userId} />
           </div>
         )}
         {tab === "profile" && (
-          <div className="h-full overflow-y-auto">
+          <div>
             <div className="p-6 pb-2">
               <div className="mb-4 flex items-center gap-3">
                 <ViglaLogo />
@@ -268,13 +278,11 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
             </div>
           </div>
         )}
+          </>}
+          </PageNavigation>
+        )}
       </main>
-      <BottomTabs value={tab} onChange={setTab} />
-      {showSettings && (
-        <div className="fixed inset-0 z-[900] bg-slate-50">
-          <SettingsScreen userId={userId} email={email} onBack={() => setShowSettings(false)} />
-        </div>
-      )}
+      <BottomTabs value={tab} onChange={selectTab} />
     </div>
   );
 }

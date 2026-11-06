@@ -21,9 +21,10 @@ interface Props {
   userId: string;
   email: string;
   onBack: () => void;
+  embedded?: boolean;
 }
 
-export function SettingsScreen({ userId, email, onBack }: Props) {
+export function SettingsScreen({ userId, email, onBack, embedded = false }: Props) {
   const { t, i18n } = useTranslation();
   const prefs = useVigla((s) => s.preferences);
   const [deleting, setDeleting] = useState(false);
@@ -70,7 +71,7 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
 
   return (
     <div className="h-full overflow-y-auto bg-slate-50 pb-8">
-      <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-3">
+      {!embedded && <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-slate-200 bg-white px-3 py-3">
         <button
           onClick={onBack}
           className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-slate-100"
@@ -79,7 +80,7 @@ export function SettingsScreen({ userId, email, onBack }: Props) {
           <ChevronLeft className="h-5 w-5" />
         </button>
         <h1 className="text-base font-semibold text-slate-900">{t("settings.title")}</h1>
-      </div>
+      </div>}
 
       <Section title={t("settings.sectionDisplay")}>
         <SegmentedRow
