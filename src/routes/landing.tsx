@@ -28,6 +28,8 @@ export const Route = createFileRoute("/landing")({
           "Alertes de zones de danger temps réel, mode convoi, alertes moto natives. Auto et moto. Prix garanti stable 24 mois.",
       },
       { property: "og:title", content: "VIGLA — Copilote auto & moto" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content:

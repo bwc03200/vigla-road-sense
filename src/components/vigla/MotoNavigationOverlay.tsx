@@ -10,6 +10,7 @@ import { TrafficSignalAhead } from "@/components/vigla/TrafficSignalAhead";
 import { RouteBar } from "@/components/vigla/RouteBar";
 import { HazardAlertBanner } from "@/components/vigla/HazardAlertBanner";
 import { useSpeedLimit } from "@/hooks/useRouteMilestones";
+import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
