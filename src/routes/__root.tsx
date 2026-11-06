@@ -10,6 +10,8 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
+import appIcon from "@/assets/vigla-icon-180.png.asset.json";
+import startup from "@/assets/vigla-apple-splash.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { MapInteractionProvider } from "../context/MapInteractionContext";
 import { syncClientLocale } from "../i18n/i18n";
@@ -101,21 +103,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord." },
       { property: "og:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord." },
       { name: "twitter:description", content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord." },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3030c30-946d-446b-9961-53a859594fad/id-preview-906fec6a--067a541a-e668-45e9-bd24-a7b365c91b4d.lovable.app-1783142455787.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/e3030c30-946d-446b-9961-53a859594fad/id-preview-906fec6a--067a541a-e668-45e9-bd24-a7b365c91b4d.lovable.app-1783142455787.png" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon", sizes: "192x192" },
+      { rel: "icon", href: "/favicon.png", type: "image/png", sizes: "64x64" },
+      { rel: "icon", href: "/icons/favicon.ico", type: "image/x-icon", sizes: "32x32" },
       { rel: "manifest", href: "/manifest.json" },
-      { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
+      { rel: "apple-touch-icon", href: appIcon.url, sizes: "180x180" },
       {
         rel: "apple-touch-startup-image",
-        href: "/icons/apple-splash-1170x2532.png",
+        href: startup.url,
         media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
       },
     ],

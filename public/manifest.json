@@ -1,7 +1,7 @@
 {
-  "name": "VIGLA — Alertes routières",
+  "name": "VIGLA Road Sense",
   "short_name": "VIGLA",
-  "description": "Alertes de zones de danger en temps réel pour motards et automobilistes",
+  "description": "Roulez informé, roulez serein — alertes routières auto et moto",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
@@ -9,10 +9,27 @@
   "theme_color": "#FF6B35",
   "background_color": "#0B0F14",
   "lang": "fr",
-  "categories": ["navigation", "travel", "utilities"],
+  "categories": [
+    "navigation",
+    "travel",
+    "utilities"
+  ],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    {
+      "src": "/__l5e/assets-v1/72978e36-e2df-42da-9b6f-9913c342b645/vigla-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/__l5e/assets-v1/21ee36d1-07be-43a7-bdfd-f610ca05b6cb/vigla-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "/__l5e/assets-v1/21ee36d1-07be-43a7-bdfd-f610ca05b6cb/vigla-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ]
 }

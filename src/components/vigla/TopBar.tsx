@@ -5,6 +5,7 @@ import { useVigla } from "@/lib/vigla-store";
 import { haversine, formatDistance, formatSpeed, speedUnitLabel } from "@/lib/geo";
 import { hazardLabel } from "@/lib/i18n-helpers";
 import { useSpeedLimit } from "@/hooks/useRouteMilestones";
+import { ViglaLogo } from "./ViglaLogo";
 
 export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   const { t } = useTranslation();
@@ -40,6 +41,7 @@ export function TopBar({ embedded = false }: { embedded?: boolean } = {}) {
   return (
     <div className={wrapperClass}>
       <div className="pointer-events-auto flex items-center gap-3 rounded-2xl bg-white px-4 py-2.5 shadow-[0_8px_24px_rgba(15,23,42,0.12)] ring-1 ring-slate-200">
+        {!embedded && <ViglaLogo />}
         <div className="flex flex-col items-center leading-none">
           <span
             className={`vigla-speed-value tabular-nums font-bold ${overLimit ? "vigla-speed-over text-[#e2313f]" : "text-slate-900"} ${embedded ? "text-[20px]" : "text-[32px]"}`}

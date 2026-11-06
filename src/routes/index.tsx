@@ -48,7 +48,8 @@ import { TripHistoryList } from "@/components/vigla/TripHistoryList";
 import { SettingsScreen } from "@/components/vigla/SettingsScreen";
 import { usePreferences } from "@/hooks/usePreferences";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, LogOut, Shield, Navigation, Settings as SettingsIcon } from "lucide-react";
+import { AlertTriangle, LogOut, Navigation, Settings as SettingsIcon } from "lucide-react";
+import { ViglaLogo, ViglaSplash } from "@/components/vigla/ViglaLogo";
 import { formatDistance } from "@/lib/geo";
 
 export const Route = createFileRoute("/")({
@@ -99,7 +100,7 @@ function Index() {
   }, [user, navigate]);
 
   if (user === undefined) {
-    return <div className="p-6 text-sm text-muted-foreground">{t("common.loading")}</div>;
+    return <ViglaSplash />;
   }
   if (!user) return null;
 
@@ -234,12 +235,11 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
           <div className="h-full overflow-y-auto">
             <div className="p-6 pb-2">
               <div className="mb-4 flex items-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
-                  <Shield className="h-6 w-6" />
-                </div>
+                <ViglaLogo />
                 <div>
                   <div className="text-sm font-semibold text-foreground">{email}</div>
                   <div className="text-xs text-muted-foreground">{t("profile.account")}</div>
+                  <div className="text-xs text-muted-foreground">{t("brand.tagline")}</div>
                 </div>
               </div>
               <Button

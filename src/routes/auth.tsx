@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Shield } from "lucide-react";
+import { ViglaLogo } from "@/components/vigla/ViglaLogo";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -63,10 +63,8 @@ function AuthPage() {
     <main className="flex min-h-screen items-center justify-center bg-background p-6">
       <div className="w-full max-w-sm">
         <div className="mb-8 flex items-center justify-center gap-2">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg">
-            <Shield className="h-6 w-6" />
-          </div>
-          <span className="text-2xl font-bold tracking-tight">VIGLA</span>
+          <ViglaLogo />
+          <div className="min-w-0"><span className="text-xl font-bold">VIGLA Road Sense</span><p className="text-xs text-muted-foreground">{t("brand.tagline")}</p></div>
         </div>
         <div className="rounded-3xl border border-border bg-card p-6 shadow-2xl">
           <h1 className="text-lg font-semibold text-foreground">
