@@ -630,5 +630,18 @@
     "flanders": "Flandre",
     "wallonia": "Wallonie",
     "brussels": "Bruxelles"
+  },
+  "sillaxe": {
+    "itinerary": "Guidage Moto",
+    "speed": "Vitesse actuelle",
+    "radarLimit": "Vitesse contrôlée au prochain radar",
+    "favorites": "Trajets favoris",
+    "nearbyHazards": "Signaler un danger · dangers proches",
+    "vigilance": "VIGILANCE ACTIVE",
+    "collapse": "Réduire l’alerte",
+    "dismissAlert": "Fermer l’alerte de vigilance",
+    "proximity": "Distance avant le danger",
+    "arrival": "arrivée",
+    "voice": "Guidage vocal"
   }
 }
