@@ -456,32 +456,47 @@ html { scroll-behavior: smooth; }
   .sillaxe-right .sillaxe-counter-button:hover, .sillaxe-right .sillaxe-counter-button:active { transform: none; }
 }
 
-/* Moto Prompt H: independent fixed widgets; zoom exists only on the left. */
-.vigla-moto-mode.vigla-sillaxe-active { --hud-col-top: calc(80px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
-.vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { position: fixed; top: var(--hud-col-top); right: var(--hud-col-right); z-index: 500; }
-.vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11,
-.vigla-moto-mode.vigla-sillaxe-active button.vigla-zoom-btn.h-11.w-11 { width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { position: fixed; display: block; width: 56px; height: 136px; left: var(--hud-col-left); right: auto; top: var(--hud-col-top); bottom: auto; z-index: 500; }
-.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn { position: absolute; left: 0; top: 0; margin: 0; }
-.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn:nth-child(2) { top: 80px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right { position: fixed; display: block; width: 56px; right: var(--hud-col-right); top: calc(var(--hud-col-top) + 80px); bottom: auto; height: 296px; overflow: visible; z-index: 500; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button { position: absolute; right: 0; top: 0; margin: 0; border-radius: 14px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 80px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 160px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 240px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-speed { position: fixed; left: var(--hud-col-left); bottom: calc(120px + env(safe-area-inset-bottom)); width: 80px; height: 80px; padding: 0; z-index: 400; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-speed-disc { width: 80px; height: 80px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-speed-value { font-size: 36px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-top { left: calc(var(--hud-col-left) + 72px); right: calc(var(--hud-col-right) + 72px); padding: 12px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-turn-icon { width: 28px; height: 28px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-turn-distance { font-size: 24px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-bottom { left: calc(var(--hud-col-left) + 96px); right: 12px; max-width: 620px; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-status-row { min-height: 0; }
-.vigla-moto-mode.vigla-sillaxe-active > .absolute.left-3.top-20 { left: var(--hud-col-left); top: calc(var(--hud-col-top) + 160px); }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 240px); bottom: auto; }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-40 { left: var(--hud-col-left); top: calc(var(--hud-col-top) + 320px); bottom: auto; }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.left-3.top-\[8\.5rem\] { left: calc(var(--hud-col-left) + 72px); top: calc(var(--hud-col-top) + 40px); max-width: calc(100% - 176px); }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.left-3.top-\[8\.5rem\] > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Moto Prompt L — RESET LAYOUT : une seule disposition stricte, identique au
+   repos et en navigation. Échelle z : carte 100, vitesse 400, colonnes 500,
+   barre du haut 600, modales du bas 700, onglets du bas 800. */
+.vigla-moto-mode { --hud-col-top: calc(80px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
+.vigla-moto-mode .leaflet-container { z-index: 100; }
+.vigla-moto-mode .leaflet-container > .absolute.right-3.top-3 { display: none; }
+
+/* Z-500 — contrôles carte à gauche : filtre, zoom+, zoom−, position, recadrer (pas de 72 px). */
+.vigla-moto-mode > .absolute.left-3.top-20 { position: fixed; left: var(--hud-col-left); top: var(--hud-col-top); z-index: 500; }
+.vigla-moto-mode > .absolute.left-3.top-20 > button { width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+.vigla-moto-mode .leaflet-container > .absolute.bottom-24 { position: fixed; display: block; width: 56px; height: 136px; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 72px); bottom: auto; z-index: 500; }
+.vigla-moto-mode .leaflet-container > .absolute.bottom-56 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 216px); bottom: auto; z-index: 500; }
+.vigla-moto-mode .leaflet-container > .absolute.bottom-44 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 288px); bottom: auto; z-index: 500; }
+.vigla-moto-mode .vigla-zoom-btn { position: absolute; left: 0; top: 0; margin: 0; width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+.vigla-moto-mode .vigla-zoom-btn svg { color: var(--sillaxe-accent) !important; }
+.vigla-moto-mode .leaflet-container > .absolute.bottom-24 .vigla-zoom-btn:nth-child(2) { top: 72px; }
+
+/* Z-500 — HUD droite : calques puis les 4 compteurs (pas de 72 px). */
+.vigla-moto-mode > .absolute.right-3.top-\[8\.5rem\] { position: fixed; top: var(--hud-col-top); right: var(--hud-col-right); z-index: 500; }
+.vigla-moto-mode > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11 { width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+.vigla-moto-mode .sillaxe-right { position: fixed; display: block; width: 56px; right: var(--hud-col-right); top: calc(var(--hud-col-top) + 72px); bottom: auto; height: 272px; overflow: visible; z-index: 500; }
+.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button { position: absolute; right: 0; top: 0; margin: 0; border-radius: 14px; }
+.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 72px; }
+.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 144px; }
+.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 216px; }
+
+/* Z-400 — disque de vitesse, bas gauche. */
+.vigla-moto-mode .sillaxe-speed { position: fixed; left: var(--hud-col-left); bottom: calc(120px + env(safe-area-inset-bottom)); width: 80px; height: 80px; padding: 0; z-index: 400; }
+.vigla-moto-mode .sillaxe-speed-disc { width: 80px; height: 80px; }
+.vigla-moto-mode .sillaxe-speed-value { font-size: 36px; }
+
+/* Z-600 — barre du haut ; Z-700 — carte du bas. */
+.vigla-moto-mode .sillaxe-top { left: calc(var(--hud-col-left) + 72px); right: calc(var(--hud-col-right) + 72px); padding: 12px; z-index: 600; }
+.vigla-moto-mode .sillaxe-turn-icon { width: 28px; height: 28px; }
+.vigla-moto-mode .sillaxe-turn-distance { font-size: 24px; }
+.vigla-moto-mode .sillaxe-bottom { left: calc(var(--hud-col-left) + 96px); right: 12px; max-width: 620px; z-index: 700; }
+.vigla-moto-mode .sillaxe-status-row { min-height: 0; }
+
+/* Pastille restaurants : dégagée des deux colonnes. */
+.vigla-moto-mode .leaflet-container > .absolute.left-3.top-\[8\.5rem\] { position: fixed; left: calc(var(--hud-col-left) + 72px); top: calc(var(--hud-col-top) + 40px); max-width: calc(100% - 176px); }
+.vigla-moto-mode .leaflet-container > .absolute.left-3.top-\[8\.5rem\] > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Moto Prompt I: keep the ETA values readable on short screens. */
 @media (max-height: 700px) {
