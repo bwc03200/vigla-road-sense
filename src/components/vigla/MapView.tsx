@@ -1209,7 +1209,7 @@ export function MapView() {
       )
     )}
     {pending && (
-      <div className="pointer-events-none absolute inset-x-0 bottom-4 z-[860] flex justify-center px-4">
+      <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[860] flex justify-center px-4">
         <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]/10 text-[#FF6B35]">
