@@ -413,10 +413,13 @@ html { scroll-behavior: smooth; }
 .sillaxe-recalculating { position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%); display: flex; gap: 4px; align-items: center; background: var(--sillaxe-panel); color: var(--sillaxe-muted); font-size: 10px; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
 .sillaxe-alert-detail { position: absolute; top: 0; right: 56px; width: 200px; padding: 14px; font-size: 12px; }
 .sillaxe-itinerary-host { position: absolute; inset: 0; pointer-events: none; }
+.sillaxe-itinerary-host { color: var(--foreground); }
 .sillaxe-itinerary-host > div { position: absolute; bottom: 220px; z-index: 710; }
 .sillaxe-signals { position: absolute; top: 105px; left: 80px; }
 .vigla-sillaxe-active .sillaxe-route { stroke: var(--sillaxe-accent); }
-.vigla-sillaxe-active .vigla-user-arrow { background: var(--sillaxe-accent); }
+.vigla-sillaxe-active .vigla-user-arrow { background: var(--sillaxe-accent) !important; }
+.vigla-sillaxe-active > .absolute.left-3.top-20 > button,
+.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11 { width: 44px !important; height: 44px !important; border-radius: 50% !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; }
 .vigla-sillaxe-active .vigla-zoom-btn { width: 40px !important; height: 40px !important; border-radius: 50% !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; }
 .vigla-sillaxe-active .vigla-zoom-btn svg { color: var(--sillaxe-accent) !important; }
 .vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { top: 150px; bottom: auto; }
