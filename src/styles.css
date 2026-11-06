@@ -433,6 +433,7 @@ html { scroll-behavior: smooth; }
 .vigla-sillaxe-active .vigla-zoom-btn { width: 40px !important; height: 40px !important; border-radius: 50% !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; }
 .vigla-sillaxe-active .vigla-zoom-btn svg { color: var(--sillaxe-accent) !important; }
 .vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { top: 150px; bottom: auto; }
+.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { top: 150px; bottom: auto; right: 76px; }
 .vigla-sillaxe-active > .absolute.left-3.top-20 { top: 108px; }
 .vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { top: 108px; }
 .vigla-sillaxe-active .leaflet-container > .absolute.left-3.top-\[8\.5rem\] { top: 160px; max-width: calc(100% - 85px); }
