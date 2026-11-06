@@ -454,3 +454,25 @@ html { scroll-behavior: smooth; }
   .sillaxe-hud *, .sillaxe-panel, .sillaxe-right, .sillaxe-counter-tooltip { animation: none !important; transition: none !important; }
   .sillaxe-right .sillaxe-counter-button:hover, .sillaxe-right .sillaxe-counter-button:active { transform: none; }
 }
+
+/* Sillaxe Moto: strict absolute grid for the right column (no flex, zero overlap).
+   Right column = Calques + 4 counters; zoom and "Ma position" move to the left column. */
+.vigla-sillaxe-active .sillaxe-right {
+  display: block; position: absolute; width: 80px; height: 284px; gap: 0;
+  top: calc(172px + env(safe-area-inset-top)); bottom: auto;
+}
+.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button { position: absolute; right: 0; margin: 0; }
+.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(1) { top: 0; }
+.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 76px; }
+.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 152px; }
+.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 228px; }
+.vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { top: calc(108px + env(safe-area-inset-top)); right: calc(max(16px, env(safe-area-inset-right)) + 6px); }
+.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn { width: 44px !important; height: 44px !important; border-radius: 50% !important; }
+.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn svg { width: 22px !important; height: 22px !important; }
+.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { position: absolute; left: 12px; right: auto; top: calc(212px + env(safe-area-inset-top)); bottom: auto; gap: 8px; }
+.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { position: absolute; left: 12px; right: auto; top: calc(320px + env(safe-area-inset-top)); bottom: auto; }
+@media (min-width: 768px) { .vigla-sillaxe-active .sillaxe-right { right: max(24px, env(safe-area-inset-right)); } }
+@media (min-width: 1024px) { .vigla-sillaxe-active .sillaxe-right { right: max(32px, env(safe-area-inset-right)); } }
+@media (max-height: 640px) {
+  .vigla-sillaxe-active .sillaxe-right { top: calc(112px + env(safe-area-inset-top)); bottom: calc(100px + env(safe-area-inset-bottom)); height: auto; overflow-y: auto; overflow-x: hidden; }
+}
