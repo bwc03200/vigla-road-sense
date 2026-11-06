@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useTranslation } from "react-i18next";
+import { ViglaLogo } from "@/components/vigla/ViglaLogo";
 import {
   MapPin,
   ShieldCheck,
@@ -138,16 +140,15 @@ function FeatureCard({
 }
 
 function LandingPage() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* NAV */}
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-background/85 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3 sm:px-8">
           <a href="#hero" className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-strong text-primary-foreground">
-              <Radar className="h-4 w-4" />
-            </div>
-            <span className="text-lg font-black tracking-tight">VIGLA</span>
+            <ViglaLogo />
+            <div className="min-w-0"><span className="text-sm font-bold">VIGLA Road Sense</span><p className="hidden text-xs text-muted-foreground sm:block">{t("brand.tagline")}</p></div>
           </a>
           <nav className="hidden items-center gap-6 text-sm font-medium text-slate-600 md:flex">
             <a href="#features" className="hover:text-slate-900">
@@ -644,10 +645,8 @@ function LandingPage() {
 
         <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-8 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary-strong text-primary-foreground">
-              <Radar className="h-3.5 w-3.5" />
-            </div>
-            <span className="font-bold text-slate-900">VIGLA</span>
+            <ViglaLogo />
+            <span className="font-bold text-foreground">VIGLA Road Sense</span>
             <span>© {new Date().getFullYear()}</span>
           </div>
           <div className="flex flex-wrap gap-5">
