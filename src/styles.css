@@ -478,12 +478,14 @@ html { scroll-behavior: smooth; }
 }
 
 /* Sillaxe Moto: single right column, 7 Apple glass buttons on an 80px grid (56px + 24px gap). */
-.vigla-moto-mode.vigla-sillaxe-active { --hud-col-top: calc(100px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); }
+.vigla-moto-mode.vigla-sillaxe-active { --hud-col-top: calc(112px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); }
 .vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { top: var(--hud-col-top); right: var(--hud-col-right); }
 .vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11,
 .vigla-moto-mode.vigla-sillaxe-active button.vigla-zoom-btn.h-11.w-11 { width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
 .vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { display: flex; flex-direction: column; gap: 24px; left: auto; right: var(--hud-col-right); top: calc(var(--hud-col-top) + 80px); bottom: auto; }
 .vigla-moto-mode.vigla-sillaxe-active .sillaxe-right { top: calc(var(--hud-col-top) + 240px); height: 296px; }
+/* Keep the bottom card clear of the right button column (56px + 24px strip). */
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-bottom { right: calc(80px + var(--hud-col-right)); }
 .vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 80px; }
 .vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 160px; }
 .vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 240px; }
