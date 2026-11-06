@@ -455,38 +455,27 @@ html { scroll-behavior: smooth; }
   .sillaxe-right .sillaxe-counter-button:hover, .sillaxe-right .sillaxe-counter-button:active { transform: none; }
 }
 
-/* Sillaxe Moto: strict absolute grid for the right column (no flex, zero overlap).
-   Right column = Calques + 4 counters; zoom and "Ma position" move to the left column. */
-.vigla-sillaxe-active .sillaxe-right {
-  display: block; position: absolute; width: 80px; height: 284px; gap: 0;
-  top: calc(172px + env(safe-area-inset-top)); bottom: auto;
-}
-.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button { position: absolute; right: 0; margin: 0; }
-.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(1) { top: 0; }
-.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 76px; }
-.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 152px; }
-.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 228px; }
-.vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { top: calc(108px + env(safe-area-inset-top)); right: calc(max(16px, env(safe-area-inset-right)) + 6px); }
-.vigla-moto-mode.vigla-sillaxe-active button.vigla-zoom-btn.h-11.w-11 { width: 44px !important; height: 44px !important; border-radius: 50% !important; }
-.vigla-moto-mode.vigla-sillaxe-active button.vigla-zoom-btn.h-11.w-11 svg { width: 22px !important; height: 22px !important; }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { position: absolute; left: 12px; right: auto; top: calc(212px + env(safe-area-inset-top)); bottom: auto; gap: 8px; }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { position: absolute; left: 12px; right: auto; top: calc(320px + env(safe-area-inset-top)); bottom: auto; }
-@media (min-width: 768px) { .vigla-sillaxe-active .sillaxe-right { right: max(24px, env(safe-area-inset-right)); } }
-@media (min-width: 1024px) { .vigla-sillaxe-active .sillaxe-right { right: max(32px, env(safe-area-inset-right)); } }
-@media (max-height: 640px) {
-  .vigla-sillaxe-active .sillaxe-right { top: calc(112px + env(safe-area-inset-top)); bottom: calc(100px + env(safe-area-inset-bottom)); height: auto; overflow-y: auto; overflow-x: hidden; }
-}
-
-/* Sillaxe Moto: single right column, 7 Apple glass buttons on an 80px grid (56px + 24px gap). */
-.vigla-moto-mode.vigla-sillaxe-active { --hud-col-top: calc(112px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); }
-.vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { top: var(--hud-col-top); right: var(--hud-col-right); }
+/* Moto Prompt H: independent fixed widgets; zoom exists only on the left. */
+.vigla-moto-mode.vigla-sillaxe-active { --hud-col-top: calc(80px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
+.vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { position: fixed; top: var(--hud-col-top); right: var(--hud-col-right); z-index: 500; }
 .vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11,
 .vigla-moto-mode.vigla-sillaxe-active button.vigla-zoom-btn.h-11.w-11 { width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { display: flex; flex-direction: column; gap: 24px; left: auto; right: var(--hud-col-right); top: calc(var(--hud-col-top) + 80px); bottom: auto; }
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right { top: calc(var(--hud-col-top) + 240px); height: 296px; }
-/* Keep the bottom card clear of the right button column (56px + 24px strip). */
-.vigla-moto-mode.vigla-sillaxe-active .sillaxe-bottom { right: calc(80px + var(--hud-col-right)); }
+.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { position: fixed; display: block; width: 56px; height: 136px; left: var(--hud-col-left); right: auto; top: var(--hud-col-top); bottom: auto; z-index: 500; }
+.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn { position: absolute; left: 0; top: 0; margin: 0; }
+.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn:nth-child(2) { top: 80px; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right { position: fixed; display: block; width: 56px; right: var(--hud-col-right); top: calc(var(--hud-col-top) + 80px); bottom: auto; height: 296px; overflow: visible; z-index: 500; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button { position: absolute; right: 0; top: 0; margin: 0; border-radius: 14px; }
 .vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 80px; }
 .vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 160px; }
 .vigla-moto-mode.vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 240px; }
-.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { top: calc(212px + env(safe-area-inset-top)); }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-speed { position: fixed; left: var(--hud-col-left); bottom: calc(120px + env(safe-area-inset-bottom)); width: 80px; height: 80px; padding: 0; z-index: 400; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-speed-disc { width: 80px; height: 80px; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-speed-value { font-size: 36px; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-top { left: calc(var(--hud-col-left) + 72px); right: calc(var(--hud-col-right) + 72px); padding: 12px; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-turn-icon { width: 28px; height: 28px; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-turn-distance { font-size: 24px; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-bottom { left: calc(var(--hud-col-left) + 96px); right: 12px; max-width: 620px; }
+.vigla-moto-mode.vigla-sillaxe-active .sillaxe-status-row { min-height: 0; }
+.vigla-moto-mode.vigla-sillaxe-active > .absolute.left-3.top-20 { left: var(--hud-col-left); top: calc(var(--hud-col-top) + 160px); }
+.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 240px); bottom: auto; }
+.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-40 { left: var(--hud-col-left); top: calc(var(--hud-col-top) + 320px); bottom: auto; }
