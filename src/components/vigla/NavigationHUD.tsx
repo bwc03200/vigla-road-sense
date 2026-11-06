@@ -134,8 +134,10 @@ export function NavigationETABar({ navigation, eta, onStop, onVoice }: { navigat
     <div className="sillaxe-eta-cell sillaxe-arrival"><strong key={eta} className="tabular-nums">{eta}</strong><span>{t("sillaxe.arrival")}</span></div>
     <div className="sillaxe-eta-cell"><strong key={Math.ceil(navigation.durationRemainingS / 60)} className="tabular-nums">{Math.max(0, Math.ceil(navigation.durationRemainingS / 60))}</strong><span>{t("common.min")}</span></div>
     <div className="sillaxe-eta-cell"><strong key={(navigation.distanceRemainingM / 1000).toFixed(1)} className="tabular-nums">{(Math.max(0, navigation.distanceRemainingM) / 1000).toFixed(1)}</strong><span>{t("common.km")}</span></div>
-    <Button variant="ghost" size="icon" className="sillaxe-round sillaxe-voice" title={t("sillaxe.voice")} aria-label={t("sillaxe.voice")} aria-pressed={voice} onClick={() => { if (voice) cancelSpeech(); onVoice(); }}>{voice ? <Volume2 /> : <VolumeX />}</Button>
-    <Button variant="ghost" size="icon" className="sillaxe-round sillaxe-stop" title={t("navigation.stop")} aria-label={t("navigation.stop")} onClick={onStop}><X /></Button>
+    <div className="sillaxe-eta-actions">
+      <Button variant="ghost" size="icon" className="sillaxe-round sillaxe-voice" title={t("sillaxe.voice")} aria-label={t("sillaxe.voice")} aria-pressed={voice} onClick={() => { if (voice) cancelSpeech(); onVoice(); }}>{voice ? <Volume2 /> : <VolumeX />}</Button>
+      <Button variant="ghost" size="icon" className="sillaxe-round sillaxe-stop" title={t("navigation.stop")} aria-label={t("navigation.stop")} onClick={onStop}><X /></Button>
+    </div>
     {navigation.recalculating && <span className="sillaxe-recalculating"><Loader2 className="size-3 animate-spin" />{t("navigation.recalculating")}</span>}
   </div>;
 }
