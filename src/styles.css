@@ -437,23 +437,15 @@ html { scroll-behavior: smooth; }
 .sillaxe-signals { position: absolute; top: 105px; left: 80px; }
 .vigla-sillaxe-active .sillaxe-route { stroke: var(--sillaxe-accent); }
 .vigla-sillaxe-active .vigla-user-arrow { background: var(--sillaxe-accent) !important; }
-.vigla-sillaxe-active > .absolute.left-3.top-20 > button,
-.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11 { width: 44px !important; height: 44px !important; border-radius: 50% !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; }
-.vigla-sillaxe-active .vigla-zoom-btn { width: 40px !important; height: 40px !important; border-radius: 50% !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; }
-.vigla-sillaxe-active .vigla-zoom-btn svg { color: var(--sillaxe-accent) !important; }
-.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { top: 150px; bottom: auto; }
-.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { top: 150px; bottom: auto; right: 76px; }
-.vigla-sillaxe-active > .absolute.left-3.top-20 { top: 108px; }
-.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { top: 108px; }
-.vigla-sillaxe-active .leaflet-container > .absolute.left-3.top-\[8\.5rem\] { top: 160px; max-width: calc(100% - 85px); }
-.vigla-sillaxe-active .leaflet-container > .absolute.bottom-40 { top: 210px; bottom: auto; }
+/* Prompt L: l'ancien bloc .vigla-sillaxe-active est remplacé par la
+   disposition unifiée .vigla-moto-mode plus bas (mêmes positions au repos
+   et en navigation). */
 @media (min-width: 768px) {
   .sillaxe-right { right: max(24px, env(safe-area-inset-right)); }
   .sillaxe-bottom { bottom: 24px; }
   .sillaxe-speed-value { font-size: 48px; }
 }
 @media (min-width: 1024px) { .sillaxe-right { right: max(32px, env(safe-area-inset-right)); } }
-@media (max-height: 700px) { .vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { left: 12px; right: auto; } }
 @media (max-height: 540px) { .sillaxe-right { bottom: calc(100px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: visible; } }
 
 @keyframes apple-fade-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
