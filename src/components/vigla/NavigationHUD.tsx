@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUp, ArrowUpLeft, ArrowUpRight, CornerDownLeft, CornerDownRight, Heart, AlertTriangle, MessageCircle, Route, Volume2, VolumeX, X, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useVigla } from "@/lib/vigla-store";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistance, formatSpeed } from "@/lib/geo";
@@ -43,6 +44,34 @@ export function NavigationSpeedHUD({ speed, unit, limit }: { speed: number; unit
   </div>;
 }
 
+function RightHUDCounter({ Icon, label, count, action, warning, expanded }: {
+  Icon: typeof Heart; label: string; count: number | string; action?: () => void; warning?: boolean; expanded?: boolean;
+}) {
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const held = useRef(false);
+  const clearHold = () => { clearTimeout(holdTimer.current); };
+  useEffect(() => () => clearTimeout(holdTimer.current), []);
+  return <Tooltip open={tooltipOpen} onOpenChange={setTooltipOpen}>
+    <TooltipTrigger asChild>
+      <Button variant="ghost" size="icon" className={`sillaxe-round sillaxe-counter-button${warning ? " sillaxe-counter-warning" : ""}`}
+        aria-label={label} aria-expanded={expanded} disabled={!action}
+        onPointerDown={event => {
+          held.current = false;
+          if (event.pointerType === "touch") holdTimer.current = setTimeout(() => { held.current = true; setTooltipOpen(true); }, 500);
+        }}
+        onPointerUp={clearHold} onPointerCancel={() => { clearHold(); setTooltipOpen(false); }}
+        onPointerLeave={() => { clearHold(); setTooltipOpen(false); }}
+        onClick={() => { if (held.current) { held.current = false; return; } setTooltipOpen(false); action?.(); }}>
+        <Icon aria-hidden="true" strokeWidth={1.8} />
+        <span key={count} className="sillaxe-counter-value tabular-nums" aria-hidden="true">{count}</span>
+        <span className="sr-only">{count}</span>
+      </Button>
+    </TooltipTrigger>
+    <TooltipContent side="left" sideOffset={12} className="sillaxe-counter-tooltip">{label}</TooltipContent>
+  </Tooltip>;
+}
+
 export function NavigationRightHUD({ hazards, messages, stops, onReport, onItinerary, onHistory }: {
   hazards: number; messages: number; stops: number; onReport?: () => void; onItinerary: () => void; onHistory?: () => void;
 }) {
@@ -61,19 +90,19 @@ export function NavigationRightHUD({ hazards, messages, stops, onReport, onItine
   });
   const entries = [
     { Icon: Heart, label: t("sillaxe.favorites"), count: favorites ?? "—", action: onHistory },
-    { Icon: AlertTriangle, label: t("sillaxe.nearbyHazards"), count: hazards, action: onReport },
-    { Icon: MessageCircle, label: t("navigation.alerts"), count: messages, action: () => setAlertsOpen(v => !v) },
+    { Icon: AlertTriangle, label: t("sillaxe.nearbyHazards"), count: hazards, action: onReport, warning: hazards > 0 },
+    { Icon: MessageCircle, label: t("tabs.convoy"), count: messages, action: () => setAlertsOpen(v => !v), expanded: alertsOpen },
     { Icon: Route, label: t("navigation.itinerary"), count: stops, action: onItinerary },
   ];
-  return <div className="sillaxe-right">
-    {entries.map(({ Icon, label, count, action }) => <div className="sillaxe-counter" key={label}>
-      <Button variant="ghost" size="icon" className="sillaxe-round" title={label} aria-label={label} onClick={action} disabled={!action}><Icon /></Button>
-      <span className="tabular-nums">{count}</span>
-    </div>)}
-    {alertsOpen && <div className="sillaxe-alert-detail sillaxe-panel"><strong>{t("navigation.alerts")}: {messages}</strong>
+  return <TooltipProvider delayDuration={250}><div className="sillaxe-right" role="group" aria-label={t("navigation.itinerary")}>
+    {entries.map(entry => <RightHUDCounter key={entry.label} {...entry} />)}
+    {alertsOpen && <div className="sillaxe-alert-detail sillaxe-panel" role="region" aria-label={t("tabs.convoy")}>
+      <div className="sillaxe-alert-detail-heading"><strong>{t("navigation.alerts")}: {messages}</strong>
+        <Button variant="ghost" size="icon" className="sillaxe-icon-button" aria-label={t("common.close")} onClick={() => setAlertsOpen(false)}><X /></Button>
+      </div>
       {convoyAlerts.slice(-3).map(a => <div key={a.id}>{a.payload.text ?? a.kind}</div>)}
     </div>}
-  </div>;
+  </div></TooltipProvider>;
 }
 
 export function NavigationAlertBar({ milestone }: { milestone: RouteMilestone | undefined }) {
