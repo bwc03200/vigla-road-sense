@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { Map, AlertTriangle, BookOpen, Users, User, History, Footprints } from "lucide-react";
 import { useFootModeStore } from "@/lib/foot-mode-store";
+import { Button } from "@/components/ui/button";
 
 export type Tab = "map" | "report" | "roadbooks" | "history" | "convoy" | "profile";
 
@@ -34,40 +35,42 @@ export function BottomTabs({
           const active = value === id;
           const label = t(`tabs.${key}`);
           return (
-            <button
+            <Button
+              variant="ghost"
               key={id}
               type="button"
               onClick={() => onChange(id)}
               aria-label={label}
               aria-current={active ? "page" : undefined}
-              className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition ${
-                active ? "text-slate-900" : "text-slate-500"
+              className={`h-16 min-w-0 flex-1 flex-col gap-1 rounded-none px-0 py-2.5 transition ${
+                active ? "text-foreground" : "text-muted-foreground"
               }`}
             >
               <Icon
                 aria-hidden="true"
-                className={`h-5 w-5 ${active ? "text-[#FF6B35] scale-110" : ""} transition`}
+                className={`h-5 w-5 ${active ? "text-primary scale-110" : ""} transition`}
               />
               <span className="text-[10px] font-semibold">{label}</span>
-            </button>
+            </Button>
           );
         })}
 
-        <button
+        <Button
+          variant="ghost"
           type="button"
-          onClick={toggleFootMode}
+          onClick={() => { toggleFootMode(); onChange("map"); }}
           aria-label={t("tabs.foot")}
           aria-pressed={isFootMode}
-          className={`flex flex-1 flex-col items-center justify-center gap-1 py-2.5 transition ${
-            isFootMode ? "text-blue-600" : "text-slate-500"
+          className={`h-16 min-w-0 flex-1 flex-col gap-1 rounded-none px-0 py-2.5 transition ${
+            isFootMode ? "text-info" : "text-muted-foreground"
           }`}
         >
           <Footprints
             aria-hidden="true"
-            className={`h-5 w-5 ${isFootMode ? "text-blue-600 scale-110" : ""} transition`}
+            className={`h-5 w-5 ${isFootMode ? "text-info scale-110" : ""} transition`}
           />
           <span className="text-[10px] font-semibold">{t("tabs.foot")}</span>
-        </button>
+        </Button>
       </div>
     </nav>
   );

@@ -13,3 +13,4 @@
 - HUD proximity presentation uses existing route milestones and a separate pure threshold helper; it must not alter POI layer visibility or the proximity-alert engine.
 - Initialize locale deterministically, then restore it after hydration through the versioned language policy; this avoids browser-locale overrides and resets legacy automatic selections once.
 - Share uploaded branding through ViglaLogo and CDN asset pointers; derive small app icons from the artwork without lettering for legibility, while favicons remain real public files.
+- Secondary app screens share PageNavigation; hide rather than unmount the map while switching tabs so guidance continues, and keep settings below the persistent bottom tabs.
