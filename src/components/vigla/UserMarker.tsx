@@ -137,6 +137,9 @@ export function UserMarker({ lat, lng, heading }: Props) {
     // high-accuracy mode, and long durations feel laggy. Cap at 1.2s so
     // the marker never trails the vehicle by more than one GPS cycle.
     durationRef.current = Math.min(1200, Math.max(250, dt));
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      durationRef.current = 1; // jump directly
+    }
 
     startTsRef.current = now;
     lastFixTsRef.current = now;
