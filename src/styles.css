@@ -399,7 +399,7 @@ html { scroll-behavior: smooth; }
 @media (hover: hover) { .sillaxe-right .sillaxe-counter-button:hover { transform: scale(1.05); } }
 @keyframes apple-counter-pulse { 50% { transform: scale(1.12); } }
 .sillaxe-round:hover, .sillaxe-icon-button:hover, .sillaxe-mini:hover { background: var(--sillaxe-line); color: var(--sillaxe-text); }
-.sillaxe-vigilance { min-width: 0; flex: 1; padding: 10px 12px; border-radius: 18px; border-color: var(--sillaxe-danger); color: var(--sillaxe-danger); pointer-events: auto; }
+.sillaxe-vigilance { min-width: 0; flex: 1; padding: 10px 12px; border-radius: 16px; border-color: var(--sillaxe-danger); color: var(--sillaxe-danger); pointer-events: auto; }
 .sillaxe-vigilance-heading { display: flex; align-items: center; gap: 4px; }
 .sillaxe-vigilance-heading strong { flex: 1; font-size: 10px; line-height: 1.3; }
 .sillaxe-mini { width: 24px; height: 24px; flex-shrink: 0; padding: 0; }
@@ -410,6 +410,13 @@ html { scroll-behavior: smooth; }
 .sillaxe-progress::-webkit-progress-value { background: var(--sillaxe-danger); transition: width 200ms ease-out; }
 .sillaxe-progress::-moz-progress-bar { background: var(--sillaxe-danger); }
 .sillaxe-eta { min-height: 84px; display: flex; align-items: center; gap: 8px; padding: 14px; pointer-events: auto; position: relative; }
+.sillaxe-vigilance.sillaxe-panel, .sillaxe-eta.sillaxe-panel { background: color-mix(in srgb, var(--sillaxe-panel) 66%, transparent); animation: apple-bar-spring .55s cubic-bezier(.22,1.35,.36,1) both; letter-spacing: 0; }
+.sillaxe-eta .sillaxe-eta-cell strong { animation: apple-value-spring .35s cubic-bezier(.22,1.35,.36,1) both; }
+.sillaxe-eta .sillaxe-round, .sillaxe-vigilance .sillaxe-mini { transition: transform .35s cubic-bezier(.34,1.56,.64,1), background .2s ease, color .2s ease; }
+.sillaxe-eta .sillaxe-round:focus-visible, .sillaxe-vigilance .sillaxe-mini:focus-visible { outline: 2px solid var(--sillaxe-accent); outline-offset: 3px; }
+.sillaxe-vigilance .sillaxe-mini:active { transform: scale(.92); }
+@keyframes apple-bar-spring { from { opacity: 0; transform: translateY(10px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes apple-value-spring { from { opacity: .65; transform: translateY(2px) scale(.97); } to { opacity: 1; transform: none; } }
 .sillaxe-eta-cell { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: center; }
 .sillaxe-eta-cell strong { font-size: 21px; line-height: 1; }
 .sillaxe-eta-cell span { font-size: 11px; color: var(--sillaxe-muted); }

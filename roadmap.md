@@ -1,4 +1,5 @@
 # Sillaxe Moto design
+- [x] Prompt B: Apple translucent vigilance/ETA bars with spring entry, live value feedback and focus/press polish. Authenticated real Moto route plus simulated radar proximity and distance changes verified French vigilance, 10→9min, 2.5→2.3km, voice toggle and reduced motion; 24 existing tests passed.
 - [x] Integrate supplied PNG logo through shared branding, map/auth/profile/landing, 1024px startup artwork, CDN app icons and real favicons; bilingual tagline. Verified authenticated map header at 48px, auth/profile/landing rendering and manifest image dimensions; 24 HUD/language tests passed. No vector SVG fabricated; installed-device startup/reinstallation remains device-only verification.
 - [x] Add Moto-only navigation HUD using live navigation, speed and alert data.
 - [x] Integrate without changing map tiles, POI visibility, seven tabs or car/foot navigation.
