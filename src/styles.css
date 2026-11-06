@@ -467,8 +467,8 @@ html { scroll-behavior: smooth; }
 .vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 152px; }
 .vigla-sillaxe-active .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 228px; }
 .vigla-moto-mode.vigla-sillaxe-active > .absolute.right-3.top-\[8\.5rem\] { top: calc(108px + env(safe-area-inset-top)); right: calc(max(16px, env(safe-area-inset-right)) + 6px); }
-.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn { width: 44px !important; height: 44px !important; border-radius: 50% !important; }
-.vigla-moto-mode.vigla-sillaxe-active .vigla-zoom-btn svg { width: 22px !important; height: 22px !important; }
+.vigla-moto-mode.vigla-sillaxe-active button.vigla-zoom-btn.h-11.w-11 { width: 44px !important; height: 44px !important; border-radius: 50% !important; }
+.vigla-moto-mode.vigla-sillaxe-active button.vigla-zoom-btn.h-11.w-11 svg { width: 22px !important; height: 22px !important; }
 .vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { position: absolute; left: 12px; right: auto; top: calc(212px + env(safe-area-inset-top)); bottom: auto; gap: 8px; }
 .vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { position: absolute; left: 12px; right: auto; top: calc(320px + env(safe-area-inset-top)); bottom: auto; }
 @media (min-width: 768px) { .vigla-sillaxe-active .sillaxe-right { right: max(24px, env(safe-area-inset-right)); } }
