@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
-import i18n, { currentLang, setLanguage } from "@/i18n/i18n";
 
 export type Country = "belgium" | "france" | "other";
 export type BeRegion = "flanders" | "wallonia" | "brussels";
@@ -23,7 +22,7 @@ export function detectBelgianRegion(lat: number, lng: number): BeRegion {
 
 const MANUAL_KEY = "vigla:lang:manual";
 
-/** Auto-switch language when entering Flanders (NL) / Wallonia (FR), unless the user chose a language manually. */
+/** Detect the region without changing the user's interface language. */
 export function useBelgiumDetection() {
   const position = useVigla((s) => s.position);
   const last = useRef<string | null>(null);
@@ -38,15 +37,6 @@ export function useBelgiumDetection() {
     if (country !== "belgium" || !region) return;
     console.log("🟢 Belgium: geolocation detected", { lat: position.lat, lng: position.lng, country, region });
 
-    let manual = false;
-    try { manual = localStorage.getItem(MANUAL_KEY) === "1"; } catch { /* ignore */ }
-    if (manual || region === "brussels") return;
-    const target = region === "flanders" ? "nl" : "fr";
-    if (currentLang() !== target) {
-      setLanguage(target);
-      console.log("🟢 i18n: locale switched", { locale: target, region });
-      void i18n;
-    }
   }, [position]);
 }
 

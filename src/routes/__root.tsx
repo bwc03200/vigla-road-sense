@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { MapInteractionProvider } from "../context/MapInteractionContext";
+import { syncClientLocale } from "../i18n/i18n";
 
 function NotFoundComponent() {
   return (
@@ -128,7 +129,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="fr" suppressHydrationWarning>
       <head suppressHydrationWarning>
         <HeadContent />
       </head>
@@ -142,6 +143,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  useEffect(() => { syncClientLocale(); }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

@@ -1,48 +1,49 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
 import fr from "./locales/fr.json";
 import en from "./locales/en.json";
 import nl from "./locales/nl.json";
 
-export const SUPPORTED_LANGS = ["fr", "en", "nl"] as const;
-export type Lang = (typeof SUPPORTED_LANGS)[number];
-
-const isBrowser = typeof window !== "undefined";
+import { initialLanguage, LANGUAGE_POLICY_VERSION, SUPPORTED_LANGS, type Lang } from "./language-policy";
+export { SUPPORTED_LANGS, type Lang } from "./language-policy";
 
 if (!i18n.isInitialized) {
-  const chain = isBrowser
-    ? i18n.use(LanguageDetector).use(initReactI18next)
-    : i18n.use(initReactI18next);
-
-  chain.init({
+  i18n.use(initReactI18next).init({
     resources: {
       fr: { translation: fr },
       en: { translation: en },
       nl: { translation: nl },
     },
-    lng: isBrowser ? undefined : "fr",
-    fallbackLng: { nl: ["en"], default: ["fr"] },
+    lng: "fr",
+    fallbackLng: "fr",
     supportedLngs: SUPPORTED_LANGS as unknown as string[],
     nonExplicitSupportedLngs: true,
     interpolation: { escapeValue: false },
-    detection: {
-      order: ["localStorage", "navigator"],
-      lookupLocalStorage: "vigla:lang",
-      caches: ["localStorage"],
-    },
   });
 }
 
 export function setLanguage(lang: Lang) {
-  i18n.changeLanguage(lang);
-  if (isBrowser) {
+  void i18n.changeLanguage(lang);
+  if (typeof window !== "undefined") {
+    document.documentElement.lang = lang;
     try {
       window.localStorage.setItem("vigla:lang", lang);
+      window.localStorage.setItem("vigla:lang:policy", LANGUAGE_POLICY_VERSION);
     } catch {
       /* ignore */
     }
   }
+}
+
+/** Called after hydration: the browser's locale never overrides the app default. */
+export function syncClientLocale() {
+  if (typeof window === "undefined") return;
+  let lang: Lang = "fr";
+  try {
+    lang = initialLanguage(localStorage.getItem("vigla:lang"), localStorage.getItem("vigla:lang:policy"));
+  } catch { /* French remains available when storage is blocked. */ }
+  setLanguage(lang);
+  console.log("🟢 [i18n] Langue de l’interface", { locale: lang });
 }
 
 export function currentLang(): Lang {
