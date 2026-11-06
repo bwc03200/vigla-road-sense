@@ -630,5 +630,18 @@
     "flanders": "Flanders",
     "wallonia": "Wallonia",
     "brussels": "Brussels"
+  },
+  "sillaxe": {
+    "itinerary": "Moto guidance",
+    "speed": "Current speed",
+    "radarLimit": "Enforced speed at the next camera",
+    "favorites": "Favorite trips",
+    "nearbyHazards": "Report a hazard · nearby hazards",
+    "vigilance": "VIGILANCE ACTIVE",
+    "collapse": "Collapse alert",
+    "dismissAlert": "Dismiss vigilance alert",
+    "proximity": "Distance to hazard",
+    "arrival": "arrival",
+    "voice": "Voice guidance"
   }
 }

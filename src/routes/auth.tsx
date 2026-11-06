@@ -10,6 +10,14 @@ import { Shield } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  head: () => ({ meta: [
+    { title: "VIGLA — Connexion" },
+    { name: "description", content: "Connectez-vous à VIGLA pour retrouver vos trajets et alertes routières." },
+    { property: "og:title", content: "VIGLA — Connexion" },
+    { property: "og:description", content: "Retrouvez vos trajets et alertes routières avec VIGLA." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary_large_image" },
+  ] }),
   component: AuthPage,
 });
 

@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { TrafficSignalAhead } from "@/components/vigla/TrafficSignalAhead";
 import { RouteBar } from "@/components/vigla/RouteBar";
 import { HazardAlertBanner } from "@/components/vigla/HazardAlertBanner";
+import { MotoNavigationOverlay } from "@/components/vigla/MotoNavigationOverlay";
+import { savePreferences } from "@/hooks/usePreferences";
 import { useVigla } from "@/lib/vigla-store";
 import { useNavigationEngine } from "@/hooks/useNavigationEngine";
 import { formatDistance } from "@/lib/geo";
@@ -112,7 +114,7 @@ export function StartTripBar() {
   );
 }
 
-export function NavigationOverlay() {
+export function NavigationOverlay({ onReport, onHistory }: { onReport?: () => void; onHistory?: () => void } = {}) {
   useNavigationEngine();
   const { t } = useTranslation();
   const navigation = useVigla((s) => s.navigation);
@@ -175,7 +177,13 @@ export function NavigationOverlay() {
   // In Moto Mode the dedicated MotoNavigationOverlay renders the HUD/chips/
   // instruction panel. We still needed to run useNavigationEngine above and
   // handle arrival — but skip the standard dark instruction card + TopBar.
-  if (motoMode) return null;
+  if (motoMode) return <MotoNavigationOverlay onReport={onReport} onHistory={onHistory} onStop={endTrip} onVoice={() => {
+    const next = !useVigla.getState().preferences.voice_alerts;
+    useVigla.getState().setPreferences({ ...useVigla.getState().preferences, voice_alerts: next });
+    void supabase.auth.getUser().then(({ data }) => {
+      if (data.user) void savePreferences(data.user.id, { voice_alerts: next });
+    });
+  }} />;
 
 
   const startedAtMs = navigation.startedAt

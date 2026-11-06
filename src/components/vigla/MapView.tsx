@@ -657,6 +657,7 @@ export function MapView() {
   // Recalculates the active route with the car/foot OSRM profile on toggle.
   useFootRouting();
   const isFootMode = useVigla((s) => s.isFootMode);
+  const sillaxeActive = motoMode && !isFootMode && navActive;
   const [poiRouting, setPoiRouting] = useState(false);
   const [poiPreview, setPoiPreview] = useState<(typeof inViewFastfoods)[number] | null>(null);
   const [poiPopup, setPoiPopup] = useState<{
@@ -1098,7 +1099,7 @@ export function MapView() {
           {navigation.remainingCoords.length >= 2 && (
             <Polyline
               positions={navigation.remainingCoords}
-              pathOptions={{ color: "#FF6B35", weight: 7, opacity: 0.95 }}
+              pathOptions={sillaxeActive ? { className: "sillaxe-route", weight: 7, opacity: 0.95 } : { color: "#FF6B35", weight: 7, opacity: 0.95 }}
             />
           )}
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
@@ -1303,10 +1304,10 @@ export function MapView() {
         onClose={() => setGasPopup(null)}
       />
     )}
-    {navActive && <NavigationBannerBlue />}
+    {navActive && !sillaxeActive && <NavigationBannerBlue />}
     {navActive && isFootMode && <FootModePanel />}
-    {navActive && <FixedTurnMarker />}
-    {navActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
+    {navActive && !sillaxeActive && <FixedTurnMarker />}
+    {navActive && !sillaxeActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
     <CityDisplay city={cityName} />
     </>
   );

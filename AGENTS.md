@@ -8,3 +8,6 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Moto navigation presentation is composed from read-only HUD components; NavigationOverlay remains mounted and owns the engine, arrival and trip teardown to preserve navigation lifecycle.
+- HUD proximity presentation uses existing route milestones and a separate pure threshold helper; it must not alter POI layer visibility or the proximity-alert engine.

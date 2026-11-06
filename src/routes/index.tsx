@@ -36,7 +36,6 @@ import { DemoAlertModal } from "@/components/vigla/DemoAlertModal";
 import { BottomTabs, type Tab } from "@/components/vigla/BottomTabs";
 import { RoutePlanner } from "@/components/vigla/RoutePlanner";
 import { NavigationOverlay, StartTripBar } from "@/components/vigla/NavigationOverlay";
-import { MotoNavigationOverlay } from "@/components/vigla/MotoNavigationOverlay";
 import { NavigationErrorBoundary } from "@/components/vigla/NavigationErrorBoundary";
 import { CrashAlertOverlay } from "@/components/vigla/CrashAlertOverlay";
 import { AutoProtectBanner, ProtectionBadge } from "@/components/vigla/AutoProtectBanner";
@@ -63,6 +62,8 @@ export const Route = createFileRoute("/")({
           "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord.",
       },
       { property: "og:title", content: "VIGLA — Alertes routières temps réel" },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
       {
         property: "og:description",
         content: "VIGLA — application communautaire d'alerte de zones de danger routières  ( compatible Moto): radars, accidents, travaux. Temps réel, mobile et tableau de bord.",
@@ -188,8 +189,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
               }}
             >
               <StartTripBar />
-              <NavigationOverlay />
-              <MotoNavGate onReport={() => setTab("report")} />
+              <NavigationOverlay onReport={() => setTab("report")} onHistory={() => setTab("history")} />
             </NavigationErrorBoundary>
             {navActive && convoy && <ConvoyReactionBar userId={userId} />}
             {showRoute && <RoutePlanner onClose={() => setShowRoute(false)} />}
@@ -281,21 +281,13 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
 
 function MapTabContainer({ children }: { children: React.ReactNode }) {
   const motoMode = useVigla((s) => s.preferences.moto_mode);
+  const sillaxeActive = useVigla(s => s.preferences.moto_mode && !s.isFootMode && !!s.navigation && !s.navigation.arrived);
   return (
-    <div className={`relative h-full w-full vigla-map-root${motoMode ? " vigla-moto-mode" : ""}`}>
+    <div className={`relative h-full w-full vigla-map-root${motoMode ? " vigla-moto-mode" : ""}${sillaxeActive ? " vigla-sillaxe-active" : ""}`}>
       {children}
     </div>
   );
 }
-
-function MotoNavGate({ onReport }: { onReport: () => void }) {
-  const motoMode = useVigla((s) => s.preferences.moto_mode);
-  const navigation = useVigla((s) => s.navigation);
-  const navActive = !!navigation && !navigation.arrived;
-  if (!motoMode || !navActive) return null;
-  return <MotoNavigationOverlay onReport={onReport} />;
-}
-
 
 
 
