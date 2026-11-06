@@ -1,4 +1,5 @@
 # Sillaxe Moto design
+- [ ] Integrate supplied VIGLA logo in headers, startup, app icons and favicon; bilingual tagline; verify branding and existing Moto layout.
 - [x] Add Moto-only navigation HUD using live navigation, speed and alert data.
 - [x] Integrate without changing map tiles, POI visibility, seven tabs or car/foot navigation.
 - [x] Verify alert rules and navigation controls; inspect mobile and desktop layouts (authenticated real route, voice toggle, itinerary, stop; simulated speed/radar, ten-second dismissal; four threshold tests passed).
