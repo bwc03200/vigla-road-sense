@@ -71,7 +71,7 @@ export function NavigationRightHUD({ hazards, messages, stops, onReport, onItine
       <span className="tabular-nums">{count}</span>
     </div>)}
     {alertsOpen && <div className="sillaxe-alert-detail sillaxe-panel"><strong>{t("navigation.alerts")}: {messages}</strong>
-      {convoyAlerts.slice(-3).map(a => <div key={a.id}>{a.type}</div>)}
+      {convoyAlerts.slice(-3).map(a => <div key={a.id}>{a.payload.text ?? a.kind}</div>)}
     </div>}
   </div>;
 }
