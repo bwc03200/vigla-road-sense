@@ -385,7 +385,7 @@ html { scroll-behavior: smooth; }
 .sillaxe-speed-over .sillaxe-speed-value { color: var(--sillaxe-danger); }
 .sillaxe-speed-over .sillaxe-speed-disc { border-color: var(--sillaxe-danger); }
 .sillaxe-limit { position: absolute; top: -7px; right: -4px; width: 43px; height: 43px; border-radius: 50%; border: 4px solid var(--sillaxe-danger); background: var(--sillaxe-limit-bg); color: var(--sillaxe-limit-text); display: grid; place-items: center; font-size: 19px; font-weight: 800; }
-.sillaxe-right { position: absolute; right: max(16px, env(safe-area-inset-right)); top: max(calc(112px + env(safe-area-inset-top)), min(172px, calc(100% - 400px - env(safe-area-inset-bottom)))); width: 80px; display: flex; flex-direction: column; align-items: flex-end; gap: 20px; pointer-events: auto; letter-spacing: 0; animation: apple-fade-in .4s cubic-bezier(.34,1.56,.64,1) both; }
+.sillaxe-right { position: absolute; right: max(16px, env(safe-area-inset-right)); top: max(calc(112px + env(safe-area-inset-top)), min(282px, calc(100% - 396px - env(safe-area-inset-bottom)))); width: 80px; display: flex; flex-direction: column; align-items: flex-end; gap: 20px; pointer-events: auto; letter-spacing: 0; animation: apple-fade-in .4s cubic-bezier(.34,1.56,.64,1) both; }
 .sillaxe-round { width: 44px; height: 44px; border-radius: 50%; background: color-mix(in srgb, var(--sillaxe-panel) 72%, transparent); backdrop-filter: blur(20px) saturate(180%); color: var(--sillaxe-text); border: 1px solid var(--sillaxe-line); padding: 0; transition: transform .5s cubic-bezier(.34,1.56,.64,1), background .2s ease; box-shadow: var(--sillaxe-shadow); }
 .sillaxe-round svg { width: 23px; height: 23px; }
 .sillaxe-right .sillaxe-counter-button { width: 56px; height: 56px; min-width: 56px; min-height: 56px; flex-shrink: 0; border-radius: 16px; display: flex; flex-direction: column; gap: 2px; cursor: pointer; touch-action: manipulation; transition: transform .3s cubic-bezier(.34,1.56,.64,1), color .3s ease, background .3s ease; }
@@ -394,7 +394,8 @@ html { scroll-behavior: smooth; }
 .sillaxe-right .sillaxe-counter-warning, .sillaxe-right .sillaxe-counter-warning:hover { color: var(--sillaxe-danger); border-color: var(--sillaxe-danger); }
 .sillaxe-right .sillaxe-counter-button:active { transform: scale(1.05); }
 .sillaxe-counter-button:focus-visible { outline: 2px solid var(--sillaxe-accent); outline-offset: 4px; }
-.sillaxe-counter-tooltip { z-index: 800; background: var(--sillaxe-panel); color: var(--sillaxe-text); border: 1px solid var(--sillaxe-line); border-radius: 8px; box-shadow: var(--sillaxe-shadow); font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; letter-spacing: 0; }
+.sillaxe-counter-tooltip { z-index: 800; pointer-events: none; background: var(--sillaxe-panel); color: var(--sillaxe-text); border: 1px solid var(--sillaxe-line); border-radius: 8px; box-shadow: var(--sillaxe-shadow); font-family: -apple-system, BlinkMacSystemFont, system-ui, sans-serif; letter-spacing: 0; }
+.sillaxe-counter-tooltip[data-state="closed"] { display: none; }
 @media (hover: hover) { .sillaxe-right .sillaxe-counter-button:hover { transform: scale(1.05); } }
 @keyframes apple-counter-pulse { 50% { transform: scale(1.12); } }
 .sillaxe-round:hover, .sillaxe-icon-button:hover, .sillaxe-mini:hover { background: var(--sillaxe-line); color: var(--sillaxe-text); }
@@ -442,6 +443,7 @@ html { scroll-behavior: smooth; }
   .sillaxe-speed-value { font-size: 48px; }
 }
 @media (min-width: 1024px) { .sillaxe-right { right: max(32px, env(safe-area-inset-right)); } }
+@media (max-height: 700px) { .vigla-sillaxe-active .leaflet-container > .absolute.bottom-24 { left: 12px; right: auto; } }
 @media (max-height: 540px) { .sillaxe-right { bottom: calc(100px + env(safe-area-inset-bottom)); overflow-y: auto; overflow-x: visible; } }
 
 @keyframes apple-fade-in { from { opacity: 0; transform: translateY(-4px) scale(.98); } to { opacity: 1; transform: none; } }
