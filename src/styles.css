@@ -479,3 +479,5 @@ html { scroll-behavior: smooth; }
 .vigla-moto-mode.vigla-sillaxe-active > .absolute.left-3.top-20 { left: var(--hud-col-left); top: calc(var(--hud-col-top) + 160px); }
 .vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-56 { left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 240px); bottom: auto; }
 .vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.bottom-40 { left: var(--hud-col-left); top: calc(var(--hud-col-top) + 320px); bottom: auto; }
+.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.left-3.top-\[8\.5rem\] { left: calc(var(--hud-col-left) + 72px); top: calc(var(--hud-col-top) + 40px); max-width: calc(100% - 176px); }
+.vigla-moto-mode.vigla-sillaxe-active .leaflet-container > .absolute.left-3.top-\[8\.5rem\] > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
