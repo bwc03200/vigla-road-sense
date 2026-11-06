@@ -409,7 +409,7 @@ html { scroll-behavior: smooth; }
 .sillaxe-progress::-webkit-progress-bar { background: var(--sillaxe-line); }
 .sillaxe-progress::-webkit-progress-value { background: var(--sillaxe-danger); transition: width 200ms ease-out; }
 .sillaxe-progress::-moz-progress-bar { background: var(--sillaxe-danger); }
-.sillaxe-eta { min-height: 84px; display: flex; align-items: center; gap: 8px; padding: 14px; pointer-events: auto; position: relative; }
+.sillaxe-eta { min-height: 84px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 14px; pointer-events: auto; position: relative; }
 .sillaxe-vigilance.sillaxe-panel, .sillaxe-eta.sillaxe-panel { background: color-mix(in srgb, var(--sillaxe-panel) 66%, transparent); animation: apple-bar-spring .55s cubic-bezier(.22,1.35,.36,1) both; letter-spacing: 0; }
 .sillaxe-eta .sillaxe-eta-cell strong { animation: apple-value-spring .35s cubic-bezier(.22,1.35,.36,1) both; }
 .sillaxe-eta .sillaxe-round, .sillaxe-vigilance .sillaxe-mini { transition: transform .35s cubic-bezier(.34,1.56,.64,1), background .2s ease, color .2s ease; }
