@@ -3,6 +3,9 @@ import { useTranslation } from "react-i18next";
 import { AlertTriangle, ArrowUp, Radar, Signal, SignalLow, SignalMedium, Wifi } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { formatDistance, formatSpeed } from "@/lib/geo";
+import { NavigationTopBar, NavigationSpeedHUD, NavigationRightHUD, NavigationAlertBar, NavigationETABar } from "@/components/vigla/NavigationHUD";
+import { useRouteMilestones } from "@/hooks/useRouteMilestones";
+import { isVigilanceInRange } from "@/lib/navigation-hud";
 import { TrafficSignalAhead } from "@/components/vigla/TrafficSignalAhead";
 import { RouteBar } from "@/components/vigla/RouteBar";
 import { HazardAlertBanner } from "@/components/vigla/HazardAlertBanner";
@@ -18,7 +21,7 @@ function pad2(n: number) {
  * Standard NavigationOverlay hides its visuals in that case; the navigation
  * engine hook still runs there so business logic is untouched.
  */
-export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
+export function MotoNavigationOverlay({ onReport, onStop, onVoice, onHistory }: { onReport?: () => void; onStop?: () => void; onVoice?: () => void; onHistory?: () => void }) {
   const { t } = useTranslation();
   const navigation = useVigla((s) => s.navigation);
   const position = useVigla((s) => s.position);
@@ -26,6 +29,11 @@ export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
   const speedUnit = useVigla((s) => s.preferences.speed_unit);
   const officialRadars = useVigla((s) => s.officialRadars);
   const speedLimit = useSpeedLimit();
+  const milestones = useRouteMilestones(30);
+  const route = useVigla(s => s.route);
+  const isFootMode = useVigla(s => s.isFootMode);
+  const convoyAlerts = useVigla(s => s.convoyAlerts);
+  const [itineraryOpen, setItineraryOpen] = useState(false);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -52,6 +60,26 @@ export function MotoNavigationOverlay({ onReport }: { onReport?: () => void }) {
     !!(navigator as unknown as { connection?: { saveData?: boolean } }).connection?.saveData;
 
   if (!navigation || navigation.arrived) return null;
+
+  // Only replace the visual Moto HUD. The existing navigation engine and
+  // trip teardown remain owned by NavigationOverlay.
+  if (!isFootMode && onStop && onVoice) {
+    const vigilance = milestones.find(m => isVigilanceInRange(m.kind, m.distanceM));
+    return <div className="sillaxe-hud">
+      <NavigationTopBar navigation={navigation} eta={eta} onStop={onStop} />
+      <NavigationRightHUD hazards={milestones.filter(m => m.kind === "hazard" && m.distanceM < 500).length}
+        messages={navigation.alertsReceived + convoyAlerts.length} stops={route?.waypoints.length ?? 0}
+        onReport={onReport} onHistory={onHistory} onItinerary={() => setItineraryOpen(v => !v)} />
+      <div className="sillaxe-bottom">
+        <div className="sillaxe-status-row"><NavigationSpeedHUD speed={speedKmh} unit={speedUnit} limit={speedLimit} />
+          <NavigationAlertBar milestone={vigilance} />
+        </div>
+        <NavigationETABar navigation={navigation} eta={eta} onStop={onStop} onVoice={onVoice} />
+      </div>
+      {itineraryOpen && <div className="sillaxe-itinerary-host"><ItineraryPanel /></div>}
+      <div className="sillaxe-signals"><TrafficSignalAhead moto /></div>
+    </div>;
+  }
 
   const step = navigation.steps[navigation.currentStepIndex];
 
