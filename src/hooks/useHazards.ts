@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { HazardReport } from "@/types/vigla";
+import { loadGuestHazards } from "@/lib/guest-hazards";
 
 const CACHE_KEY = "vigla:hazards-cache";
 
@@ -21,7 +22,7 @@ export function useHazards() {
           .gt("expires_at", nowIso);
         if (error) throw error;
         if (cancelled) return;
-        setHazards(data as HazardReport[]);
+        setHazards([...(data as HazardReport[]), ...loadGuestHazards()]);
         try {
           localStorage.setItem(CACHE_KEY, JSON.stringify(data));
         } catch {}
@@ -30,7 +31,7 @@ export function useHazards() {
         // so the map stays populated. Online status is tracked by useOnlineStatus.
         try {
           const cached = localStorage.getItem(CACHE_KEY);
-          if (cached) setHazards(JSON.parse(cached) as HazardReport[]);
+          setHazards([...(cached ? JSON.parse(cached) as HazardReport[] : []), ...loadGuestHazards()]);
         } catch {}
       }
     }

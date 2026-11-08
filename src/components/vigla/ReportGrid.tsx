@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Camera, Siren, Construction, TriangleAlert, Turtle, Radar, CircleDot, Droplet, PawPrint, AlertOctagon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { saveGuestHazard } from "@/lib/guest-hazards";
 import { useVigla } from "@/lib/vigla-store";
 import { hazardLabel } from "@/lib/i18n-helpers";
 import { enqueueHazard } from "@/lib/offline-hazard-queue";
@@ -50,7 +51,13 @@ export function ReportGrid({ onReported }: { onReported?: () => void }) {
     const { data: sessionData } = await supabase.auth.getSession();
     const uid = sessionData.session?.user?.id;
     if (!uid) {
-      toast.error(t("hazard.report.loginRequired"));
+      try {
+        saveGuestHazard(type, position.lat, position.lng);
+        toast.success("Signalement enregistré sur cet appareil", { description: hazardLabel(type) });
+        onReported?.();
+      } catch {
+        toast.error("Impossible d’enregistrer le signalement sur cet appareil.");
+      }
       setPending(null);
       return;
     }

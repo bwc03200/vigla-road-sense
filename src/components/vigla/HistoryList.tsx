@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Bell, MapPin } from "lucide-react";
 import type { TripHistory } from "@/types/vigla";
+import { readGuestData } from "@/lib/access-mode";
 
 export function HistoryList() {
   const { t, i18n } = useTranslation();
@@ -15,6 +16,11 @@ export function HistoryList() {
   useEffect(() => {
     let mounted = true;
     (async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        if (mounted) setTrips(readGuestData<TripHistory[]>("trip-history", []));
+        return;
+      }
       const { data, error } = await supabase
         .from("trip_history")
         .select("*")
