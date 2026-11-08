@@ -459,7 +459,7 @@ html { scroll-behavior: smooth; }
 /* Moto Prompt L — RESET LAYOUT : une seule disposition stricte, identique au
    repos et en navigation. Échelle z : carte 100, vitesse 400, colonnes 500,
    barre du haut 600, modales du bas 700, onglets du bas 800. */
-.vigla-moto-mode { --hud-col-top: calc(80px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
+.vigla-moto-mode { --hud-col-top: calc(80px + env(safe-area-inset-top)); --hud-col-right-top: calc(120px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
 .vigla-moto-mode .leaflet-container { z-index: 100; }
 .vigla-moto-mode .leaflet-container > .absolute.right-3.top-3 { display: none; }
 
@@ -473,14 +473,15 @@ html { scroll-behavior: smooth; }
 .vigla-moto-mode .vigla-zoom-btn svg { color: var(--sillaxe-accent) !important; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-24 .vigla-zoom-btn:nth-child(2) { top: 72px; }
 
-/* Z-500 — HUD droite : calques puis les 4 compteurs (pas de 72 px). */
-.vigla-moto-mode > .absolute.right-3.top-\[8\.5rem\] { position: fixed; top: var(--hud-col-top); right: var(--hud-col-right); z-index: 500; }
+/* Z-500 — HUD droite : calques puis les 4 compteurs, colonne verticale sous
+   le bandeau du haut, 12 px entre boutons (pas de 68 px). */
+.vigla-moto-mode > .absolute.right-3.top-\[8\.5rem\] { position: fixed; top: var(--hud-col-right-top); right: var(--hud-col-right); z-index: 500; }
 .vigla-moto-mode > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11 { width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
-.vigla-moto-mode .sillaxe-right { position: fixed; display: block; width: 56px; right: var(--hud-col-right); top: calc(var(--hud-col-top) + 72px); bottom: auto; height: 272px; overflow: visible; z-index: 500; }
+.vigla-moto-mode .sillaxe-right { position: fixed; display: block; width: 56px; right: var(--hud-col-right); top: calc(var(--hud-col-right-top) + 68px); bottom: auto; height: 260px; overflow: visible; z-index: 500; }
 .vigla-moto-mode .sillaxe-right > .sillaxe-counter-button { position: absolute; right: 0; top: 0; margin: 0; border-radius: 14px; }
-.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 72px; }
-.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 144px; }
-.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 216px; }
+.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 68px; }
+.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 136px; }
+.vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 204px; }
 
 /* Z-400 — disque de vitesse, bas gauche. */
 .vigla-moto-mode .sillaxe-speed { position: fixed; left: var(--hud-col-left); bottom: calc(120px + env(safe-area-inset-bottom)); width: 80px; height: 80px; padding: 0; z-index: 400; }
