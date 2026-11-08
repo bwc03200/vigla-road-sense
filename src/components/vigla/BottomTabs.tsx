@@ -50,7 +50,7 @@ export function BottomTabs({
                 aria-hidden="true"
                 className={`h-5 w-5 ${active ? "text-primary scale-110" : ""} transition`}
               />
-              <span className="text-[10px] font-semibold">{label}</span>
+              <span className="vigla-tab-label text-[11px] font-semibold">{label}</span>
             </Button>
           );
         })}
