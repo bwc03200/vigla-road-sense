@@ -1,5 +1,15 @@
 import { test, expect } from "@playwright/test";
 import { isVigilanceInRange, vigilanceProgress, VIGILANCE_DURATION_MS } from "../src/lib/navigation-hud";
+import { formatDistance } from "../src/lib/geo";
+
+test("distance to next turn uses lowercase metres with a space, never a lone uppercase M", () => {
+  expect(formatDistance(41)).toBe("41 m");
+  expect(formatDistance(149)).toBe("149 m");
+  expect(formatDistance(41)).not.toMatch(/M/);
+});
+test("longer distances use kilometres with a space", () => {
+  expect(formatDistance(41000)).toBe("41.0 km");
+});
 
 test("radar vigilance is strictly below 300 metres", () => {
   expect(isVigilanceInRange("radar", 299)).toBe(true);

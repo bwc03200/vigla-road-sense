@@ -220,15 +220,22 @@ html { scroll-behavior: smooth; }
     border-radius 200ms ease-out, width 200ms ease-out, height 200ms ease-out;
 }
 
+/* Boutons de carte (filtre, zoom, localisation) : un seul matériau,
+   verre sombre avec flou, sur tous les états (accueil, aperçu, navigation). */
+.vigla-map-btn {
+  background: rgba(28, 28, 30, 0.72);
+  color: #eef1f4;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
 /* Floating map controls: square, dark panel, subtle border, no orange ring. */
 .vigla-moto-mode .vigla-zoom-btn,
 .vigla-moto-mode button.h-11.w-11 {
   height: 56px !important;
   width: 56px !important;
   border-radius: 16px !important;
-  background-color: var(--moto-panel) !important;
-  color: var(--moto-text) !important;
-  border: 1px solid var(--moto-line) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
   ring-color: transparent !important;
 }
@@ -435,7 +442,7 @@ html { scroll-behavior: smooth; }
 .sillaxe-itinerary-host { color: var(--foreground); }
 .sillaxe-itinerary-host > div { position: absolute; bottom: 220px; z-index: 710; }
 .sillaxe-signals { position: absolute; top: 105px; left: 80px; }
-.vigla-sillaxe-active .sillaxe-route { stroke: var(--sillaxe-accent); }
+.vigla-sillaxe-active .sillaxe-route { stroke: #FF6B35; }
 .vigla-sillaxe-active .vigla-user-arrow { background: var(--sillaxe-accent) !important; }
 /* Prompt L: l'ancien bloc .vigla-sillaxe-active est remplacé par la
    disposition unifiée .vigla-moto-mode plus bas (mêmes positions au repos
@@ -467,12 +474,12 @@ html { scroll-behavior: smooth; }
 
 /* Z-500 — contrôles carte à gauche : filtre, zoom+, zoom−, position, recadrer (pas de 72 px). */
 .vigla-moto-mode > .absolute.left-3.top-20 { position: fixed; left: var(--hud-col-left); top: var(--hud-col-top); z-index: 500; }
-.vigla-moto-mode > .absolute.left-3.top-20 > button { width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
+.vigla-moto-mode > .absolute.left-3.top-20 > button { width: 56px !important; height: 56px !important; border-radius: 14px !important; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-24 { position: fixed; display: block; width: 56px; height: 136px; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 72px); bottom: auto; z-index: 500; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-56 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 216px); bottom: auto; z-index: 500; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-44 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 288px); bottom: auto; z-index: 500; }
-.vigla-moto-mode .vigla-zoom-btn { position: absolute; left: 0; top: 0; margin: 0; width: 56px !important; height: 56px !important; border-radius: 14px !important; background: var(--sillaxe-panel) !important; color: var(--sillaxe-accent) !important; backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%); }
-.vigla-moto-mode .vigla-zoom-btn svg { color: var(--sillaxe-accent) !important; }
+.vigla-moto-mode .vigla-zoom-btn { position: absolute; left: 0; top: 0; margin: 0; width: 56px !important; height: 56px !important; border-radius: 14px !important; }
+.vigla-moto-mode .vigla-zoom-btn svg { color: inherit !important; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-24 .vigla-zoom-btn:nth-child(2) { top: 72px; }
 
 /* Z-500 — HUD droite : calques puis les 4 compteurs, colonne verticale sous

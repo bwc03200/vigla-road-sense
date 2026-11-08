@@ -31,7 +31,7 @@ import { useProximityAlerts, type ProximityPOI } from "@/hooks/useProximityAlert
 import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
-import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
+import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue"; // conservé pour réactivation éventuelle
 import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
 import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
 import { useHeadingLock } from "@/hooks/useHeadingLock";
@@ -314,7 +314,7 @@ function FitRouteButton({ coords, label }: { coords: [number, number][]; label: 
           const bounds = L.latLngBounds(coords.map(([la, ln]) => L.latLng(la, ln)));
           map.fitBounds(bounds, { padding: [60, 60], animate: true });
         }}
-        className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95"
+        className="vigla-zoom-btn vigla-map-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95"
       >
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
           <path d="M3 8V5a2 2 0 0 1 2-2h3" />
@@ -352,7 +352,7 @@ function MyLocationButton({ lat, lng, label, onRecenter }: { lat: number; lng: n
           map.panTo([lat, lng], { animate: true, duration: 0.5 });
           onRecenter();
         }}
-        className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95"
+        className="vigla-zoom-btn vigla-map-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95"
       >
         <LocateFixed className="h-5 w-5" />
       </button>
@@ -1082,7 +1082,7 @@ export function MapView() {
 
       {route && !navActive && (
         <>
-          <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
+          <Polyline positions={route.coords} pathOptions={{ color: "#FF6B35", weight: 6, opacity: 0.85 }} />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
           <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
@@ -1178,7 +1178,7 @@ export function MapView() {
         </div>
       )}
     </MapContainer>
-    <div className="absolute right-3 top-[8.5rem] z-[700]">
+    <div className={`absolute right-3 z-[700] ${navActive && !sillaxeActive ? "top-[14rem]" : "top-[8.5rem]"}`}>
       <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
     </div>
     {proximityAlert && (
@@ -1304,7 +1304,7 @@ export function MapView() {
         onClose={() => setGasPopup(null)}
       />
     )}
-    {navActive && !sillaxeActive && <NavigationBannerBlue />}
+    {/* Pastille « En navigation » supprimée : l'info est dans la carte d'instruction. */}
     {navActive && isFootMode && <FootModePanel />}
     {navActive && !sillaxeActive && <FixedTurnMarker />}
     {navActive && !sillaxeActive && route && route.waypoints.length > 0 && <ItineraryPanel />}

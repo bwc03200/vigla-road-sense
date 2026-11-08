@@ -31,7 +31,7 @@ export function ZoomControls() {
         aria-label={t("map.zoomIn")}
         disabled={atMax}
         onClick={() => { vibrateTap(); setFollow(false); map.zoomIn(); }}
-        className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+        className="vigla-zoom-btn vigla-map-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95 disabled:pointer-events-none disabled:opacity-40"
       >
         <ZoomIn className="h-5 w-5" />
       </button>
@@ -40,7 +40,7 @@ export function ZoomControls() {
         aria-label={t("map.zoomOut")}
         disabled={atMin}
         onClick={() => { vibrateTap(); setFollow(false); map.zoomOut(); }}
-        className="vigla-zoom-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95 disabled:pointer-events-none disabled:opacity-40"
+        className="vigla-zoom-btn vigla-map-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95 disabled:pointer-events-none disabled:opacity-40"
       >
         <ZoomOut className="h-5 w-5" />
       </button>
