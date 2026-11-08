@@ -459,7 +459,9 @@ html { scroll-behavior: smooth; }
 /* Moto Prompt L — RESET LAYOUT : une seule disposition stricte, identique au
    repos et en navigation. Échelle z : carte 100, vitesse 400, colonnes 500,
    barre du haut 600, modales du bas 700, onglets du bas 800. */
-.vigla-moto-mode { --hud-col-top: calc(80px + env(safe-area-inset-top)); --hud-col-right-top: calc(120px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
+/* Le bas de la carte du logo est à 102 px - 16 px : la colonne gauche part
+   juste sous la carte, sans la toucher. */
+.vigla-moto-mode { --hud-col-top: 102px; --hud-col-right-top: calc(120px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
 .vigla-moto-mode .leaflet-container { z-index: 100; }
 .vigla-moto-mode .leaflet-container > .absolute.right-3.top-3 { display: none; }
 
@@ -509,6 +511,17 @@ html { scroll-behavior: smooth; }
 @keyframes vigla-page-slide { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: none; } }
 @keyframes vigla-map-fade { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .vigla-page-content, .vigla-map-return { animation: none !important; } }
+
+/* Libellés des onglets du bas : 11 px, une seule ligne, et ils ne débordent
+   jamais sur l'onglet voisin (tronqués s'ils sont trop longs). */
+.vigla-tab-label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  letter-spacing: -0.07em;
+}
 
 /* Moto Prompt I: keep the ETA values readable on short screens. */
 @media (max-height: 700px) {
