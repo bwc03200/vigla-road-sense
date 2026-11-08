@@ -435,7 +435,7 @@ html { scroll-behavior: smooth; }
 .sillaxe-itinerary-host { color: var(--foreground); }
 .sillaxe-itinerary-host > div { position: absolute; bottom: 220px; z-index: 710; }
 .sillaxe-signals { position: absolute; top: 105px; left: 80px; }
-.vigla-sillaxe-active .sillaxe-route { stroke: var(--sillaxe-accent); }
+.vigla-sillaxe-active .sillaxe-route { stroke: #FF6B35; }
 .vigla-sillaxe-active .vigla-user-arrow { background: var(--sillaxe-accent) !important; }
 /* Prompt L: l'ancien bloc .vigla-sillaxe-active est remplacé par la
    disposition unifiée .vigla-moto-mode plus bas (mêmes positions au repos

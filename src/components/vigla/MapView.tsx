@@ -1178,7 +1178,7 @@ export function MapView() {
         </div>
       )}
     </MapContainer>
-    <div className="absolute right-3 top-[8.5rem] z-[700]">
+    <div className={`absolute right-3 z-[700] ${navActive && !sillaxeActive ? "top-[14rem]" : "top-[8.5rem]"}`}>
       <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
     </div>
     {proximityAlert && (
