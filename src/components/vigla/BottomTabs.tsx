@@ -69,7 +69,7 @@ export function BottomTabs({
             aria-hidden="true"
             className={`h-5 w-5 ${isFootMode ? "text-info scale-110" : ""} transition`}
           />
-          <span className="text-[10px] font-semibold">{t("tabs.foot")}</span>
+          <span className="vigla-tab-label text-[11px] font-semibold">{t("tabs.foot")}</span>
         </Button>
       </div>
     </nav>
