@@ -520,7 +520,7 @@ html { scroll-behavior: smooth; }
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.07em;
 }
 
 /* Moto Prompt I: keep the ETA values readable on short screens. */
