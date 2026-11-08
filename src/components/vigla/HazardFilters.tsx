@@ -38,7 +38,7 @@ export function HazardFilters() {
         aria-label={t("filters.button")}
         aria-expanded={open}
         aria-controls="vigla-hazard-filters-panel"
-        className="pointer-events-auto relative flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-800 shadow-[0_4px_12px_rgba(15,23,42,0.18)] ring-1 ring-slate-200 transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2"
+        className="vigla-map-btn pointer-events-auto relative flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF6B35] focus-visible:ring-offset-2"
       >
         <Filter className="h-5 w-5" aria-hidden="true" />
         {hasFilter && (
