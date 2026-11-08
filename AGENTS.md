@@ -14,3 +14,4 @@
 - Initialize locale deterministically, then restore it after hydration through the versioned language policy; this avoids browser-locale overrides and resets legacy automatic selections once.
 - Share uploaded branding through ViglaLogo and CDN asset pointers; derive small app icons from the artwork without lettering for legibility, while favicons remain real public files.
 - Secondary app screens share PageNavigation; hide rather than unmount the map while switching tabs so guidance continues, and keep settings below the persistent bottom tabs.
+- Keep account-screen activation centralized in access-mode; branch guest-owned mutations to namespaced browser storage, never send synthetic guest IDs to Cloud or weaken RLS, so signup remains reversible and private data stays protected.

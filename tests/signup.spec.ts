@@ -1,4 +1,7 @@
 import { test, expect } from "@playwright/test";
+import { SHOW_AUTH_SCREEN } from "../src/lib/access-mode";
+
+test.skip(!SHOW_AUTH_SCREEN, "Account screen is preserved but currently disabled for guest access.");
 
 test("signup without a session does not navigate before email confirmation", async ({ page }) => {
   let calls = 0;

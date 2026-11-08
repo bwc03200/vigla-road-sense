@@ -4,6 +4,7 @@ import i18n from "@/i18n/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { EmergencyContact } from "@/types/vigla";
+import { isGuestUser, readGuestData, writeGuestData } from "@/lib/access-mode";
 
 const t = (k: string) => i18n.t(k);
 
@@ -16,6 +17,10 @@ export function useEmergencyContacts(userId: string | null) {
 
   useEffect(() => {
     if (!userId) return;
+    if (isGuestUser(userId)) {
+      setEmergencyContacts(readGuestData<EmergencyContact[]>("contacts", []));
+      return;
+    }
     let cancelled = false;
     db.from("emergency_contacts")
       .select("*")
@@ -31,6 +36,13 @@ export function useEmergencyContacts(userId: string | null) {
 
   async function add(input: { name: string; phone?: string; email?: string }) {
     if (!userId) return;
+    if (isGuestUser(userId)) {
+      const row: EmergencyContact = { id: `guest-contact-${crypto.randomUUID()}`, user_id: userId, name: input.name, phone: input.phone || null, email: input.email || null, created_at: new Date().toISOString() };
+      const next = [...readGuestData<EmergencyContact[]>("contacts", []), row];
+      writeGuestData("contacts", next);
+      setEmergencyContacts(next);
+      return;
+    }
     const { data, error } = await db
       .from("emergency_contacts")
       .insert({
@@ -50,6 +62,12 @@ export function useEmergencyContacts(userId: string | null) {
   }
 
   async function remove(id: string) {
+    if (isGuestUser(userId)) {
+      const next = readGuestData<EmergencyContact[]>("contacts", []).filter(row => row.id !== id);
+      writeGuestData("contacts", next);
+      setEmergencyContacts(next);
+      return;
+    }
     const { error } = await db.from("emergency_contacts").delete().eq("id", id);
     if (error) {
       toast.error(t("contacts.deleteFailed"));

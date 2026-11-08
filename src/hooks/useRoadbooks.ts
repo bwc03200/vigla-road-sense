@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import i18n from "@/i18n/i18n";
 import { useVigla } from "@/lib/vigla-store";
 import type { Roadbook } from "@/types/vigla";
+import { isGuestUser, readGuestData, writeGuestData } from "@/lib/access-mode";
 
 type AnyClient = { from: (t: string) => any };
 const db = supabase as unknown as AnyClient;
@@ -13,6 +14,10 @@ export function useRoadbooks(userId: string | null) {
 
   useEffect(() => {
     if (!userId) return;
+    if (isGuestUser(userId)) {
+      setRoadbooks(readGuestData<Roadbook[]>("roadbooks", []));
+      return;
+    }
     let cancelled = false;
     db.from("roadbooks")
       .select("*")
@@ -36,6 +41,14 @@ export function useRoadbooks(userId: string | null) {
     isPublic?: boolean;
   }) {
     if (!userId) return;
+    if (isGuestUser(userId)) {
+      const row: Roadbook = { id: `guest-roadbook-${crypto.randomUUID()}`, created_by: userId, title: input.title, description: input.description || null, duration_days: input.durationDays ?? 1, distance_km: input.distanceKm ?? null, route_geojson: input.coords ? { coords: input.coords, destination: input.destination } : null, cover_hint: null, is_public: false, created_at: new Date().toISOString() };
+      const next = [row, ...readGuestData<Roadbook[]>("roadbooks", [])];
+      writeGuestData("roadbooks", next);
+      setRoadbooks(next);
+      toast.success(tLocalSaved());
+      return;
+    }
     const { data, error } = await db
       .from("roadbooks")
       .insert({
@@ -61,6 +74,12 @@ export function useRoadbooks(userId: string | null) {
   }
 
   async function remove(id: string) {
+    if (isGuestUser(userId)) {
+      const next = readGuestData<Roadbook[]>("roadbooks", []).filter(row => row.id !== id);
+      writeGuestData("roadbooks", next);
+      setRoadbooks(next);
+      return;
+    }
     const { error } = await db.from("roadbooks").delete().eq("id", id);
     if (error) return toast.error(i18n.t("roadbooks.removeFailed"));
     const current = useVigla.getState().roadbooks;
@@ -69,3 +88,5 @@ export function useRoadbooks(userId: string | null) {
 
   return { create, remove };
 }
+
+function tLocalSaved() { return "Roadbook enregistré sur cet appareil"; }

@@ -8,6 +8,8 @@ import { vibrateConfirm } from "@/lib/haptics";
 import { reactionLabel, reactionText } from "@/lib/i18n-helpers";
 import { sendConvoyPush } from "@/lib/push.functions";
 import { type ConvoyReactionKind } from "@/types/vigla";
+import type { ConvoyAlert } from "@/types/vigla";
+import { isGuestUser, readGuestData, writeGuestData } from "@/lib/access-mode";
 
 type AnyClient = { from: (t: string) => any };
 const db = supabase as unknown as AnyClient;
@@ -29,11 +31,19 @@ export function ConvoyReactionBar({ userId }: { userId: string }) {
   if (!convoy) return null;
 
   async function send(kind: ConvoyReactionKind) {
+    if (!convoy) return;
     vibrateConfirm();
     const text = reactionText(kind);
     const name = displayName || t("convoy.reactions.message");
+    if (isGuestUser(userId)) {
+      const now = Date.now();
+      const alert: ConvoyAlert = { id: `guest-alert-${crypto.randomUUID()}`, convoy_id: convoy.id, user_id: userId, display_name: name, kind, payload: { text }, created_at: new Date(now).toISOString(), expires_at: new Date(now + 60000).toISOString() };
+      writeGuestData("convoy-alerts", [...readGuestData<ConvoyAlert[]>("convoy-alerts", []), alert]);
+      useVigla.getState().pushConvoyAlert(alert);
+      return;
+    }
     const { error } = await db.from("convoy_alerts").insert({
-      convoy_id: convoy!.id,
+      convoy_id: convoy.id,
       user_id: userId,
       display_name: name,
       kind,
@@ -46,8 +56,8 @@ export function ConvoyReactionBar({ userId }: { userId: string }) {
     // Fire-and-forget push notification to other convoy members.
     pushFn({
       data: {
-        convoyId: convoy!.id,
-        title: `${convoy!.name} — ${name}`,
+        convoyId: convoy.id,
+        title: `${convoy.name} — ${name}`,
         body: text,
       },
     }).catch((e) => console.warn("[push] send failed", e));

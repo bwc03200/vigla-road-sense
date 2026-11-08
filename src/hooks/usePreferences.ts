@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { UserPreferences } from "@/types/vigla";
+import { isGuestUser, readGuestData, writeGuestData } from "@/lib/access-mode";
 
 type AnyClient = { from: (t: string) => any };
 const db = supabase as unknown as AnyClient;
@@ -22,6 +23,10 @@ export function usePreferences(userId: string | null) {
 
   useEffect(() => {
     if (!userId) return;
+    if (isGuestUser(userId)) {
+      setPreferences({ ...DEFAULT_PREFERENCES, ...readGuestData("preferences", {}) });
+      return;
+    }
     let cancelled = false;
     db.from("user_preferences")
       .select("*")
@@ -51,6 +56,10 @@ export async function savePreferences(
   const current = useVigla.getState().preferences;
   const next = { ...current, ...patch };
   useVigla.getState().setPreferences(next);
+  if (isGuestUser(userId)) {
+    writeGuestData("preferences", next);
+    return;
+  }
   await db
     .from("user_preferences")
     .upsert({ user_id: userId, ...next }, { onConflict: "user_id" });

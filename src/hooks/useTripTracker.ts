@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
+import { isGuestUser, readGuestData, writeGuestData } from "@/lib/access-mode";
+import type { TripHistory } from "@/types/vigla";
 
 const MIN_DISTANCE_TO_PERSIST_M = 100;
 
@@ -28,6 +30,18 @@ export function useTripTracker(userId: string | null) {
 
     const d = haversine(last.lat, last.lng, position.lat, position.lng);
     if (d > 3) distanceRef.current += d;
+    if (isGuestUser(userId)) {
+      if (distanceRef.current >= MIN_DISTANCE_TO_PERSIST_M) {
+        const rows = readGuestData<TripHistory[]>("trip-history", []);
+        const id = tripIdRef.current ?? `guest-history-${crypto.randomUUID()}`;
+        tripIdRef.current = id;
+        const existing = rows.find(row => row.id === id);
+        const row: TripHistory = { id, user_id: userId, started_at: existing?.started_at ?? new Date().toISOString(), ended_at: null, distance_km: +(distanceRef.current / 1000).toFixed(3), alerts_received: alertsRef.current };
+        writeGuestData("trip-history", [row, ...rows.filter(item => item.id !== id)].slice(0, 50));
+      }
+      lastPointRef.current = { lat: position.lat, lng: position.lng, t: now };
+      return;
+    }
 
     // Lazily create the trip row only once we've actually moved.
     if (

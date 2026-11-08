@@ -4,6 +4,7 @@ import i18n from "@/i18n/i18n";
 import { supabase } from "@/integrations/supabase/client";
 import { useVigla } from "@/lib/vigla-store";
 import type { Convoy, ConvoyAlert, ConvoyMember } from "@/types/vigla";
+import { isGuestUser, readGuestData, writeGuestData } from "@/lib/access-mode";
 
 const t = (k: string, opts?: Record<string, unknown>) => i18n.t(k, opts);
 
@@ -31,18 +32,28 @@ export function useConvoy(userId: string | null) {
 
   const lastPushAt = useRef(0);
 
+  useEffect(() => {
+    if (isGuestUser(userId)) setConvoy(readGuestData<Convoy | null>("convoy", null));
+  }, [userId, setConvoy]);
+
   // Realtime members + alerts subscription.
   useEffect(() => {
     if (!convoy) return;
+    if (isGuestUser(userId)) {
+      setConvoyMembers(readGuestData<ConvoyMember[]>("convoy-members", []));
+      setConvoyAlerts(readGuestData<ConvoyAlert[]>("convoy-alerts", []));
+      return;
+    }
+    const convoyId = convoy.id;
     let mounted = true;
 
     async function loadInitial() {
       const [{ data: members }, { data: alerts }] = await Promise.all([
-        db.from("convoy_members").select("*").eq("convoy_id", convoy!.id),
+        db.from("convoy_members").select("*").eq("convoy_id", convoyId),
         db
           .from("convoy_alerts")
           .select("*")
-          .eq("convoy_id", convoy!.id)
+          .eq("convoy_id", convoyId)
           .gt("expires_at", new Date().toISOString()),
       ]);
       if (!mounted) return;
@@ -82,7 +93,7 @@ export function useConvoy(userId: string | null) {
       mounted = false;
       supabase.removeChannel(channel);
     };
-  }, [convoy, setConvoyMembers, setConvoyAlerts, pushConvoyAlert]);
+  }, [convoy, userId, setConvoyMembers, setConvoyAlerts, pushConvoyAlert]);
 
   // Auto-expire alerts by time.
   useEffect(() => {
@@ -99,6 +110,12 @@ export function useConvoy(userId: string | null) {
   // Push own position every 5s.
   useEffect(() => {
     if (!convoy || !userId || !position) return;
+    if (isGuestUser(userId)) {
+      const next = readGuestData<ConvoyMember[]>("convoy-members", []).map(row => ({ ...row, last_lat: position.lat, last_lng: position.lng, last_seen: new Date().toISOString() }));
+      writeGuestData("convoy-members", next);
+      setConvoyMembers(next);
+      return;
+    }
     const now = Date.now();
     if (now - lastPushAt.current < 5000) return;
     lastPushAt.current = now;
@@ -119,6 +136,17 @@ export function useConvoy(userId: string | null) {
       return;
     }
     const code = randomCode();
+    if (isGuestUser(userId)) {
+      const now = new Date().toISOString();
+      const c: Convoy = { id: `guest-convoy-${crypto.randomUUID()}`, name, code, owner_id: userId, created_at: now, ended_at: null };
+      const member: ConvoyMember = { id: `guest-member-${crypto.randomUUID()}`, convoy_id: c.id, user_id: userId, display_name: displayName || "Moi", joined_at: now, last_lat: position?.lat ?? null, last_lng: position?.lng ?? null, last_seen: now };
+      writeGuestData("convoy", c);
+      writeGuestData("convoy-members", [member]);
+      writeGuestData("convoy-alerts", []);
+      setConvoy(c);
+      toast.success("Convoi enregistré sur cet appareil uniquement");
+      return;
+    }
     try {
       const { data, error } = await db
         .from("convoys")
@@ -152,6 +180,12 @@ export function useConvoy(userId: string | null) {
   }
 
   async function joinConvoy(code: string) {
+    if (isGuestUser(userId)) {
+      const local = readGuestData<Convoy | null>("convoy", null);
+      if (local?.code === code.trim().toUpperCase()) setConvoy(local);
+      else toast("En mode invité, seuls les convois enregistrés sur cet appareil sont accessibles.");
+      return;
+    }
     if (!userId) {
       toast.error(t("convoy.loginRequiredJoin"));
       return;
@@ -196,6 +230,15 @@ export function useConvoy(userId: string | null) {
 
   async function leaveConvoy() {
     if (!convoy || !userId) return;
+    if (isGuestUser(userId)) {
+      writeGuestData("convoy", null);
+      writeGuestData("convoy-members", []);
+      writeGuestData("convoy-alerts", []);
+      setConvoy(null);
+      setConvoyMembers([]);
+      setConvoyAlerts([]);
+      return;
+    }
     try {
       const { error } = await db
         .from("convoy_members")
