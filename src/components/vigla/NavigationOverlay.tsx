@@ -205,7 +205,7 @@ export function NavigationOverlay({ onReport, onHistory }: { onReport?: () => vo
             <Navigation className="h-5 w-5" />
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-medium uppercase tracking-widest text-white/55">
+            <div className="text-[10px] font-medium tracking-widest text-white/55">
               {t("navigation.in", { distance: formatDistance(navigation.distanceToNextManeuverM) })}
             </div>
             <div className="mt-1 line-clamp-2 text-2xl font-bold leading-tight tracking-tight">

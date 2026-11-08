@@ -31,7 +31,7 @@ import { useProximityAlerts, type ProximityPOI } from "@/hooks/useProximityAlert
 import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
-import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
+import { NavigationBannerBlue as _UnusedNavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
 import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
 import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
 import { useHeadingLock } from "@/hooks/useHeadingLock";
@@ -1082,7 +1082,7 @@ export function MapView() {
 
       {route && !navActive && (
         <>
-          <Polyline positions={route.coords} pathOptions={{ color: "#2563EB", weight: 6, opacity: 0.85 }} />
+          <Polyline positions={route.coords} pathOptions={{ color: "#FF6B35", weight: 6, opacity: 0.85 }} />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
           <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
@@ -1304,7 +1304,7 @@ export function MapView() {
         onClose={() => setGasPopup(null)}
       />
     )}
-    {navActive && !sillaxeActive && <NavigationBannerBlue />}
+    {/* Pastille « En navigation » supprimée : l'info est dans la carte d'instruction. */}
     {navActive && isFootMode && <FootModePanel />}
     {navActive && !sillaxeActive && <FixedTurnMarker />}
     {navActive && !sillaxeActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
