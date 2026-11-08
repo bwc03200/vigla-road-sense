@@ -220,6 +220,16 @@ html { scroll-behavior: smooth; }
     border-radius 200ms ease-out, width 200ms ease-out, height 200ms ease-out;
 }
 
+/* Boutons de carte (filtre, zoom, localisation) : un seul matériau,
+   verre sombre avec flou, sur tous les états (accueil, aperçu, navigation). */
+.vigla-map-btn {
+  background: rgba(28, 28, 30, 0.72);
+  color: #eef1f4;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+}
+
 /* Floating map controls: square, dark panel, subtle border, no orange ring. */
 .vigla-moto-mode .vigla-zoom-btn,
 .vigla-moto-mode button.h-11.w-11 {
