@@ -1,4 +1,5 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, redirect, useNavigate } from "@tanstack/react-router";
+import { SHOW_AUTH_SCREEN } from "@/lib/access-mode";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,6 +11,9 @@ import { ViglaLogo } from "@/components/vigla/ViglaLogo";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  beforeLoad: () => {
+    if (!SHOW_AUTH_SCREEN) throw redirect({ to: "/", replace: true });
+  },
   head: () => ({ meta: [
     { title: "VIGLA — Connexion" },
     { name: "description", content: "Connectez-vous à VIGLA pour retrouver vos trajets et alertes routières." },

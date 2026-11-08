@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { User } from "@supabase/supabase-js";
 import { toast, Toaster } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { GUEST_USER_ID, SHOW_AUTH_SCREEN, isGuestUser } from "@/lib/access-mode";
 import { useGeolocation } from "@/hooks/useGeolocation";
 import { useHazards } from "@/hooks/useHazards";
 import { useOfficialRadars } from "@/hooks/useOfficialRadars";
@@ -97,15 +98,15 @@ function Index() {
   }, []);
 
   useEffect(() => {
-    if (user === null) navigate({ to: "/auth" });
+    if (SHOW_AUTH_SCREEN && user === null) navigate({ to: "/auth" });
   }, [user, navigate]);
 
-  if (user === undefined) {
+  if (SHOW_AUTH_SCREEN && user === undefined) {
     return <ViglaSplash />;
   }
-  if (!user) return null;
+  if (SHOW_AUTH_SCREEN && !user) return null;
 
-  return <ViglaApp userId={user.id} email={user.email ?? ""} />;
+  return <ViglaApp userId={user?.id ?? GUEST_USER_ID} email={user?.email ?? ""} />;
 }
 
 function ViglaApp({ userId, email }: { userId: string; email: string }) {
@@ -123,7 +124,7 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
     : tab === "convoy" ? t("convoy.title") : t("tabs.profile");
   useEffect(() => {
     installGlobalErrorLogging();
-    setLoggerUser(userId);
+    setLoggerUser(isGuestUser(userId) ? null : userId);
     return () => setLoggerUser(null);
   }, [userId]);
   useEffect(() => {
