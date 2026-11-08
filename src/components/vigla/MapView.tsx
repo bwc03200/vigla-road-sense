@@ -31,7 +31,8 @@ import { useProximityAlerts, type ProximityPOI } from "@/hooks/useProximityAlert
 import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
-import { NavigationBannerBlue as _UnusedNavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
+import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue";
+void NavigationBannerBlue;
 import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
 import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
 import { useHeadingLock } from "@/hooks/useHeadingLock";
