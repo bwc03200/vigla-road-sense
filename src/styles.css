@@ -236,9 +236,6 @@ html { scroll-behavior: smooth; }
   height: 56px !important;
   width: 56px !important;
   border-radius: 16px !important;
-  background-color: var(--moto-panel) !important;
-  color: var(--moto-text) !important;
-  border: 1px solid var(--moto-line) !important;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4) !important;
   ring-color: transparent !important;
 }
