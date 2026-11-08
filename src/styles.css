@@ -479,7 +479,7 @@ html { scroll-behavior: smooth; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-56 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 216px); bottom: auto; z-index: 500; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-44 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 288px); bottom: auto; z-index: 500; }
 .vigla-moto-mode .vigla-zoom-btn { position: absolute; left: 0; top: 0; margin: 0; width: 56px !important; height: 56px !important; border-radius: 14px !important; }
-.vigla-moto-mode .vigla-zoom-btn svg { color: var(--sillaxe-accent) !important; }
+.vigla-moto-mode .vigla-zoom-btn svg { color: inherit !important; }
 .vigla-moto-mode .leaflet-container > .absolute.bottom-24 .vigla-zoom-btn:nth-child(2) { top: 72px; }
 
 /* Z-500 — HUD droite : calques puis les 4 compteurs, colonne verticale sous
