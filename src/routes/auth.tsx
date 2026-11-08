@@ -28,6 +28,8 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signupError, setSignupError] = useState("");
+  const [signupMessage, setSignupMessage] = useState("");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -37,23 +39,63 @@ function AuthPage() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (loading) return;
+    setSignupError("");
+    setSignupMessage("");
     setLoading(true);
     try {
       if (mode === "signup") {
-        const { error } = await supabase.auth.signUp({
-          email,
+        const signupEmail = email.trim();
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(signupEmail)) {
+          setSignupError("Saisissez une adresse email valide.");
+          return;
+        }
+        if (password.length < 6) {
+          setSignupError("Le mot de passe doit contenir au moins 6 caractères.");
+          return;
+        }
+        console.log("[VIGLA inscription] Appel d’inscription", { emailPresent: Boolean(signupEmail), passwordPresent: Boolean(password) });
+        const { data, error } = await supabase.auth.signUp({
+          email: signupEmail,
           password,
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast.success(t("auth.accountCreated"));
+        if (data.session) {
+          navigate({ to: "/" });
+        } else {
+          setSignupMessage("Vérifiez votre email pour activer votre compte");
+        }
+        return;
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
       }
       navigate({ to: "/" });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("common.unknownError"));
+      if (mode === "signup") {
+        const details = err as { code?: string; status?: number; message?: string } | null;
+        const code = details?.code;
+        const message = details?.message ?? "";
+        console.error("[VIGLA inscription] Échec", { code: code ?? "unknown", status: details?.status });
+        if (code === "weak_password" || /weak|easy to guess/i.test(message)) {
+          setSignupError("Ce mot de passe est trop facile à deviner ou déjà compromis. Choisissez un mot de passe plus robuste et unique.");
+        } else if (code === "user_already_exists" || code === "email_exists" || /already.*registered/i.test(message)) {
+          setSignupError("Cet email est déjà utilisé. Connectez-vous avec votre compte existant.");
+        } else if (/password.*(short|least)/i.test(message)) {
+          setSignupError("Le mot de passe est trop court. Choisissez un mot de passe plus long.");
+        } else if (code === "over_email_send_rate_limit" || details?.status === 429) {
+          setSignupError("Trop de demandes d’inscription. Réessayez dans quelques minutes.");
+        } else if (/fetch|network|connection|timeout/i.test(message)) {
+          setSignupError("Impossible de joindre le service d’inscription. Vérifiez votre connexion et réessayez.");
+        } else if (code === "signup_disabled" || code === "email_provider_disabled") {
+          setSignupError("L’inscription est momentanément indisponible. Réessayez plus tard.");
+        } else {
+          setSignupError("L’inscription a échoué. Vérifiez votre email et votre mot de passe, puis réessayez.");
+        }
+      } else {
+        toast.error(err instanceof Error ? err.message : t("common.unknownError"));
+      }
     } finally {
       setLoading(false);
     }
@@ -71,7 +113,7 @@ function AuthPage() {
             {mode === "signin" ? t("auth.signin") : t("auth.signup")}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{t("auth.subtitle")}</p>
-          <form onSubmit={onSubmit} className="mt-5 space-y-3">
+          <form onSubmit={onSubmit} noValidate={mode === "signup"} className="mt-5 space-y-3">
             <div className="space-y-1.5">
               <Label htmlFor="email">{t("auth.email")}</Label>
               <Input
@@ -99,6 +141,8 @@ function AuthPage() {
               {loading ? "…" : mode === "signin" ? t("auth.signInBtn") : t("auth.signUpBtn")}
             </Button>
           </form>
+          {mode === "signup" && signupError && <p role="alert" className="mt-3 text-sm text-destructive">{signupError}</p>}
+          {mode === "signup" && signupMessage && <p role="status" className="mt-3 text-sm text-foreground">{signupMessage}</p>}
           <button
             type="button"
             onClick={() => setMode(mode === "signin" ? "signup" : "signin")}
