@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AlertTriangle, ArrowUp, Radar, Signal, SignalLow, SignalMedium, Wifi } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
@@ -11,6 +11,7 @@ import { RouteBar } from "@/components/vigla/RouteBar";
 import { HazardAlertBanner } from "@/components/vigla/HazardAlertBanner";
 import { useSpeedLimit } from "@/hooks/useRouteMilestones";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
+import { useHudInset } from "@/lib/hud-insets";
 
 function pad2(n: number) {
   return String(n).padStart(2, "0");
@@ -35,6 +36,9 @@ export function MotoNavigationOverlay({ onReport, onStop, onVoice, onHistory }: 
   const isFootMode = useVigla(s => s.isFootMode);
   const convoyAlerts = useVigla(s => s.convoyAlerts);
   const [itineraryOpen, setItineraryOpen] = useState(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+  const hudVisible = !!navigation && !navigation.arrived && !isFootMode && !!onStop && !!onVoice;
+  useHudInset(bottomRef, "bottom", hudVisible);
 
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -71,7 +75,7 @@ export function MotoNavigationOverlay({ onReport, onStop, onVoice, onHistory }: 
       <NavigationRightHUD hazards={milestones.filter(m => m.kind === "hazard" && m.distanceM < 500).length}
         messages={navigation.alertsReceived + convoyAlerts.length} stops={route?.waypoints.length ?? 0}
         onReport={onReport} onHistory={onHistory} onItinerary={() => setItineraryOpen(v => !v)} />
-      <div className="sillaxe-bottom">
+      <div ref={bottomRef} className="sillaxe-bottom">
         <div className="sillaxe-status-row"><NavigationSpeedHUD speed={speedKmh} unit={speedUnit} limit={speedLimit} />
           <NavigationAlertBar milestone={vigilance} />
         </div>

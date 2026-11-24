@@ -178,6 +178,9 @@
     "resumeYes": "Resume",
     "instructions": {
       "arrive": "You have arrived",
+      "arriveAhead": "Arriving at destination",
+      "roundaboutExit": "At the roundabout, take the {{ordinal}} exit",
+      "roundaboutExitN": "At the roundabout, take exit {{exit}}",
       "departNamed": "Depart on {{name}}",
       "depart": "Depart",
       "turn": "Turn",
@@ -194,6 +197,15 @@
       "exitRoundabout": "Exit the roundabout",
       "on": " onto {{name}}"
     },
+    "ordinal": {
+      "1": "first",
+      "2": "second",
+      "3": "third",
+      "4": "fourth",
+      "5": "fifth",
+      "6": "sixth"
+    },
+    "recenter": "Recenter",
     "modifier": {
       "left": "left",
       "right": "right",
@@ -600,7 +612,11 @@
   "voice": {
     "hazardAhead": "{{label}} reported in {{distance}} meters",
     "turnIn": "In {{distance}} meters, {{instruction}}",
-    "turnNow": "Now, {{instruction}}"
+    "turnInKm": "In {{distance}} kilometers, {{instruction}}",
+    "turnNow": "Now, {{instruction}}",
+    "arriveIn": "In {{distance}} meters, you will arrive at your destination",
+    "arriveInKm": "In {{distance}} kilometers, you will arrive at your destination",
+    "recalculated": "Route recalculated"
   },
   "trafficSignals": {
     "filter": "Traffic lights",

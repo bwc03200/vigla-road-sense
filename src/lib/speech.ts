@@ -21,7 +21,11 @@ function supported(): boolean {
 }
 
 function langCode(): string {
-  return currentLang() === "en" ? "en-US" : "fr-FR";
+  const lang = currentLang();
+  if (lang === "en") return "en-US";
+  // Dutch text read by a French voice is unintelligible.
+  if (lang === "nl") return "nl-NL";
+  return "fr-FR";
 }
 
 function playNext() {

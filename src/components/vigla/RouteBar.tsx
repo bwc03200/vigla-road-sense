@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { useVigla } from "@/lib/vigla-store";
 import { formatDistance } from "@/lib/geo";
 import { useRouteMilestones } from "@/hooks/useRouteMilestones";
@@ -9,12 +8,15 @@ import { useRouteMilestones } from "@/hooks/useRouteMilestones";
  * Data-only consumer: reuses hazards/radars/signals already in the store.
  */
 export function RouteBar({ moto = false }: { moto?: boolean }) {
-  const { t } = useTranslation();
   const navigation = useVigla((s) => s.navigation);
   const route = useVigla((s) => s.route);
   const milestones = useRouteMilestones(5);
 
   if (!navigation || navigation.arrived) return null;
+  // Nothing reported ahead: no bar. An empty track with only the remaining
+  // minutes repeated what the instruction card already says, and took the
+  // place of the map.
+  if (milestones.length === 0) return null;
 
   const total = route?.distanceM ?? 0;
   const progress =
@@ -38,7 +40,7 @@ export function RouteBar({ moto = false }: { moto?: boolean }) {
   const track = moto ? "var(--moto-line, #242830)" : "#e2e8f0";
 
   return (
-    <div className="pointer-events-none absolute right-3 top-1/2 z-40 -translate-y-1/2">
+    <div className="vigla-routebar pointer-events-none absolute right-3 top-1/2 z-40 -translate-y-1/2">
       <div
         className="pointer-events-auto flex max-h-[calc(100vh-200px)] w-[58px] flex-col items-center gap-2 overflow-y-auto rounded-2xl px-2 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.18)]"
         style={panel}
@@ -56,15 +58,7 @@ export function RouteBar({ moto = false }: { moto?: boolean }) {
               boxShadow: "0 0 0 3px rgba(255,107,53,0.25)",
             }}
           />
-          {milestones.length === 0 ? (
-            <div
-              className="relative py-2 text-center text-[10px] leading-tight"
-              style={{ color: dim }}
-            >
-              {t("map.clear")}
-            </div>
-          ) : (
-            milestones.map((m) => (
+          {milestones.map((m) => (
               <div key={m.id} className="relative flex flex-col items-center">
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-full text-[15px]"
@@ -78,8 +72,7 @@ export function RouteBar({ moto = false }: { moto?: boolean }) {
                   {formatDistance(m.distanceM)}
                 </span>
               </div>
-            ))
-          )}
+            ))}
         </div>
         <div
           className="mt-1 w-full border-t pt-1.5 text-center text-[13px] font-bold tabular-nums"

@@ -112,6 +112,58 @@ html { scroll-behavior: smooth; }
 }
 
 
+/* ---------------------------------------------------------------------------
+   Map stage and HUD docking.
+   The map sits in its own stacking context so no Leaflet pane can ever paint
+   above the HUD, and the floating controls are placed from the measured size
+   of the panels docked at the top and bottom (--vigla-inset-top / -bottom,
+   see lib/hud-insets.ts) rather than from guessed offsets.
+   --------------------------------------------------------------------------- */
+.vigla-map-clip { z-index: 0; isolation: isolate; }
+/* The stage is resized when navigation starts; never animate that. */
+.vigla-map-root .vigla-map-stage .leaflet-container { transition: none; }
+
+.vigla-attribution {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 300;
+  padding: 1px 6px;
+  border-top-left-radius: 6px;
+  background: rgba(255, 255, 255, 0.8);
+  color: #475569;
+  font-size: 10px;
+  line-height: 1.5;
+  text-decoration: none;
+}
+
+/* Recenter / fit / zoom column: always above whatever is docked at the bottom. */
+.vigla-map-controls {
+  bottom: max(6rem, calc(var(--vigla-inset-bottom, 0px) + 0.75rem));
+}
+/* "Back to my position" during navigation is the one control that must be
+   found at a glance. */
+.vigla-map-root .vigla-map-btn.vigla-ctl-resume {
+  background: #2563eb;
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Standard (car) navigation: everything that floats under the instruction
+   card starts below its real bottom edge, whatever its height. */
+.vigla-map-root.vigla-nav-active:not(.vigla-moto-mode) .vigla-under-top {
+  top: calc(var(--vigla-inset-top, 13rem) + 0.75rem);
+}
+.vigla-map-root.vigla-nav-active:not(.vigla-moto-mode) .vigla-routebar {
+  top: calc(var(--vigla-inset-top, 13rem) + 0.75rem + 3.25rem);
+  translate: none;
+  transform: none;
+}
+.vigla-map-root.vigla-nav-active:not(.vigla-moto-mode) .vigla-chip-restaurants {
+  left: 4.25rem;
+  max-width: calc(100% - 9rem);
+}
+
 /* Leaflet light tweaks */
 .leaflet-container {
   background: #E5E7EB;
@@ -470,17 +522,25 @@ html { scroll-behavior: smooth; }
    juste sous la carte, sans la toucher. */
 .vigla-moto-mode { --hud-col-top: 102px; --hud-col-right-top: calc(120px + env(safe-area-inset-top)); --hud-col-right: max(16px, env(safe-area-inset-right)); --hud-col-left: max(16px, env(safe-area-inset-left)); }
 .vigla-moto-mode .leaflet-container { z-index: 100; }
-.vigla-moto-mode .leaflet-container > .absolute.right-3.top-3 { display: none; }
 
 /* Z-500 — contrôles carte à gauche : filtre, zoom+, zoom−, position, recadrer (pas de 72 px). */
 .vigla-moto-mode > .absolute.left-3.top-20 { position: fixed; left: var(--hud-col-left); top: var(--hud-col-top); z-index: 500; }
 .vigla-moto-mode > .absolute.left-3.top-20 > button { width: 56px !important; height: 56px !important; border-radius: 14px !important; }
-.vigla-moto-mode .leaflet-container > .absolute.bottom-24 { position: fixed; display: block; width: 56px; height: 136px; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 72px); bottom: auto; z-index: 500; }
-.vigla-moto-mode .leaflet-container > .absolute.bottom-56 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 216px); bottom: auto; z-index: 500; }
-.vigla-moto-mode .leaflet-container > .absolute.bottom-44 { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 288px); bottom: auto; z-index: 500; }
-.vigla-moto-mode .vigla-zoom-btn { position: absolute; left: 0; top: 0; margin: 0; width: 56px !important; height: 56px !important; border-radius: 14px !important; }
+/* Une seule colonne flex (MapControls) : zoom+, zoom−, position, recadrer.
+   Le pas de 72 px vient du gap, plus d'un décalage calculé bouton par bouton. */
+.vigla-moto-mode .vigla-map-controls { position: fixed; left: var(--hud-col-left); right: auto; top: calc(var(--hud-col-top) + 72px); bottom: auto; gap: 16px; z-index: 500; }
+.vigla-moto-mode .vigla-zoom-btn { margin: 0; width: 56px !important; height: 56px !important; border-radius: 14px !important; }
 .vigla-moto-mode .vigla-zoom-btn svg { color: inherit !important; }
-.vigla-moto-mode .leaflet-container > .absolute.bottom-24 .vigla-zoom-btn:nth-child(2) { top: 72px; }
+.vigla-moto-mode .vigla-ctl-zoom-in { order: 1; }
+.vigla-moto-mode .vigla-ctl-zoom-out { order: 2; }
+.vigla-moto-mode .vigla-ctl-locate { order: 3; }
+.vigla-moto-mode .vigla-ctl-fit { order: 4; }
+/* Aperçu d'itinéraire sur petit écran : la colonne (4 boutons) se resserre
+   pour s'arrêter au-dessus de la carte « Démarrer le trajet » au lieu de
+   passer dessous. Sans effet dès qu'il y a la place (gap plafonné à 16 px). */
+.vigla-moto-mode:not(.vigla-nav-active) .vigla-map-controls {
+  gap: clamp(4px, calc((100dvh - 4rem - var(--hud-col-top) - 72px - var(--vigla-inset-bottom, 0px) - 12px - 224px) / 3), 16px);
+}
 
 /* Z-500 — HUD droite : calques puis les 4 compteurs, colonne verticale sous
    le bandeau du haut, 12 px entre boutons (pas de 68 px). */
@@ -505,8 +565,8 @@ html { scroll-behavior: smooth; }
 .vigla-moto-mode .sillaxe-status-row { min-height: 0; }
 
 /* Pastille restaurants : dégagée des deux colonnes. */
-.vigla-moto-mode .leaflet-container > .absolute.left-3.top-\[8\.5rem\] { position: fixed; left: calc(var(--hud-col-left) + 72px); top: calc(var(--hud-col-top) + 40px); max-width: calc(100% - 176px); }
-.vigla-moto-mode .leaflet-container > .absolute.left-3.top-\[8\.5rem\] > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vigla-moto-mode > .vigla-chip-restaurants { position: fixed; left: calc(var(--hud-col-left) + 72px); top: calc(var(--hud-col-top) + 40px); max-width: calc(100% - 176px); }
+.vigla-moto-mode > .vigla-chip-restaurants > * { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Prompt M: shared page chrome stays outside the animated scrolling surface. */
 .vigla-page-header { position: fixed; inset: 0 0 auto; min-height: calc(60px + env(safe-area-inset-top)); padding: calc(6px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 6px max(16px, env(safe-area-inset-left)); display: flex; align-items: center; gap: 12px; z-index: 600; background: color-mix(in srgb, var(--sillaxe-panel) 95%, transparent); color: var(--sillaxe-text); backdrop-filter: blur(20px); letter-spacing: 0; }
@@ -541,4 +601,24 @@ html { scroll-behavior: smooth; }
   .vigla-moto-mode.vigla-sillaxe-active .sillaxe-eta-cell strong { font-size: 18px; }
   .vigla-moto-mode.vigla-sillaxe-active .sillaxe-arrival strong { font-size: 20px; }
   .vigla-moto-mode.vigla-sillaxe-active .sillaxe-eta-cell + .sillaxe-eta-cell { padding-left: 5px; }
+}
+
+/* Moto paysage court (téléphone couché, hauteur ≤ 540 px) : colonnes gauche et
+   droite resserrées (boutons 44 px) et disque de vitesse ramené en haut à gauche,
+   pour rester entre la barre du haut et les onglets du bas sans chevauchement. */
+@media (max-height: 540px) {
+  .vigla-moto-mode { --hud-col-top: 80px; --hud-col-right-top: 72px; }
+  .vigla-moto-mode > .absolute.left-3.top-20 > button { width: 44px !important; height: 44px !important; border-radius: 12px !important; }
+  .vigla-moto-mode .vigla-map-controls { top: calc(var(--hud-col-top) + 52px); gap: 8px; }
+  .vigla-moto-mode .vigla-zoom-btn { width: 44px !important; height: 44px !important; border-radius: 12px !important; }
+  .vigla-moto-mode > .absolute.right-3.top-\[8\.5rem\] button.h-11.w-11 { width: 44px !important; height: 44px !important; border-radius: 12px !important; }
+  .vigla-moto-mode .sillaxe-right { top: calc(var(--hud-col-right-top) + 52px); height: 194px; width: 44px; }
+  .vigla-moto-mode .sillaxe-right > .sillaxe-counter-button { width: 44px; height: 44px; }
+  .vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(2) { top: 50px; }
+  .vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(3) { top: 100px; }
+  .vigla-moto-mode .sillaxe-right > .sillaxe-counter-button:nth-child(4) { top: 150px; }
+  .vigla-moto-mode .sillaxe-speed { top: 8px; bottom: auto; width: 56px; height: 56px; }
+  .vigla-moto-mode .sillaxe-speed-disc { width: 56px; height: 56px; }
+  .vigla-moto-mode .sillaxe-speed-value { font-size: 24px; }
+  .vigla-moto-mode .sillaxe-speed-unit { font-size: 9px; margin-top: 2px; }
 }

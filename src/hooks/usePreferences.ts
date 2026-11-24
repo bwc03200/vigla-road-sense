@@ -11,7 +11,9 @@ export const DEFAULT_PREFERENCES: UserPreferences = {
   speed_unit: "kmh",
   map_theme: "light",
   auto_recenter: true,
-  voice_alerts: false,
+  // A navigation app that says nothing is a map: guidance speaks unless the
+  // rider turns it off. Existing saved preferences are left as they are.
+  voice_alerts: true,
   sound_alerts: true,
   vibration_alerts: true,
   alert_lead_time: "normal",

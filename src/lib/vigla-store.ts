@@ -231,7 +231,7 @@ export const useVigla = create<ViglaState>((set) => ({
     speed_unit: "kmh",
     map_theme: "light",
     auto_recenter: true,
-    voice_alerts: false,
+    voice_alerts: true,
     sound_alerts: true,
     vibration_alerts: true,
     alert_lead_time: "normal",

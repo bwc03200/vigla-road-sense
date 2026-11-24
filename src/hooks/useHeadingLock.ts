@@ -6,10 +6,18 @@ import type L from "leaflet";
  * points up.
  *
  * - Listens to the GPS heading (0–360°)
- * - Smooths the rotation (eased over ~2.5 s, jitter-filtered)
+ * - Smooths the rotation (eased over ~0.9 s, jitter-filtered)
  * - Freezes on the last known bearing when the GPS heading is lost
  * - Rotates map panes only, so markers/HUD containers can be kept upright
  */
+/**
+ * How long the map takes to swing onto a new bearing. The bearing now comes
+ * from the road ahead (it starts turning just before the corner), so a short
+ * ease keeps the map in step with the bike; 2.5 s left it still turning well
+ * after the corner was done.
+ */
+const TRACK_EASE_MS = 900;
+
 export function useHeadingLock(
   map: L.Map | null,
   heading: number | null | undefined,
@@ -19,7 +27,7 @@ export function useHeadingLock(
   const lastTargetAtRef = useRef(0);
   // Easing duration for the current transition (ms): slow while tracking a
   // live heading, fast (1s) for the north-up reset when GPS heading drops.
-  const easeMsRef = useRef(2500);
+  const easeMsRef = useRef(TRACK_EASE_MS);
 
   // Track the desired bearing (freeze on last known value when GPS drops).
   useEffect(() => {
@@ -36,15 +44,12 @@ export function useHeadingLock(
       }, 2000);
       return () => window.clearTimeout(timer);
     }
-    easeMsRef.current = 2500;
+    easeMsRef.current = TRACK_EASE_MS;
     const now = Date.now();
     const delta = Math.abs(((heading - targetRef.current + 540) % 360) - 180);
     if (now - lastTargetAtRef.current < 200 && delta < 15) return;
     lastTargetAtRef.current = now;
     targetRef.current = heading;
-    console.log(
-      `🧭 [NAV HEADING] Bearing: ${Math.round(heading)}° • Rotation applied`,
-    );
   }, [heading, enabled]);
 
   useEffect(() => {

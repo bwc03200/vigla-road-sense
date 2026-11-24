@@ -76,6 +76,8 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
+const TOAST_TOP_OFFSET = "calc(var(--vigla-inset-top, 4.75rem) + 0.5rem)";
+
 function Index() {
   const { t } = useTranslation();
   const [user, setUser] = useState<User | null | undefined>(undefined);
@@ -166,7 +168,15 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
   return (
     <div className="relative min-h-[100dvh] bg-background">
       <DemoAlertModal />
-      <Toaster position="top-center" theme="light" richColors closeButton />
+      {/* Toasts open BELOW the top bar / instruction card, never on top of it. */}
+      <Toaster
+        position="top-center"
+        theme="light"
+        richColors
+        closeButton
+        offset={{ top: TOAST_TOP_OFFSET }}
+        mobileOffset={{ top: TOAST_TOP_OFFSET }}
+      />
       <CrashAlertOverlay />
       <main className="fixed inset-x-0 top-0 bottom-16" style={{ height: "calc(100dvh - 4rem)" }}>
         <h1 className="sr-only">VIGLA</h1>
@@ -291,8 +301,9 @@ function ViglaApp({ userId, email }: { userId: string; email: string }) {
 function MapTabContainer({ children }: { children: React.ReactNode }) {
   const motoMode = useVigla((s) => s.preferences.moto_mode);
   const sillaxeActive = useVigla(s => s.preferences.moto_mode && !s.isFootMode && !!s.navigation && !s.navigation.arrived);
+  const navActive = useVigla((s) => !!s.navigation && !s.navigation.arrived);
   return (
-    <div className={`relative h-full w-full vigla-map-root${motoMode ? " vigla-moto-mode" : ""}${sillaxeActive ? " vigla-sillaxe-active" : ""}`}>
+    <div className={`relative h-full w-full vigla-map-root${motoMode ? " vigla-moto-mode" : ""}${sillaxeActive ? " vigla-sillaxe-active" : ""}${navActive ? " vigla-nav-active" : ""}`}>
       {children}
     </div>
   );

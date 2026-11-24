@@ -3,13 +3,15 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { MapContainer, TileLayer, Marker, Polyline, CircleMarker, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-import { LocateFixed, MapPin, X, Loader2, Navigation } from "lucide-react";
+import { MapPin, X, Loader2, Navigation } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
-import { haversine, projectOnPolyline } from "@/lib/geo";
+import { haversine, projectOnPolyline, routeBearingAt } from "@/lib/geo";
+import { matchAlongRoute } from "@/lib/route-index";
+import { useHudInset, useHudInsetValues } from "@/lib/hud-insets";
 import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
 import { vibrateConfirm } from "@/lib/haptics";
 import { UserMarker } from "@/components/vigla/UserMarker";
-import { ZoomControls } from "@/components/vigla/ZoomControls";
+import { MapControls, ROUTE_FIT_PADDING } from "@/components/vigla/MapControls";
 import { PoiLayerToggles } from "@/components/vigla/PoiLayerToggles";
 import { HazardMarker } from "@/components/vigla/HazardMarker";
 import { OfficialRadarCluster } from "@/components/vigla/OfficialRadarCluster";
@@ -32,7 +34,6 @@ import { useMapInteraction } from "@/context/MapInteractionContext";
 import { ProximityAlertCard } from "@/components/vigla/ProximityAlertCard";
 import { ItineraryPanel } from "@/components/vigla/ItineraryPanel";
 import { NavigationBannerBlue } from "@/components/vigla/NavigationBannerBlue"; // conservé pour réactivation éventuelle
-import { FixedTurnMarker } from "@/components/vigla/FixedTurnMarker";
 import { ProximityPopupSheet } from "@/components/vigla/ProximityPopupSheet";
 import { useHeadingLock } from "@/hooks/useHeadingLock";
 import { useFootRouting } from "@/hooks/useFootRouting";
@@ -155,88 +156,68 @@ function InteractionTracker() {
   return null;
 }
 
-function NavigationFollow({ lat, lng, heading }: { lat: number; lng: number; heading?: number | null }) {
+/**
+ * Keeps the vehicle at the centre of the map stage while navigating.
+ * Rotation is owned by useHeadingLock alone: this component used to run a
+ * second, independent rotation loop on the same panes.
+ */
+function NavigationFollow({ lat, lng, follow }: { lat: number; lng: number; follow: boolean }) {
   const map = useMap();
   const firstFollow = useRef(true);
+  const latestRef = useRef<[number, number]>([lat, lng]);
+  latestRef.current = [lat, lng];
+  const followRef = useRef(follow);
+  followRef.current = follow;
+
   useEffect(() => {
     if (firstFollow.current) {
       // On nav start, zoom in once for a driving view.
-      map.setView([lat, lng], Math.max(map.getZoom(), 17), { animate: true });
+      map.setView([lat, lng], Math.max(map.getZoom(), 17), { animate: false });
       firstFollow.current = false;
-    } else {
-      // Then just recenter, respecting whatever zoom the user chose.
-      map.setView([lat, lng], map.getZoom(), { animate: true });
+      return;
     }
-  }, [lat, lng, map]);
+    if (!follow) return;
+    // Then just recenter, respecting whatever zoom the user chose.
+    map.setView([lat, lng], map.getZoom(), { animate: true });
+  }, [lat, lng, follow, map]);
 
-  // Heading lock: rotate the map container so the direction of travel points
-  // up. Debounced (200ms), jitter-filtered, eased over 2.5s, and reverted to
-  // north-up smoothly when navigation stops or GPS heading is lost.
-  const targetRef = useRef(0);
-  const lastTargetAtRef = useRef(0);
+  // The stage is resized when navigation starts (see MapStage). Leaflet keeps
+  // the top-left corner fixed on a resize, which would leave the vehicle
+  // off-centre until the next GPS fix: recentre as soon as the size settles.
   useEffect(() => {
-    if (heading == null || !Number.isFinite(heading)) return;
-    const now = Date.now();
-    const delta = Math.abs(((heading - targetRef.current + 540) % 360) - 180);
-    // GPS jitter: ignore rapid small-ish swings.
-    if (now - lastTargetAtRef.current < 200 && delta < 15) return;
-    lastTargetAtRef.current = now;
-    targetRef.current = heading;
-  }, [heading]);
-
-  useEffect(() => {
-    const el = map.getContainer();
-    const panes = () =>
-      [
-        map.getPane("tilePane"),
-        map.getPane("overlayPane"),
-        map.getPane("shadowPane"),
-        map.getPane("markerPane"),
-        map.getPane("popupPane"),
-      ].filter(Boolean) as HTMLElement[];
-
-    let current = 0;
-    let from = 0;
-    let to = 0;
-    let startedAt = performance.now();
-    let raf = 0;
-    const easeInOutQuad = (t: number) => (t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t);
-
-    const frame = (now: number) => {
-      const target = targetRef.current;
-      if (target !== to) {
-        from = current;
-        to = target;
-        startedAt = now;
-      }
-      const p = Math.min(1, (now - startedAt) / 2500);
-      const diff = ((to - from + 540) % 360) - 180;
-      current = from + diff * easeInOutQuad(p);
-      const rot = -current;
-      // Rotate the map panes only, so floating UI (chips, buttons, HUD)
-      // stays upright. Origin = the on-screen map centre.
-      const origin = map.latLngToLayerPoint(map.getCenter());
-      for (const pane of panes()) {
-        pane.style.transformOrigin = `${origin.x}px ${origin.y}px`;
-        pane.style.transform = `rotate(${rot.toFixed(2)}deg)`;
-      }
-      el.style.setProperty("--vigla-map-rot", `${rot.toFixed(2)}deg`);
-      raf = requestAnimationFrame(frame);
+    const onResize = () => {
+      if (!followRef.current) return;
+      map.setView(latestRef.current, map.getZoom(), { animate: false });
     };
-    el.classList.add("vigla-heading-lock");
-    raf = requestAnimationFrame(frame);
-
+    map.on("resize", onResize);
     return () => {
-      cancelAnimationFrame(raf);
-      el.classList.remove("vigla-heading-lock");
-      for (const pane of panes()) {
-        pane.style.transform = "";
-        pane.style.transformOrigin = "";
-      }
-      el.style.removeProperty("--vigla-map-rot");
+      map.off("resize", onResize);
     };
   }, [map]);
 
+  return null;
+}
+
+/**
+ * After the rider pans or zooms away during navigation, hand the map back to
+ * the vehicle once they have left it alone for a while — nobody should have
+ * to find a "recentre" button with gloves on.
+ */
+function AutoResumeFollow({ following, onResume }: { following: boolean; onResume: () => void }) {
+  const map = useMap();
+  useEffect(() => {
+    if (following) return;
+    let timer = window.setTimeout(onResume, 10_000);
+    const rearm = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(onResume, 10_000);
+    };
+    map.on("dragstart zoomstart", rearm);
+    return () => {
+      window.clearTimeout(timer);
+      map.off("dragstart zoomstart", rearm);
+    };
+  }, [following, map, onResume]);
   return null;
 }
 
@@ -297,37 +278,23 @@ function FitRoute({ coords }: { coords: [number, number][] }) {
   useEffect(() => {
     if (coords.length < 2) return;
     const bounds = L.latLngBounds(coords.map(([la, ln]) => L.latLng(la, ln)));
-    map.fitBounds(bounds, { padding: [60, 60] });
+    map.fitBounds(bounds, ROUTE_FIT_PADDING);
   }, [coords, map]);
   return null;
 }
 
-function FitRouteButton({ coords, label }: { coords: [number, number][]; label: string }) {
-  const map = useMap();
-  if (coords.length < 2) return null;
+/** A bottom-docked card that tells the HUD how much room it takes. */
+function DockedBottom({ className, children }: { className: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useHudInset(ref, "bottom");
   return (
-    <div className="pointer-events-none absolute bottom-44 right-3 z-[600]">
-      <button
-        type="button"
-        aria-label={label}
-        onClick={() => {
-          const bounds = L.latLngBounds(coords.map(([la, ln]) => L.latLng(la, ln)));
-          map.fitBounds(bounds, { padding: [60, 60], animate: true });
-        }}
-        className="vigla-zoom-btn vigla-map-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5">
-          <path d="M3 8V5a2 2 0 0 1 2-2h3" />
-          <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
-          <path d="M3 16v3a2 2 0 0 0 2 2h3" />
-          <path d="M21 16v3a2 2 0 0 1-2 2h-3" />
-          <circle cx="12" cy="12" r="2" />
-        </svg>
-      </button>
+    <div ref={ref} className={className}>
+      {children}
     </div>
   );
 }
 
+let routeHintShown = false;
 
 type Viewport = { north: number; south: number; east: number; west: number; zoom: number };
 type PendingPick = { lat: number; lng: number; label: string | null };
@@ -339,25 +306,6 @@ function pendingIcon() {
     iconSize: [30, 30],
     iconAnchor: [15, 30],
   });
-}
-
-function MyLocationButton({ lat, lng, label, onRecenter }: { lat: number; lng: number; label: string; onRecenter: () => void }) {
-  const map = useMap();
-  return (
-    <div className="pointer-events-none absolute bottom-56 right-3 z-[600]">
-      <button
-        type="button"
-        aria-label={label}
-        onClick={() => {
-          map.panTo([lat, lng], { animate: true, duration: 0.5 });
-          onRecenter();
-        }}
-        className="vigla-zoom-btn vigla-map-btn pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full shadow-[0_4px_12px_rgba(15,23,42,0.18)] transition active:scale-95"
-      >
-        <LocateFixed className="h-5 w-5" />
-      </button>
-    </div>
-  );
 }
 
 function TapToDestination({ onPick }: { onPick: (lat: number, lng: number) => void }) {
@@ -400,20 +348,67 @@ function ViewportTracker({ onChange }: { onChange: (v: Viewport) => void }) {
   return null;
 }
 
-/** Small read-out of the current zoom level (top-right of the map). */
-function ZoomIndicator() {
-  const map = useMap();
-  const [zoom, setZoom] = useState(() => map.getZoom());
+/**
+ * The map lives in a "stage" that is normally the size of the screen, and
+ * grows into a square centred on the vehicle while navigating.
+ *
+ * Heading-up navigation rotates the map panes with CSS. Leaflet only loads
+ * tiles for its own (unrotated) container, so a screen-sized container left
+ * large blank wedges in the corners as soon as the map turned. A square whose
+ * half-side reaches the farthest screen corner always covers the screen, at
+ * any rotation. Its centre — the vehicle — is placed two thirds of the way
+ * down the part of the screen that is actually visible between the top and
+ * bottom panels, so most of what the rider sees is the road ahead.
+ */
+const VEHICLE_BAND_Y = 0.68;
+/** The vehicle is never drawn lower than this fraction of the map height. */
+const VEHICLE_MAX_Y = 0.8;
+
+function MapStage({ expanded, children }: { expanded: boolean; children: React.ReactNode }) {
+  const clipRef = useRef<HTMLDivElement | null>(null);
+  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const insets = useHudInsetValues(clipRef);
+
   useEffect(() => {
-    const update = () => setZoom(map.getZoom());
-    map.on("zoomend zoom", update);
-    return () => {
-      map.off("zoomend zoom", update);
+    const el = clipRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+    const measure = () => {
+      const box = el.getBoundingClientRect();
+      // Hidden map tab: keep the last known size instead of collapsing.
+      if (box.width === 0 || box.height === 0) return;
+      setSize((prev) =>
+        prev && prev.w === box.width && prev.h === box.height
+          ? prev
+          : { w: box.width, h: box.height },
+      );
     };
-  }, [map]);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  let stage: React.CSSProperties = { left: 0, top: 0, width: "100%", height: "100%" };
+  if (expanded && size) {
+    const pivotX = size.w / 2;
+    const top = Math.min(insets.top, size.h * 0.45);
+    const bottom = Math.min(insets.bottom, size.h * 0.45);
+    // Clamped so a bad measurement can never push the vehicle off-screen.
+    const pivotY = Math.min(
+      size.h * VEHICLE_MAX_Y,
+      Math.max(size.h * (1 - VEHICLE_MAX_Y), top + (size.h - top - bottom) * VEHICLE_BAND_Y),
+    );
+    // Sized for the lowest allowed vehicle position, not the current one: the
+    // stage then only MOVES when a panel changes height. Resizing it would
+    // make Leaflet re-lay out its tiles in the middle of a manoeuvre.
+    const reach = Math.ceil(Math.hypot(pivotX, size.h * VEHICLE_MAX_Y));
+    stage = { left: pivotX - reach, top: pivotY - reach, width: reach * 2, height: reach * 2 };
+  }
   return (
-    <div className="pointer-events-none absolute right-3 top-3 z-[600] rounded-md bg-white/85 px-2 py-1 text-[11px] font-semibold text-slate-700 shadow-sm ring-1 ring-slate-200">
-      Zoom level: {Math.round(zoom)}
+    <div ref={clipRef} className="vigla-map-clip absolute inset-0 overflow-hidden">
+      <div className="vigla-map-stage absolute" style={stage}>
+        {children}
+      </div>
     </div>
   );
 }
@@ -452,25 +447,19 @@ export function MapView() {
   const MIN_ZOOM_FOR_RADARS = 10;
   const MAX_RADAR_MARKERS = 300;
 
+  const navActiveForRadars = !!navigation && !navigation.arrived;
+  const routeCoordsForRadars = route?.coords ?? null;
   const nearbyOfficial = useMemo(() => {
     if (officialRadars.length === 0) return [];
 
 
-    // Radars along the active navigation route (always shown, regardless of viewport).
+    // Radars along the active route (always shown, regardless of viewport).
+    // Matched once per route through the cached route index: the previous
+    // version re-scanned every radar against the route on each GPS fix.
     const routeSet = new Map<string, typeof officialRadars[number]>();
-    const navActiveLocal = !!navigation && !navigation.arrived;
-    if (navActiveLocal && navigation && navigation.remainingCoords.length > 1) {
-      const coords = navigation.remainingCoords;
-      // Sample every Nth coord to bound cost.
-      const step = Math.max(1, Math.floor(coords.length / 200));
-      for (const r of officialRadars) {
-        for (let i = 0; i < coords.length; i += step) {
-          const [la, ln] = coords[i];
-          if (haversine(la, ln, r.latitude, r.longitude) < 500) {
-            routeSet.set(r.id, r);
-            break;
-          }
-        }
+    if (navActiveForRadars && routeCoordsForRadars && routeCoordsForRadars.length > 1) {
+      for (const m of matchAlongRoute(routeCoordsForRadars, officialRadars, 500)) {
+        routeSet.set(m.item.id, m.item);
       }
     }
 
@@ -509,7 +498,7 @@ export function MapView() {
     const capped = inView.slice(0, MAX_RADAR_MARKERS);
     for (const r of capped) merged.set(r.id, r);
     return Array.from(merged.values());
-  }, [officialRadars, viewport, navigation]);
+  }, [officialRadars, viewport, navActiveForRadars, routeCoordsForRadars]);
 
 
   const showSignals = useVigla((s) => s.showTrafficSignals);
@@ -653,7 +642,52 @@ export function MapView() {
   // Heading lock: rotate the map so the direction of travel points up.
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
   const handleMapReady = useCallback((m: L.Map | null) => setMapInstance(m), []);
-  useHeadingLock(mapInstance, position?.heading, navActive);
+
+  // Every navigation starts locked on the vehicle, whatever was left over
+  // from browsing the map beforehand.
+  useEffect(() => {
+    if (navActive) setMapFollowsUser(true);
+  }, [navActive, setMapFollowsUser]);
+  const resumeFollow = useCallback(() => setMapFollowsUser(true), [setMapFollowsUser]);
+  const navFollowing = navActive && autoRecenter && mapFollowsUser;
+
+  // Where the vehicle is drawn, and which way it points.
+  //  - Position: snapped to the route while the fix is within ~28 m of it, so
+  //    the arrow rides the road instead of wobbling beside it. Beyond that the
+  //    true fix is shown, so a real deviation is never hidden.
+  //  - Course: the bearing of the road just ahead when snapped. The raw GPS
+  //    heading is missing at standstill and noisy at low speed, which made
+  //    the map spin at every stop; it is only trusted off-route and moving.
+  const speedKmh = useVigla((s) => s.speedKmh);
+  const lastCourseRef = useRef<number | null>(null);
+  const vehicle = useMemo(() => {
+    if (!position) return null;
+    let lat = position.lat;
+    let lng = position.lng;
+    let course: number | null = null;
+    if (navActive && navigation && route && route.coords.length > 1) {
+      // remainingCoords starts at the segment the engine last matched, so
+      // only the next few segments of the route need checking. Projecting on
+      // route.coords itself reuses its cached distances.
+      const from = Math.max(0, route.coords.length - navigation.remainingCoords.length);
+      const proj = projectOnPolyline(lat, lng, route.coords, from, from + 60);
+      if (proj.distanceToRouteM <= 28) {
+        lat = proj.point[0];
+        lng = proj.point[1];
+        course = routeBearingAt(route.coords, proj.distanceAlongM);
+      }
+    }
+    if (course == null && position.heading != null && Number.isFinite(position.heading) && speedKmh >= 5) {
+      course = position.heading;
+    }
+    if (course == null) course = lastCourseRef.current;
+    return { lat, lng, course };
+  }, [position, navActive, navigation, route, speedKmh]);
+  useEffect(() => {
+    if (vehicle?.course != null) lastCourseRef.current = vehicle.course;
+  }, [vehicle?.course]);
+
+  useHeadingLock(mapInstance, vehicle?.course ?? null, navFollowing);
   // Recalculates the active route with the car/foot OSRM profile on toggle.
   useFootRouting();
   const isFootMode = useVigla((s) => s.isFootMode);
@@ -908,13 +942,17 @@ export function MapView() {
     }
   }, [activeCoords, registerPolyline, unregisterPolyline]);
 
-  // Toast once when a route polyline becomes tappable.
+  // Hint, once per session, that the route polyline is tappable. It used to
+  // pop up on every single route, stacked on the "itinéraire calculé" toast.
   const routeReadyRef = useRef(false);
   useEffect(() => {
     const hasRoute = (route?.coords?.length ?? 0) > 1;
     if (hasRoute && !routeReadyRef.current) {
       routeReadyRef.current = true;
-      toast.info("🔵 Itinéraire prêt — tapez la route pour ajouter une étape", { duration: 2500 });
+      if (!routeHintShown) {
+        routeHintShown = true;
+        toast.info("🔵 Itinéraire prêt — tapez la route pour ajouter une étape", { duration: 2500 });
+      }
     } else if (!hasRoute) {
       routeReadyRef.current = false;
       setTapPoint(null);
@@ -1010,9 +1048,9 @@ export function MapView() {
 
   return (
     <>
-    <MapContainer center={center} zoom={15} zoomControl={false} className="h-full w-full">
+    <MapStage expanded={navActive}>
+    <MapContainer center={center} zoom={15} zoomControl={false} attributionControl={false} className="h-full w-full">
       <ViewportTracker onChange={setViewport} />
-      <ZoomIndicator />
 
       <InteractionTracker />
 
@@ -1038,43 +1076,15 @@ export function MapView() {
           recenterKey={recenterKey}
         />
       )}
-      {position && autoRecenter && navActive && (
-        <NavigationFollow lat={position.lat} lng={position.lng} heading={position.heading} />
+      {vehicle && autoRecenter && navActive && (
+        <NavigationFollow lat={vehicle.lat} lng={vehicle.lng} follow={mapFollowsUser} />
+      )}
+      {navActive && autoRecenter && (
+        <AutoResumeFollow following={mapFollowsUser} onResume={resumeFollow} />
       )}
 
-      {position && (() => {
-        // Light map-matching: while a route is active, snap the arrow to
-        // the nearest point on the polyline as long as the raw fix is
-        // within ~28m of the route. Beyond that we show the true position
-        // so an actual deviation isn't hidden.
-        let dispLat = position.lat;
-        let dispLng = position.lng;
-        if (navActive && navigation && navigation.remainingCoords.length > 1) {
-          const proj = projectOnPolyline(
-            position.lat,
-            position.lng,
-            navigation.remainingCoords,
-          );
-          if (proj.distanceToRouteM <= 28) {
-            dispLat = proj.point[0];
-            dispLng = proj.point[1];
-          }
-        }
-        return <UserMarker lat={dispLat} lng={dispLng} heading={position.heading} />;
-      })()}
+      {vehicle && <UserMarker lat={vehicle.lat} lng={vehicle.lng} heading={vehicle.course} />}
 
-      <ZoomControls />
-      {position && (!navActive || motoMode) && (
-        <MyLocationButton
-          lat={position.lat}
-          lng={position.lng}
-          label={t("map.recenter")}
-          onRecenter={() => {
-            setMapFollowsUser(true);
-            setRecenterKey((k) => k + 1);
-          }}
-        />
-      )}
       {!route && !navActive && <TapToDestination onPick={handleMapPick} />}
       {pending && (
         <Marker position={[pending.lat, pending.lng]} icon={pendingIcon()} />
@@ -1085,7 +1095,6 @@ export function MapView() {
           <Polyline positions={route.coords} pathOptions={{ color: "#FF6B35", weight: 6, opacity: 0.85 }} />
           <Marker position={[route.destination.lat, route.destination.lng]} icon={destinationIcon()} />
           <FitRoute coords={route.coords} />
-          <FitRouteButton coords={route.coords} label={t("map.fitRoute")} />
         </>
       )}
       {navigation && navActive && route && (
@@ -1165,20 +1174,40 @@ export function MapView() {
             icon={convoyMemberIcon(m.display_name)}
           />
         ))}
-      {showFastfoods && (
-        <div className="pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
-          <SmartRestaurantsChip
-            pois={inViewFastfoods}
-            isLoading={fastfoodsLoading}
-            isFailing={isFailing}
-            onRetry={retryManually}
-            onSelect={openPoiPreview}
-            userPosition={position}
-          />
-        </div>
-      )}
     </MapContainer>
-    <div className={`absolute right-3 z-[700] ${navActive && !sillaxeActive ? "top-[14rem]" : "top-[8.5rem]"}`}>
+    </MapStage>
+    <a
+      className="vigla-attribution"
+      href="https://www.openstreetmap.org/copyright"
+      target="_blank"
+      rel="noreferrer"
+    >
+      © OpenStreetMap
+    </a>
+    <MapControls
+      map={mapInstance}
+      hasPosition={!!position}
+      navActive={navActive}
+      following={navActive ? navFollowing : mapFollowsUser}
+      fitCoords={route && !navActive ? route.coords : null}
+      onRecenter={() => {
+        setMapFollowsUser(true);
+        if (!navActive) setRecenterKey((k) => k + 1);
+      }}
+    />
+    {showFastfoods && (
+      <div className="vigla-chip-restaurants vigla-under-top pointer-events-none absolute left-3 top-[8.5rem] z-[600] flex">
+        <SmartRestaurantsChip
+          pois={inViewFastfoods}
+          isLoading={fastfoodsLoading}
+          isFailing={isFailing}
+          onRetry={retryManually}
+          onSelect={openPoiPreview}
+          userPosition={position}
+        />
+      </div>
+    )}
+    <div className="vigla-under-top absolute right-3 top-[8.5rem] z-[700]">
       <PoiLayerToggles dark={motoMode || mapTheme === "dark"} />
     </div>
     {proximityAlert && (
@@ -1210,7 +1239,7 @@ export function MapView() {
     )}
     {pending && (
       <div className="pointer-events-none absolute inset-x-0 bottom-24 z-[860] flex justify-center px-4">
-        <div className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
+        <DockedBottom className="pointer-events-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-4 shadow-[0_16px_40px_rgba(15,23,42,0.18)]">
           <div className="flex items-start gap-3">
             <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#FF6B35]/10 text-[#FF6B35]">
               <MapPin className="h-5 w-5" />
@@ -1252,7 +1281,7 @@ export function MapView() {
             )}
             {t("map.setAsDestination")}
           </button>
-        </div>
+        </DockedBottom>
       </div>
     )}
     {poiRouting && (
@@ -1306,9 +1335,9 @@ export function MapView() {
     )}
     {/* Pastille « En navigation » supprimée : l'info est dans la carte d'instruction. */}
     {navActive && isFootMode && <FootModePanel />}
-    {navActive && !sillaxeActive && <FixedTurnMarker />}
     {navActive && !sillaxeActive && route && route.waypoints.length > 0 && <ItineraryPanel />}
-    <CityDisplay city={cityName} />
+    {/* Hidden while navigating: it sat underneath the instruction card. */}
+    {!navActive && <CityDisplay city={cityName} />}
     </>
   );
 }

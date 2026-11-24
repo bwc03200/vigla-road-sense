@@ -3,13 +3,13 @@ import { toast } from "sonner";
 import i18n from "@/i18n/i18n";
 import { useVigla } from "@/lib/vigla-store";
 import {
+  cumulativeDistances,
   haversine,
-  polylineLength,
   projectOnPolyline,
 } from "@/lib/geo";
-import { buildRouteState, fetchOsrmRoute } from "@/lib/routing";
+import { buildRouteState, fetchOsrmRouteVia } from "@/lib/routing";
 import { speak, cancelSpeech } from "@/lib/speech";
-import type { ActiveNavigation } from "@/types/vigla";
+import type { ActiveNavigation, RouteStep, RouteWaypoint } from "@/types/vigla";
 
 const OFF_ROUTE_M = 50;
 const OFF_ROUTE_HOLD_MS = 8000;
@@ -17,6 +17,68 @@ const ARRIVAL_M = 30;
 const RECALC_RETRY_MS = 10000;
 const COORD_EPSILON = 0.0000001;
 const DISTANCE_EPSILON_M = 0.1;
+/** Minimum stretch of route (m) searched ahead of the last known position. */
+const PROJECTION_WINDOW_M = 400;
+/** A waypoint counts as reached once the rider is this close to its leg end. */
+const WAYPOINT_REACHED_M = 40;
+
+/**
+ * Distance at which the upcoming maneuver is announced ahead of time, and at
+ * which the "now" call is made. Both scale with speed: 60 m is plenty of
+ * warning at 30 km/h in town and none at all at 130 km/h on a motorway.
+ */
+export function announcementDistances(speedMps: number): { farM: number; nearM: number } {
+  const v = Number.isFinite(speedMps) && speedMps > 0 ? speedMps : 0;
+  return {
+    farM: Math.min(1500, Math.max(250, v * 18)),
+    nearM: Math.min(160, Math.max(35, v * 4)),
+  };
+}
+
+/** "Dans 300 mètres" / "Dans 1,2 kilomètres": rounded the way a person says it. */
+function spokenDistance(m: number): { key: "m" | "km"; value: string } {
+  if (m >= 950) {
+    const km = Math.round(m / 100) / 10;
+    const text = Number.isInteger(km) ? String(km) : km.toFixed(1);
+    return { key: "km", value: i18n.language?.startsWith("en") ? text : text.replace(".", ",") };
+  }
+  const step = m >= 300 ? 50 : 10;
+  return { key: "m", value: String(Math.max(step, Math.round(m / step) * step)) };
+}
+
+/** Instruction as the second half of a sentence: no leading capital. */
+function midSentence(instruction: string): string {
+  return instruction.charAt(0).toLowerCase() + instruction.slice(1);
+}
+
+/**
+ * Remaining travel time from per-step durations, so a route that mixes town
+ * and motorway is not averaged into one wrong speed. Falls back to the
+ * route-wide average when a (legacy / restored) route has no step durations.
+ */
+function remainingDuration(
+  steps: RouteStep[],
+  stepStarts: number[],
+  traveledM: number,
+  distanceRemainingM: number,
+  fallbackSpeedMps: number,
+): number {
+  const fallback = fallbackSpeedMps > 0 ? distanceRemainingM / fallbackSpeedMps : 0;
+  if (steps.length === 0 || steps.some((st) => !Number.isFinite(st.durationSeconds))) {
+    return fallback;
+  }
+  let onStep = 0;
+  for (let i = 0; i < steps.length; i++) {
+    if (stepStarts[i] <= traveledM) onStep = i;
+    else break;
+  }
+  const current = steps[onStep];
+  const length = current.distanceMeters;
+  const done = length > 0 ? Math.min(1, Math.max(0, (traveledM - stepStarts[onStep]) / length)) : 1;
+  let total = (current.durationSeconds as number) * (1 - done);
+  for (let i = onStep + 1; i < steps.length; i++) total += steps[i].durationSeconds as number;
+  return Number.isFinite(total) ? total : fallback;
+}
 
 function nearlyEqual(a: number, b: number, epsilon = DISTANCE_EPSILON_M) {
   return Math.abs(a - b) <= epsilon;
@@ -111,6 +173,26 @@ function patchNavigationIfChanged(
   }
 }
 
+/** Stops of the active route that still lie ahead of `traveledM`. */
+function pendingWaypoints(
+  route: { waypoints?: RouteWaypoint[]; legs?: { distanceM: number }[] },
+  traveledM: number,
+): RouteWaypoint[] {
+  const waypoints = Array.isArray(route.waypoints) ? route.waypoints : [];
+  const legs = Array.isArray(route.legs) ? route.legs : [];
+  // legs[i] ends at waypoints[i]; without matching legs we cannot tell which
+  // stops are behind us, so keep them all rather than drop one by mistake.
+  if (waypoints.length === 0 || legs.length !== waypoints.length) return waypoints;
+  let reachedAt = 0;
+  let firstPending = 0;
+  for (let i = 0; i < waypoints.length; i++) {
+    reachedAt += legs[i].distanceM;
+    if (traveledM >= reachedAt - WAYPOINT_REACHED_M) firstPending = i + 1;
+    else break;
+  }
+  return waypoints.slice(firstPending);
+}
+
 /** Drives ActiveNavigation state from the user's live GPS position. */
 export function useNavigationEngine() {
   const position = useVigla((s) => s.position);
@@ -145,22 +227,44 @@ export function useNavigationEngine() {
 
     const coords = activeRoute.coords;
     if (!Array.isArray(coords) || coords.length < 2) return;
-    // Restrict search to segments at or ahead of last known projection so we
-    // don't erroneously "jump" forward on routes that loop back near their start.
+    const cumulative = cumulativeDistances(coords);
+    const totalLen = cumulative[cumulative.length - 1];
+    const speedMps = Math.max(0, useVigla.getState().speedKmh / 3.6);
+
+    // Search only a window of route ahead of the last projection. Searching
+    // the whole remaining geometry let the position jump far ahead whenever
+    // the route passes close to itself again (hairpins, interchange loops,
+    // out-and-back roadbooks). A full forward search is kept as a fallback
+    // for a real gap in fixes (tunnel, GPS drop-out).
     const searchFrom = Math.min(lastSegmentIdxRef.current, coords.length - 2);
-    const proj = projectOnPolyline(
+    const windowM = Math.max(PROJECTION_WINDOW_M, speedMps * 15);
+    let searchTo = searchFrom + 1;
+    while (
+      searchTo < coords.length - 1 &&
+      cumulative[searchTo] - cumulative[searchFrom] < windowM
+    ) {
+      searchTo += 1;
+    }
+    let proj = projectOnPolyline(
       currentPosition.lat,
       currentPosition.lng,
       coords,
       searchFrom,
+      searchTo,
     );
+    if (proj.distanceToRouteM > OFF_ROUTE_M && searchTo < coords.length - 1) {
+      const wide = projectOnPolyline(
+        currentPosition.lat,
+        currentPosition.lng,
+        coords,
+        searchFrom,
+      );
+      if (wide.distanceToRouteM <= OFF_ROUTE_M) proj = wide;
+    }
     lastSegmentIdxRef.current = proj.segmentIndex;
-    const totalLen = polylineLength(coords);
     const distanceRemainingM = Math.max(0, totalLen - proj.distanceAlongM);
     const avgSpeed =
       activeRoute.durationS > 0 ? activeRoute.distanceM / activeRoute.durationS : 12;
-    const durationRemainingS =
-      avgSpeed > 0 ? distanceRemainingM / avgSpeed : 0;
 
     // IMPORTANT: the drawn geometry must NOT include the GPS-projected point.
     // Injecting proj.point made the head/tail vertex move (and the arrays get a
@@ -182,19 +286,17 @@ export function useNavigationEngine() {
       Math.max(0, steps.length - 1),
     );
     let distanceToNext = 0;
+    // stepStartDistances[i] = distance along route at which step i begins.
+    const stepStartDistances: number[] = [0];
+    const traveled = Number.isFinite(proj.distanceAlongM) ? proj.distanceAlongM : 0;
     if (steps.length > 0) {
-      // stepStartDistances[i] = distance along route at which step i begins.
-      const stepStartDistances: number[] = [0];
-      let cumulative = 0;
+      let running = 0;
       for (let i = 0; i < steps.length - 1; i++) {
-        cumulative += Number.isFinite(steps[i]?.distanceMeters)
+        running += Number.isFinite(steps[i]?.distanceMeters)
           ? steps[i].distanceMeters
           : 0;
-        stepStartDistances.push(cumulative);
+        stepStartDistances.push(running);
       }
-      const traveled = Number.isFinite(proj.distanceAlongM)
-        ? proj.distanceAlongM
-        : 0;
       // Find the first upcoming step whose start we haven't crossed yet.
       // Never regress below the current index (protects against GPS jitter),
       // but never exceed the last step either — a single-step route would
@@ -205,27 +307,19 @@ export function useNavigationEngine() {
         idx += 1;
       }
       stepIdx = idx;
+      // Count down ALONG the road. A straight-line distance to the maneuver
+      // point reads short on anything that bends (roundabouts, hairpins,
+      // slip roads), which made "dans 200 m" fire well before 200 m of road.
       const startAt = stepStartDistances[stepIdx] ?? 0;
       distanceToNext = Math.max(0, startAt - traveled);
-      // Prefer straight-line distance to the maneuver point when available —
-      // matches driver expectation (the banner counts down to the intersection).
-      const s = steps[stepIdx];
-      if (
-        s &&
-        Array.isArray(s.location) &&
-        s.location.length >= 2 &&
-        Number.isFinite(s.location[0]) &&
-        Number.isFinite(s.location[1])
-      ) {
-        const d = haversine(
-          currentPosition.lat,
-          currentPosition.lng,
-          s.location[0],
-          s.location[1],
-        );
-        if (Number.isFinite(d)) distanceToNext = d;
-      }
     }
+    const durationRemainingS = remainingDuration(
+      steps,
+      stepStartDistances,
+      traveled,
+      distanceRemainingM,
+      avgSpeed,
+    );
 
     // Arrival: use haversine to the FINAL destination point AND require the
     // projected remaining polyline distance to be near zero. Both guards prevent
@@ -267,29 +361,37 @@ export function useNavigationEngine() {
       return;
     }
 
-    // Voice announcements for the upcoming maneuver.
+    // Voice announcements for the upcoming maneuver: one ahead of time, one
+    // at the maneuver, both at speed-dependent distances.
     if (useVigla.getState().preferences.voice_alerts && steps.length > 0) {
       const currentStep = steps[stepIdx];
       const instr = currentStep?.instruction;
+      const isArrival = currentStep?.maneuverType === "arrive";
       const ann = announcedStepRef.current;
       if (ann.idx !== stepIdx) {
         ann.idx = stepIdx;
         ann.far = false;
         ann.near = false;
       }
+      const { farM, nearM } = announcementDistances(speedMps);
       if (instr) {
-        if (!ann.far && distanceToNext > 150 && distanceToNext < 350) {
+        if (!ann.far && distanceToNext <= farM && distanceToNext > nearM * 1.6) {
           ann.far = true;
+          const spoken = spokenDistance(distanceToNext);
+          const key = isArrival
+            ? spoken.key === "km" ? "voice.arriveInKm" : "voice.arriveIn"
+            : spoken.key === "km" ? "voice.turnInKm" : "voice.turnIn";
           speak(
-            i18n.t("voice.turnIn", {
-              distance: Math.round(distanceToNext / 10) * 10,
-              instruction: instr,
-            }),
+            i18n.t(key, { distance: spoken.value, instruction: midSentence(instr) }),
             "low",
           );
-        } else if (!ann.near && distanceToNext <= 60) {
+        } else if (!ann.near && distanceToNext <= nearM) {
           ann.near = true;
-          speak(i18n.t("voice.turnNow", { instruction: instr }), "high");
+          ann.far = true;
+          // The arrival itself is announced once, when actually reached.
+          if (!isArrival) {
+            speak(i18n.t("voice.turnNow", { instruction: midSentence(instr) }), "high");
+          }
         }
       }
     }
@@ -355,16 +457,30 @@ export function useNavigationEngine() {
       recalcInFlight.current = true;
       lastRecalcAt.current = now;
       patchNavigationIfChanged(navigation, { recalculating: true }, patchNavigation);
-      fetchOsrmRoute(
-        currentPosition.lat,
-        currentPosition.lng,
-        activeRoute.destination.lat,
-        activeRoute.destination.lng,
+      // Keep the stops the rider has not reached yet: recalculating straight
+      // to the final destination silently dropped every intermediate stop of
+      // a roadbook or a "via" route the first time one left the road.
+      const pending = pendingWaypoints(activeRoute, traveled);
+      const via: [number, number][] = pending.map((w) => [w.lat, w.lon]);
+      const lastVia = via[via.length - 1];
+      if (
+        !lastVia ||
+        haversine(lastVia[0], lastVia[1], activeRoute.destination.lat, activeRoute.destination.lng) > 5
+      ) {
+        via.push([activeRoute.destination.lat, activeRoute.destination.lng]);
+      }
+      fetchOsrmRouteVia(
+        [[currentPosition.lat, currentPosition.lng], ...via],
         controller.signal,
       )
         .then((result) => {
           if (controller.signal.aborted) return;
-          const newRoute = buildRouteState(activeRoute.destination, result, hazards);
+          const newRoute = buildRouteState(
+            activeRoute.destination,
+            result,
+            hazards,
+            pending,
+          );
           lastSegmentIdxRef.current = 0;
           setRoute(newRoute);
           setNavigation({
@@ -383,6 +499,10 @@ export function useNavigationEngine() {
             startedAt: navigation.startedAt,
             alertsReceived: navigation.alertsReceived,
           });
+          announcedStepRef.current = { idx: -1, far: false, near: false };
+          if (useVigla.getState().preferences.voice_alerts) {
+            speak(i18n.t("voice.recalculated"), "low");
+          }
           import("@/lib/logger").then((m) =>
             m.logEvent("nav.recalc.success", "info", { distanceM: newRoute.distanceM }),
           );

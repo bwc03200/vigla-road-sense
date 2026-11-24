@@ -31,7 +31,7 @@ export function HazardFilters() {
   const hasFilter = activeCount < HAZARD_FILTER_KEYS.length;
 
   return (
-    <div className="pointer-events-none absolute left-3 top-20 z-[600] flex flex-col items-start gap-2">
+    <div className="vigla-under-top pointer-events-none absolute left-3 top-20 z-[600] flex flex-col items-start gap-2">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}

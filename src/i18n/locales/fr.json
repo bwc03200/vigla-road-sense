@@ -178,6 +178,9 @@
     "resumeYes": "Reprendre",
     "instructions": {
       "arrive": "Vous êtes arrivé",
+      "arriveAhead": "Arrivée à destination",
+      "roundaboutExit": "Au rond-point, prenez la {{ordinal}} sortie",
+      "roundaboutExitN": "Au rond-point, prenez la sortie {{exit}}",
       "departNamed": "Départ sur {{name}}",
       "depart": "Départ",
       "turn": "Tournez",
@@ -194,6 +197,15 @@
       "exitRoundabout": "Sortez du rond-point",
       "on": " sur {{name}}"
     },
+    "ordinal": {
+      "1": "première",
+      "2": "deuxième",
+      "3": "troisième",
+      "4": "quatrième",
+      "5": "cinquième",
+      "6": "sixième"
+    },
+    "recenter": "Recentrer",
     "modifier": {
       "left": "à gauche",
       "right": "à droite",
@@ -600,7 +612,11 @@
   "voice": {
     "hazardAhead": "{{label}} signalé dans {{distance}} mètres",
     "turnIn": "Dans {{distance}} mètres, {{instruction}}",
-    "turnNow": "Maintenant, {{instruction}}"
+    "turnInKm": "Dans {{distance}} kilomètres, {{instruction}}",
+    "turnNow": "Maintenant, {{instruction}}",
+    "arriveIn": "Dans {{distance}} mètres, vous arriverez à destination",
+    "arriveInKm": "Dans {{distance}} kilomètres, vous arriverez à destination",
+    "recalculated": "Itinéraire recalculé"
   },
   "trafficSignals": {
     "filter": "Feux tricolores",

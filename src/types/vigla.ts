@@ -66,6 +66,12 @@ export interface RouteStep {
   distanceMeters: number;
   maneuverType: string;
   location: [number, number];
+  /** Travel time of this step (s). Absent on routes saved before it existed. */
+  durationSeconds?: number;
+  /** OSRM maneuver modifier ("left", "slight right", "uturn"…) for the turn arrow. */
+  modifier?: string;
+  /** Roundabout exit number, when the maneuver enters a roundabout. */
+  exit?: number;
 }
 
 export interface RouteWaypoint {

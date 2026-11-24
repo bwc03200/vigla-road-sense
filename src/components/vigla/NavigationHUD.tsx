@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowUp, ArrowUpLeft, ArrowUpRight, CornerDownLeft, CornerDownRight, Heart, AlertTriangle, MessageCircle, Route, Volume2, VolumeX, X, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import { ArrowUp, ArrowUpLeft, ArrowUpRight, CornerUpLeft, CornerUpRight, MapPin, RefreshCw, Undo2, Heart, AlertTriangle, MessageCircle, Route, Volume2, VolumeX, X, ChevronUp, ChevronDown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useVigla } from "@/lib/vigla-store";
@@ -9,22 +9,40 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistance, formatSpeed } from "@/lib/geo";
 import { cancelSpeech } from "@/lib/speech";
 import { isVigilanceInRange, vigilanceProgress, VIGILANCE_DURATION_MS } from "@/lib/navigation-hud";
+import { useHudInset } from "@/lib/hud-insets";
 import type { RouteMilestone } from "@/hooks/useRouteMilestones";
 import type { ActiveNavigation, RouteStep, SpeedUnit } from "@/types/vigla";
 
-function ManeuverIcon({ step }: { step?: RouteStep }) {
-  const instruction = step?.instruction.toLowerCase() ?? "";
-  const Icon = /gauche|left|links/.test(instruction)
-    ? (/léger|slight/.test(instruction) ? ArrowUpLeft : CornerDownLeft)
-    : /droite|right|rechts/.test(instruction)
-      ? (/léger|slight/.test(instruction) ? ArrowUpRight : CornerDownRight) : ArrowUp;
-  return <Icon aria-hidden className="sillaxe-turn-icon" strokeWidth={3} />;
+export function ManeuverIcon({ step, className = "sillaxe-turn-icon" }: { step?: RouteStep; className?: string }) {
+  // Prefer the routing engine's own maneuver data. Guessing from the wording
+  // showed a "turn left" arrow for "prenez la deuxième sortie sur Rue de la
+  // Gauche" and nothing useful for roundabouts or the destination.
+  const type = step?.maneuverType ?? "";
+  const modifier = step?.modifier ?? "";
+  let Icon = ArrowUp;
+  if (type === "arrive") Icon = MapPin;
+  else if (type === "roundabout" || type === "rotary" || type === "roundabout turn") Icon = RefreshCw;
+  else if (modifier === "uturn") Icon = Undo2;
+  else if (modifier) {
+    if (modifier === "slight left") Icon = ArrowUpLeft;
+    else if (modifier === "slight right") Icon = ArrowUpRight;
+    else if (modifier.includes("left")) Icon = CornerUpLeft;
+    else if (modifier.includes("right")) Icon = CornerUpRight;
+  } else {
+    // Routes restored from before the modifier was stored: fall back to the text.
+    const instruction = step?.instruction.toLowerCase() ?? "";
+    if (/gauche|left|links/.test(instruction)) Icon = /léger|slight/.test(instruction) ? ArrowUpLeft : CornerUpLeft;
+    else if (/droite|right|rechts/.test(instruction)) Icon = /léger|slight/.test(instruction) ? ArrowUpRight : CornerUpRight;
+  }
+  return <Icon aria-hidden className={className} strokeWidth={3} />;
 }
 
 export function NavigationTopBar({ navigation, eta, onStop }: { navigation: ActiveNavigation; eta: string; onStop: () => void }) {
   const { t } = useTranslation();
   const step = navigation.steps[navigation.currentStepIndex];
-  return <div className="sillaxe-top sillaxe-panel" aria-label={t("sillaxe.itinerary")}>
+  const ref = useRef<HTMLDivElement | null>(null);
+  useHudInset(ref, "top");
+  return <div ref={ref} className="sillaxe-top sillaxe-panel" aria-label={t("sillaxe.itinerary")}>
     <div className="sillaxe-maneuver"><ManeuverIcon step={step} /><div className="min-w-0">
       <div className="sillaxe-turn-distance tabular-nums">{formatDistance(navigation.distanceToNextManeuverM)}</div>
       <div className="sillaxe-road" title={step?.instruction}>{step?.instruction ?? t("navigation.followRoad")}</div>

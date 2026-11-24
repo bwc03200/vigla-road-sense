@@ -25,12 +25,18 @@ interface OsrmManeuver {
   type: string;
   modifier?: string;
   location?: [number, number]; // [lng, lat]
+  /** Exit number to take, on roundabout / rotary maneuvers. */
+  exit?: number;
 }
 interface OsrmStep {
   distance: number;
+  duration?: number;
   maneuver: OsrmManeuver;
   name?: string;
 }
+
+const ROUNDABOUT_TYPES = new Set(["roundabout", "rotary"]);
+const ROUNDABOUT_EXIT_TYPES = new Set(["exit roundabout", "exit rotary"]);
 
 const MANEUVER_KEY: Record<string, string> = {
   turn: "turn",
@@ -51,12 +57,31 @@ const MANEUVER_KEY: Record<string, string> = {
   "exit rotary": "exitRoundabout",
 };
 
-function stepInstruction(s: OsrmStep): string {
+function stepInstruction(s: OsrmStep, next?: OsrmStep): string {
   const t = i18n.t.bind(i18n);
   const typ = s.maneuver.type;
   const mod = s.maneuver.modifier;
   const name = s.name?.trim();
-  if (typ === "arrive") return t("navigation.instructions.arrive");
+  // Shown while approaching the destination ("Dans 300 m — Arrivée à
+  // destination"); the engine speaks "Vous êtes arrivé" once actually there.
+  if (typ === "arrive") {
+    return t("navigation.instructions.arriveAhead", {
+      defaultValue: t("navigation.instructions.arrive"),
+    });
+  }
+  // Roundabouts: what the rider needs is the exit number and the road they
+  // leave on — not the ring's own name or a left/right hint.
+  const exit = s.maneuver.exit;
+  if (ROUNDABOUT_TYPES.has(typ) && Number.isFinite(exit) && (exit as number) > 0) {
+    const ordinal = t(`navigation.ordinal.${exit}`, { defaultValue: "" });
+    const base = ordinal
+      ? t("navigation.instructions.roundaboutExit", { ordinal })
+      : t("navigation.instructions.roundaboutExitN", { exit });
+    const exitRoad =
+      next && ROUNDABOUT_EXIT_TYPES.has(next.maneuver.type) ? next.name?.trim() : name;
+    const on = exitRoad ? t("navigation.instructions.on", { name: exitRoad }) : "";
+    return `${base}${on}`.replace(/\s+/g, " ").trim();
+  }
   if (typ === "depart") {
     return name
       ? t("navigation.instructions.departNamed", { name })
@@ -156,18 +181,23 @@ export async function fetchOsrmRouteVia(
   const legs: Array<{ distance: number; duration: number }> = [];
   for (const leg of rawLegs) {
     const legSteps = Array.isArray(leg?.steps) ? (leg.steps as OsrmStep[]) : [];
-    for (const s of legSteps) {
+    for (let si = 0; si < legSteps.length; si++) {
+      const s = legSteps[si];
       if (!s || !s.maneuver) continue;
       const loc =
         Array.isArray(s.maneuver.location) && s.maneuver.location.length >= 2
           ? s.maneuver.location
           : [0, 0];
-      steps.push({
-        instruction: stepInstruction(s),
+      const step: RouteStep = {
+        instruction: stepInstruction(s, legSteps[si + 1]),
         distanceMeters: Number.isFinite(s.distance) ? s.distance : 0,
         maneuverType: s.maneuver.type ?? "continue",
         location: [loc[1], loc[0]],
-      });
+      };
+      if (Number.isFinite(s.duration)) step.durationSeconds = s.duration;
+      if (s.maneuver.modifier) step.modifier = s.maneuver.modifier;
+      if (Number.isFinite(s.maneuver.exit)) step.exit = s.maneuver.exit;
+      steps.push(step);
     }
     legs.push({
       distance: Number.isFinite(leg?.distance) ? leg.distance : 0,
@@ -182,6 +212,9 @@ export async function fetchOsrmRouteVia(
       durationS = Math.round(distanceM / FOOT_SPEED_MPS);
       for (const leg of legs) {
         leg.duration = Math.round(leg.distance / FOOT_SPEED_MPS);
+      }
+      for (const step of steps) {
+        step.durationSeconds = step.distanceMeters / FOOT_SPEED_MPS;
       }
     }
     console.log(`[DURATION FOOT] ${durationS}s (${Math.round(durationS / 60)} min)`);
