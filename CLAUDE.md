@@ -13,6 +13,24 @@ guidance, reports, roadbooks, convoy mode.
 **Tech Stack**: React + Vite + TypeScript, Supabase (backend/DB/auth),
 Playwright (E2E), bun (package manager)
 
+## 🚨 GUARDRAIL : NO FEATURE DECONSTRUCTION
+
+Toute instruction à Lovable/Claude Code DOIT préserver les fonctionnalités
+live existantes. Clause explicite "DO NOT MODIFY" sur les features
+protégées, vérification avant/après. S'applique à tout, y compris l'usage
+des agents/skills ci-dessous — aucun agent ne doit "refactorer" ou
+"nettoyer" une feature en dehors de la tâche demandée.
+
+**Outillage `.claude/` (depuis ECC — github.com/affaan-m/ECC) :**
+- `.claude/agents/` — 72 subagents (review, sécurité, architecture...)
+- `.claude/skills/` — 328 skills réutilisables
+- `.claude/commands/` — 99 commandes
+- `.claude/settings.json` — 4 hooks actifs : `config-protection` (bloque la
+  modif de configs lint/format existantes), `block-no-verify` (bloque
+  `git commit --no-verify`), `doc-file-warning` et `check-console-log`
+  (avertissent sans bloquer). Reste des hooks ECC dans
+  `.claude/hooks-available/`, inactifs.
+
 ---
 
 ## Session Start Protocol ⚡
