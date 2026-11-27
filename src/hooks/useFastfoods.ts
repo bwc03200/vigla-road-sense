@@ -4,6 +4,7 @@ import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-quer
 import { getFastfoods } from "@/lib/fastfoods.functions";
 import { checkCache, storeCache } from "@/lib/fastfood-cache";
 import type { FastfoodPOI } from "@/types/fastfoods";
+import { dlog } from "@/lib/debug";
 
 
 export interface FastfoodBBox {
@@ -63,7 +64,7 @@ export function useFastfoods(
   }, [bboxKey]);
 
   useEffect(() => {
-    console.log("🍔 [BBOX]", { active, zoom, bbox });
+    dlog("🍔 [BBOX]", { active, zoom, bbox });
   }, [bboxKey, zoom, active, bbox]);
 
   // A new viewport is a fresh attempt budget.
@@ -97,16 +98,16 @@ export function useFastfoods(
           queryClient.setQueryData(["fastfoods", settledKey], quick.data);
         }
       }
-      console.log("🍔 [FETCH START]", settledKey, "zoom:", zoom);
+      dlog("🍔 [FETCH START]", settledKey, "zoom:", zoom);
       const res = await trackPoiFetch("RESTAURANTS", () =>
         getFastfoods({ data: { ...bbox!, zoom: Math.round(zoom) } }),
       );
       if (!res.ok) throw new Error(res.error);
-      console.log(`🍔 [RESTAURANTS_FOUND] ${res.data.length} POIs`);
+      dlog(`🍔 [RESTAURANTS_FOUND] ${res.data.length} POIs`);
       const pois = res.data as FastfoodPOI[];
       if (pois.length > 0) {
         storeCache(centerLat, centerLon, Math.round(zoom), pois);
-        console.log("🍔 [CACHE_STORED]", pois.length);
+        dlog("🍔 [CACHE_STORED]", pois.length);
       }
       setRetryCount(0);
       hasShownRef.current = true;
@@ -127,7 +128,7 @@ export function useFastfoods(
   useEffect(() => {
     if (!error || !active || retryCount >= MAX_RETRIES) return;
     const delay = Math.pow(2, retryCount) * 1000;
-    console.log("🍔 [AUTO-HEAL] Retrying in", delay, "ms");
+    dlog("🍔 [AUTO-HEAL] Retrying in", delay, "ms");
     retryTimeoutRef.current = setTimeout(() => {
       setRetryCount((n) => n + 1);
       void refetch();
@@ -142,7 +143,7 @@ export function useFastfoods(
   const isFailing = !!error && retryCount >= MAX_RETRIES;
 
   useEffect(() => {
-    console.log("🍔 [STATE]", {
+    dlog("🍔 [STATE]", {
       count: fastfoods.length,
       hasData,
       isFailing,
@@ -152,7 +153,7 @@ export function useFastfoods(
   }, [fastfoods.length, hasData, isFailing, retryCount, isLoading]);
 
   const retryManually = useCallback(() => {
-    console.log("🍔 [MANUAL RETRY]");
+    dlog("🍔 [MANUAL RETRY]");
     setRetryCount(0);
     void refetch();
   }, [refetch]);

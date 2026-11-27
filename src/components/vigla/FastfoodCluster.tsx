@@ -7,6 +7,7 @@ import "leaflet.markercluster/dist/MarkerCluster.Default.css";
 import { fastfoodIcon, fastfoodPopupHtml } from "@/components/vigla/FastfoodMarker";
 import type { FastfoodPOI } from "@/types/fastfoods";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
+import { dlog } from "@/lib/debug";
 
 
 /**
@@ -68,7 +69,7 @@ export function FastfoodCluster({
 
   useEffect(() => {
     const group = clusterRef.current;
-    console.log("🍔 [CLUSTER] pois:", pois.length, "zoom:", zoom, "group:", !!group);
+    dlog("🍔 [CLUSTER] pois:", pois.length, "zoom:", zoom, "group:", !!group);
     if (!group) return;
     const existing = markersRef.current;
     const next = new Map(pois.map((p) => [p.id, p]));
@@ -98,7 +99,7 @@ export function FastfoodCluster({
       // Tapping a marker opens the shared details sheet (same data as the chip).
       m.on("click", (ev: L.LeafletMouseEvent) => {
         L.DomEvent.stopPropagation(ev);
-        console.log("🍔 [MARKER TAPPED]", poi.name);
+        dlog("🍔 [MARKER TAPPED]", poi.name);
         m.closePopup();
         actionRef.current(poi);
       });
@@ -117,7 +118,7 @@ export function FastfoodCluster({
 
     }
     if (toAdd.length) group.addLayers(toAdd);
-    console.log("🍔 [CLUSTER] added:", toAdd.length, "removed:", toRemove.length, "total:", existing.size);
+    dlog("🍔 [CLUSTER] added:", toAdd.length, "removed:", toRemove.length, "total:", existing.size);
   }, [pois, zoom, dark]);
 
 

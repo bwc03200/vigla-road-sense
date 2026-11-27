@@ -12,6 +12,7 @@ import {
   type SavedTripRow,
 } from "@/lib/saved-trips";
 import { formatTripDate, formatTripDistance, formatTripDuration } from "@/lib/trip-history";
+import { dlog } from "@/lib/debug";
 
 export function TripHistoryList({
   userId,
@@ -30,7 +31,7 @@ export function TripHistoryList({
   }, [userId]);
 
   useEffect(() => {
-    console.log("🟢 [HISTORY MODAL OPENED]");
+    dlog("🟢 [HISTORY MODAL OPENED]");
     void refresh();
   }, [refresh]);
 
@@ -47,7 +48,7 @@ export function TripHistoryList({
       return;
     }
     setBusyId(trip.id);
-    console.log("🟢 [TRIP RECREATED: OSRM recalc]", `${trip.start_name} → ${trip.end_name}`);
+    dlog("🟢 [TRIP RECREATED: OSRM recalc]", `${trip.start_name} → ${trip.end_name}`);
     try {
       const stops = Array.isArray(trip.waypoints) ? trip.waypoints : [];
       const waypoints: RouteWaypoint[] = [
@@ -77,7 +78,7 @@ export function TripHistoryList({
       });
       onReplayed?.();
     } catch (error) {
-      console.log("🔴 [TRIP RECREATE FAILED]", error);
+      dlog("🔴 [TRIP RECREATE FAILED]", error);
       toast.error("Erreur calcul route");
     } finally {
       setBusyId(null);

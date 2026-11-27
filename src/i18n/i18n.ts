@@ -5,6 +5,7 @@ import en from "./locales/en.json";
 import nl from "./locales/nl.json";
 
 import { initialLanguage, LANGUAGE_POLICY_VERSION, SUPPORTED_LANGS, type Lang } from "./language-policy";
+import { dlog } from "@/lib/debug";
 export { SUPPORTED_LANGS, type Lang } from "./language-policy";
 
 if (!i18n.isInitialized) {
@@ -43,7 +44,7 @@ export function syncClientLocale() {
     lang = initialLanguage(localStorage.getItem("vigla:lang"), localStorage.getItem("vigla:lang:policy"));
   } catch { /* French remains available when storage is blocked. */ }
   setLanguage(lang);
-  console.log("🟢 [i18n] Langue de l’interface", { locale: lang });
+  dlog("🟢 [i18n] Langue de l’interface", { locale: lang });
 }
 
 export function currentLang(): Lang {

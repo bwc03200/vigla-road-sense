@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { dlog } from "@/lib/debug";
 
 /**
  * P11-E — Fuel prices from the free public dataset
@@ -17,6 +18,9 @@ import { toast } from "sonner";
  * - Adaptive timeout: ~2.5s in dense (urban) viewports, ~5s in rural ones.
  * - On timeout with no cache: graceful fallback toast "Tarifs indisponibles".
  */
+
+/** One warning per session, not one per screen mount (the planner remounts). */
+let priceToastShown = false;
 
 const CACHE_PREFIX = "vigla_essence_cache_";
 const LEGACY_CACHE_KEY = "vigla:fuel-prices-cache";
@@ -90,7 +94,7 @@ function readStaleAreaCache(key: string): AreaCache | null {
     const parsed = JSON.parse(raw) as AreaCache;
     if (!Array.isArray(parsed?.entries) || parsed.entries.length === 0) return null;
     // DO NOT validate TTL here — return ANY cache, even if 30+ days old
-    console.log(`⛽ [CACHE STALE HIT] Found ${parsed.entries.length} stale entries`);
+    dlog(`⛽ [CACHE STALE HIT] Found ${parsed.entries.length} stale entries`);
     return parsed;
   } catch (e) {
     console.warn("⛽ [CACHE READ ERROR]:", e);
@@ -236,7 +240,6 @@ export function useGasStationPrices(
   const [loading, setLoading] = useState(false);
   const [fetchedAt, setFetchedAt] = useState<number | null>(null);
   const requestedKeysRef = useRef<Set<string>>(new Set());
-  const timedOutToastShownRef = useRef(false);
   // GPS ticks move the centre by centimetres; rounding to ~1 km keeps the
   // effect deps stable so we don't re-query the API on every position update.
   const keyLat = center ? Math.round(center.lat * 100) / 100 : null;
@@ -254,7 +257,7 @@ export function useGasStationPrices(
       setEntries(cached.entries);
       setFetchedAt(cached.fetchedAt);
       const ageMin = Math.round((Date.now() - cached.fetchedAt) / 60000);
-      console.log(
+      dlog(
         `⛽ [CACHE HIT] ${cached.entries.length} prix depuis localStorage (age=${ageMin}min)`,
       );
       return;
@@ -281,7 +284,7 @@ export function useGasStationPrices(
     let cancelled = false;
     let fbAbort: AbortController | null = null;
     setLoading(true);
-    console.log(
+    dlog(
       "🟢 [API CALL: prix-carburants.gouv.fr]",
       RADIUS_KM,
       "km — timeout",
@@ -319,7 +322,7 @@ export function useGasStationPrices(
           .map(toEntry)
           .filter((e): e is FuelPriceEntry => e !== null);
         if (rows.length === 0) throw new Error("empty primary response");
-        console.log(`⛽ [FETCH OK:PRIMARY] ${rows.length} prix`);
+        dlog(`⛽ [FETCH OK:PRIMARY] ${rows.length} prix`);
         return rows;
       });
 
@@ -336,13 +339,13 @@ export function useGasStationPrices(
           .map(fallbackToEntry)
           .filter((e): e is FuelPriceEntry => e !== null);
         if (rows.length === 0) throw new Error("empty fallback response");
-        console.log(`⛽ [FETCH OK:FALLBACK v1] ${rows.length} prix`);
+        dlog(`⛽ [FETCH OK:FALLBACK v1] ${rows.length} prix`);
         return rows;
       });
 
     Promise.any([fromPrimary, fromFallback])
       .catch((err) => {
-        console.log("⛽ [FAIL:BOTH SOURCES]", String(err));
+        dlog("⛽ [FAIL:BOTH SOURCES]", String(err));
         return null;
       })
       .then((rows) => {
@@ -361,18 +364,18 @@ export function useGasStationPrices(
           return;
         }
         requestedKeysRef.current.delete(key);
-        console.log("⛽ [FAIL:ALL] prix indisponibles (primaire + fallback KO)");
+        dlog("⛽ [FAIL:ALL] prix indisponibles (primaire + fallback KO)");
         // 5️⃣ GRACEFUL FALLBACK — keep whatever cache we showed; otherwise
         // reuse a STALE cache (past TTL) before ever showing "indisponibles".
         const stale = readStaleAreaCache(key);
         if (stale) {
-          console.log("⛽ [CACHE STALE HIT]", stale.entries.length, "prix (cache expiré réutilisé)");
+          dlog("⛽ [CACHE STALE HIT]", stale.entries.length, "prix (cache expiré réutilisé)");
           setEntries(stale.entries);
           setFetchedAt(stale.fetchedAt);
           return;
         }
-        if (!legacy && !timedOutToastShownRef.current) {
-          timedOutToastShownRef.current = true;
+        if (!legacy && !priceToastShown) {
+          priceToastShown = true;
           toast.warning("Tarifs indisponibles pour cette région");
         }
       })
@@ -402,7 +405,7 @@ export function useGasStationPrices(
         }
       }
       if (!best) {
-        console.log("⛽ [P11-E] aucun prix proche pour", lat, lng, "(chargés:", entries.length, ")");
+        dlog("⛽ [P11-E] aucun prix proche pour", lat, lng, "(chargés:", entries.length, ")");
       }
       return best;
     },

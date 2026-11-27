@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useFootModeStore } from "@/lib/foot-mode-store";
 import { useVigla } from "@/lib/vigla-store";
 import { buildRouteState, fetchOsrmRouteVia, getRoutingProfile } from "@/lib/routing";
+import { dlog } from "@/lib/debug";
 
 /**
  * Recalculates the active route whenever the foot-mode toggle changes so the
@@ -20,8 +21,8 @@ export function useFootRouting() {
       return;
     }
 
-    console.log(`🚶 [FOOT MODE TOGGLE] isFootMode: ${isFootMode}`);
-    console.log(`[TOGGLE SUCCESS] isFootMode: ${isFootMode}`);
+    dlog(`🚶 [FOOT MODE TOGGLE] isFootMode: ${isFootMode}`);
+    dlog(`[TOGGLE SUCCESS] isFootMode: ${isFootMode}`);
 
     const { route, position, hazards, navigation, setRouteWithFootSteps } =
       useVigla.getState();
@@ -39,7 +40,7 @@ export function useFootRouting() {
       points.push([route.destination.lat, route.destination.lng]);
     }
 
-    console.log(`🚶 [FOOT MODE ROUTING] Recalculating route with profile: ${profile}`);
+    dlog(`🚶 [FOOT MODE ROUTING] Recalculating route with profile: ${profile}`);
 
     let cancelled = false;
     (async () => {
@@ -48,7 +49,7 @@ export function useFootRouting() {
         if (cancelled) return;
         const newRoute = buildRouteState(route.destination, result, hazards, waypoints);
         const footSteps = profile === "foot" ? newRoute.steps : [];
-        console.log(
+        dlog(
           `🚶 [FOOT MODE STEPS] Extracted ${footSteps.length} step(s) from OSRM (${profile})`,
         );
 
@@ -73,14 +74,14 @@ export function useFootRouting() {
         // Atomic: route + navigation + footModeSteps land in ONE setState so
         // footModeSteps can never disappear between renders.
         setRouteWithFootSteps(newRoute, nextNavigation, footSteps);
-        console.log(
+        dlog(
           `🚶 [FOOT MODE STATE] Atomic update — profile: ${newRoute.profile}, duration: ${newRoute.durationS}s, distance: ${newRoute.distanceM}m, steps: ${footSteps.length}`,
         );
-        console.log(
+        dlog(
           `[ROUTE STATE UPDATED] profile: ${newRoute.profile}, duration: ${newRoute.durationS}s, distance: ${newRoute.distanceM}m`,
         );
       } catch (error) {
-        console.log("🚶 [FOOT MODE ERROR] Recalculation failed:", error);
+        dlog("🚶 [FOOT MODE ERROR] Recalculation failed:", error);
       }
     })();
 

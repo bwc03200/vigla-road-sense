@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ViglaLogo } from "@/components/vigla/ViglaLogo";
+import { dlog } from "@/lib/debug";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
@@ -58,7 +59,7 @@ function AuthPage() {
           setSignupError("Le mot de passe doit contenir au moins 6 caractères.");
           return;
         }
-        console.log("[VIGLA inscription] Appel d’inscription", { emailPresent: Boolean(signupEmail), passwordPresent: Boolean(password) });
+        dlog("[VIGLA inscription] Appel d’inscription", { emailPresent: Boolean(signupEmail), passwordPresent: Boolean(password) });
         const { data, error } = await supabase.auth.signUp({
           email: signupEmail,
           password,

@@ -3,6 +3,7 @@ import { Fuel, Loader2, Navigation, X } from "lucide-react";
 import type { FuelPriceEntry } from "@/hooks/useGasStationPrices";
 import type { GasStation } from "@/types/vigla";
 import { formatDistance } from "@/lib/geo";
+import { dlog } from "@/lib/debug";
 
 function distanceM(aLat: number, aLng: number, bLat: number, bLng: number) {
   const R = 6371000;
@@ -69,24 +70,24 @@ export function GasStationPricePopup({
       : name;
 
   useEffect(() => {
-    console.log(`🟢 [POI TAP: ${name}]`);
-    console.log(
+    dlog(`🟢 [POI TAP: ${name}]`);
+    dlog(
       `🟢 [POPUP OPENED: nom+adresse+price+distance] ${name} | ${price?.name ?? "adresse n/a"} | ${
         price?.sp95 != null ? `${price.sp95.toFixed(2)}€/L` : "prix n/a"
       } | ${dist != null ? formatDistance(dist) : "distance n/a"}`,
     );
-    console.log("🟢 [ESSENCE POPUP OPENED]", name);
+    dlog("🟢 [ESSENCE POPUP OPENED]", name);
     if (price?.sp95 != null || price?.gazole != null) {
-      console.log(
+      dlog(
         `🟢 [PRICE LOADED: ${(price.sp95 ?? price.gazole)!.toFixed(2)}€/L]`,
         price.sp95 != null ? "Essence 95" : "Gazole",
       );
       if (price.updatedAt) {
         const h = Math.max(0, Math.round((Date.now() - price.updatedAt) / 3600000));
-        console.log(`🟢 [CACHE AGE: ${h}h]`);
+        dlog(`🟢 [CACHE AGE: ${h}h]`);
       }
     } else {
-      console.log("🟢 [PRICE LOADED: n/a]");
+      dlog("🟢 [PRICE LOADED: n/a]");
     }
   }, [station.id, price?.sp95, price?.gazole, price?.updatedAt, name]);
 
@@ -129,7 +130,7 @@ export function GasStationPricePopup({
           disabled={routing || !userPosition}
           onClick={() => {
             if (routing) return;
-            console.log("🚀 [P11-E] Créer itinéraire", {
+            dlog("🚀 [P11-E] Créer itinéraire", {
               station: name,
               lat: station.latitude,
               lng: station.longitude,

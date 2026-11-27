@@ -1,3 +1,4 @@
+import { dlog } from "@/lib/debug";
 /**
  * Parallel Overpass mirror racing.
  *
@@ -77,7 +78,7 @@ export async function raceOverpassMirrors({
         if (!Array.isArray(json.elements)) throw new Error("malformed response");
         const out = { json, mirror: host, ms: Date.now() - started } satisfies RaceOutcome;
         if ((json.elements?.length ?? 0) > 0) {
-          console.log(`🟢 [${label}] ${host} won in ${(out.ms / 1000).toFixed(1)}s`);
+          dlog(`🟢 [${label}] ${host} won in ${(out.ms / 1000).toFixed(1)}s`);
           finish(out);
         } else {
           emptyAnswer ??= out;
@@ -89,7 +90,7 @@ export async function raceOverpassMirrors({
         pending -= 1;
         if (pending === 0) {
           if (emptyAnswer) {
-            console.log(`🟡 [${label}] aucun résultat (réponse vide de ${emptyAnswer.mirror})`);
+            dlog(`🟡 [${label}] aucun résultat (réponse vide de ${emptyAnswer.mirror})`);
           }
           finish(emptyAnswer);
         }
@@ -102,7 +103,7 @@ export async function raceOverpassMirrors({
   // Some mirrors answer 500 to POST but serve GET fine (and vice versa).
   // One automatic retry with the other verb before declaring failure.
   if (method === "POST") {
-    console.log(`🔁 [${label}] POST échoué sur tous les miroirs — retry GET`);
+    dlog(`🔁 [${label}] POST échoué sur tous les miroirs — retry GET`);
     return raceOverpassMirrors({ endpoints, query, timeoutMs, method: "GET", label });
   }
   throw new Error(`overpass unreachable — ${failures.join(" | ")}`);

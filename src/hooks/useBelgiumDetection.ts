@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
+import { dlog } from "@/lib/debug";
 
 export type Country = "belgium" | "france" | "other";
 export type BeRegion = "flanders" | "wallonia" | "brussels";
@@ -35,7 +36,7 @@ export function useBelgiumDetection() {
     if (key === last.current) return;
     last.current = key;
     if (country !== "belgium" || !region) return;
-    console.log("🟢 Belgium: geolocation detected", { lat: position.lat, lng: position.lng, country, region });
+    dlog("🟢 Belgium: geolocation detected", { lat: position.lat, lng: position.lng, country, region });
 
   }, [position]);
 }

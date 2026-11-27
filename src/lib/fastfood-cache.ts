@@ -1,4 +1,5 @@
 import type { FastfoodPOI } from "@/types/fastfoods";
+import { dlog } from "@/lib/debug";
 
 interface CacheEntry {
   data: FastfoodPOI[];
@@ -29,19 +30,19 @@ export function checkCache(lat: number, lon: number, zoom: number): FastfoodPOI[
   const cached = fastFoodCache.get(key);
 
   if (cached && Date.now() - cached.timestamp < TTL_MS) {
-    console.log("✅ [CACHE HIT]", key);
+    dlog("✅ [CACHE HIT]", key);
     return cached.data;
   }
 
   if (cached) fastFoodCache.delete(key);
-  console.log("❌ [CACHE MISS]", key);
+  dlog("❌ [CACHE MISS]", key);
   return null;
 }
 
 export function storeCache(lat: number, lon: number, zoom: number, data: FastfoodPOI[]): void {
   const key = getCacheKey(lat, lon, zoom);
   fastFoodCache.set(key, { data, timestamp: Date.now() });
-  console.log("💾 [CACHE STORED]", key);
+  dlog("💾 [CACHE STORED]", key);
 }
 
 export function clearFastfoodCache(): void {

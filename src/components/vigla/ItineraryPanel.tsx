@@ -5,6 +5,7 @@ import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { haversine } from "@/lib/geo";
 import { WaypointRow } from "./WaypointRow";
 import { StepRow } from "./StepRow";
+import { dlog } from "@/lib/debug";
 
 
 function formatDistance(m: number) {
@@ -69,15 +70,15 @@ export function ItineraryPanel() {
   }, [position, route]);
 
   useEffect(() => {
-    console.log("🟢 [ITINERARY PANEL MOUNTED]");
+    dlog("🟢 [ITINERARY PANEL MOUNTED]");
   }, []);
 
   useEffect(() => {
     if (!route) return;
-    console.log("🟢 [WAYPOINTS RENDERED:", route.waypoints.length, "]");
+    dlog("🟢 [WAYPOINTS RENDERED:", route.waypoints.length, "]");
     const current = route.waypoints[currentIndex];
-    if (current) console.log("🟢 [CURRENT WAYPOINT:", current.name, "]");
-    console.log(
+    if (current) dlog("🟢 [CURRENT WAYPOINT:", current.name, "]");
+    dlog(
       "📋 [ITINERARY DISPLAYED] —",
       route.waypoints.length,
       "waypoints,",

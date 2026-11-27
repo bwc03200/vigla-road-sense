@@ -1,4 +1,5 @@
 import { raceOverpassMirrors } from "./overpass-race.server";
+import { dlog } from "@/lib/debug";
 /**
  * Server-side Overpass fetch for restaurant / food POIs.
  *
@@ -115,7 +116,7 @@ function pad(bbox: OverpassBBox): OverpassBBox {
       west: Math.min(out.west, cLon - r),
       east: Math.max(out.east, cLon + r),
     };
-    console.log("🍔 [SEARCH_BBOX_BY_ZOOM]", { zoom: bbox.zoom, radius: r, bbox: out });
+    dlog("🍔 [SEARCH_BBOX_BY_ZOOM]", { zoom: bbox.zoom, radius: r, bbox: out });
   }
 
   return out;
@@ -151,7 +152,7 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
     `nwr["amenity"~"${AMENITY_RE}"](${area});` +
     `nwr["cuisine"](${area});` +
     `);out center qt 600;`;
-  console.log("🍔 [OVERPASS_QUERY]", q);
+  dlog("🍔 [OVERPASS_QUERY]", q);
 
   const started = Date.now();
   const failures: string[] = [];
@@ -177,7 +178,7 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
           !seen.has(p.id) &&
           seen.add(p.id) !== undefined,
       );
-    console.log("🍔 [RESTAURANTS_FOUND]", {
+    dlog("🍔 [RESTAURANTS_FOUND]", {
       mirror,
       area,
       count: data.length,
@@ -196,7 +197,7 @@ export async function queryFastfoods(raw: OverpassBBox): Promise<FastfoodResult>
   // Nominatim, which serves the same OSM data through a different endpoint.
   const fallback = await nominatimFallback(bbox);
   if (fallback.length) {
-    console.log("🍔 [RESTAURANTS_FOUND] nominatim fallback", fallback.length);
+    dlog("🍔 [RESTAURANTS_FOUND] nominatim fallback", fallback.length);
     return { ok: true, data: fallback, fetchTime: Date.now() - started };
   }
 

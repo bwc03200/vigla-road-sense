@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type L from "leaflet";
+import { dlog } from "@/lib/debug";
 
 /**
  * Heading lock — rotates the Leaflet map panes so the direction of travel
@@ -40,7 +41,7 @@ export function useHeadingLock(
         easeMsRef.current = 1000;
         targetRef.current = 0;
         lastTargetAtRef.current = Date.now();
-        console.log("🧭 [NAV HEADING] GPS heading lost > 2s • smooth reset to 0°");
+        dlog("🧭 [NAV HEADING] GPS heading lost > 2s • smooth reset to 0°");
       }, 2000);
       return () => window.clearTimeout(timer);
     }

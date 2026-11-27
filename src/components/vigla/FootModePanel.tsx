@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Footprints } from "lucide-react";
 import { useVigla } from "@/lib/vigla-store";
 import { formatDistance } from "@/lib/geo";
+import { dlog } from "@/lib/debug";
 
 function formatCountdown(totalS: number): string {
   const s = Math.max(0, Math.round(totalS));
@@ -39,7 +40,7 @@ export function FootModePanel() {
   }, []);
 
   useEffect(() => {
-    console.log(
+    dlog(
       `🚶 [FOOT MODE PANEL] Countdown active • steps: ${footSteps.length}`,
     );
   }, [footSteps.length]);

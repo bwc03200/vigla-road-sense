@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { FastfoodPOI } from "@/types/fastfoods";
 import { haversine, formatDistance } from "@/lib/geo";
+import { dlog } from "@/lib/debug";
 
 interface SmartRestaurantsChipProps {
   /** POIs actually visible in the current viewport. */
@@ -44,17 +45,17 @@ export function SmartRestaurantsChip({
   const wasVisible = useRef(hasData);
 
   useEffect(() => {
-    console.log("🍔 [CHIP MOUNTED]");
-    return () => console.log("🍔 [CHIP UNMOUNTED]");
+    dlog("🍔 [CHIP MOUNTED]");
+    return () => dlog("🍔 [CHIP UNMOUNTED]");
   }, []);
 
   useEffect(() => {
-    console.log("🍔 [CHIP RENDER STATE]", { count, hasData, isLoading, isFailing });
+    dlog("🍔 [CHIP RENDER STATE]", { count, hasData, isLoading, isFailing });
   }, [count, hasData, isLoading, isFailing]);
 
   useEffect(() => {
     if (hasData !== wasVisible.current) {
-      console.log("🍔 [CHIP VISIBILITY]", { was: wasVisible.current, now: hasData, count });
+      dlog("🍔 [CHIP VISIBILITY]", { was: wasVisible.current, now: hasData, count });
       wasVisible.current = hasData;
     }
   }, [hasData, count]);
@@ -64,7 +65,7 @@ export function SmartRestaurantsChip({
   }, [hasData]);
 
   useEffect(() => {
-    if (hasData) console.log("🍔 [CHIP_RENDERED]", count);
+    if (hasData) dlog("🍔 [CHIP_RENDERED]", count);
   }, [hasData, count]);
 
   if (!hasData && !isFailing && !isLoading) return null;
@@ -98,7 +99,7 @@ export function SmartRestaurantsChip({
             onClick={() => {
               const next = !expanded;
               setExpanded(next);
-              console.log("🍔 [CHIP TOGGLED]", {
+              dlog("🍔 [CHIP TOGGLED]", {
                 state: next ? "expanded" : "collapsed",
                 restaurantCount: count,
                 names: pois.map((p) => p.name),
@@ -123,7 +124,7 @@ export function SmartRestaurantsChip({
                     <button
                       type="button"
                       onClick={() => {
-                        console.log("🍔 [CHIP RESTAURANT TAPPED]", {
+                        dlog("🍔 [CHIP RESTAURANT TAPPED]", {
                           name: poi.name,
                           lat: poi.latitude,
                           lon: poi.longitude,

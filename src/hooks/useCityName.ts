@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { haversine } from "@/lib/geo";
 import { fetchCityName } from "@/lib/city-name";
+import { dlog } from "@/lib/debug";
 
 /**
  * Reverse-geocodes the current GPS fix to a city name (Nominatim).
@@ -22,7 +23,7 @@ export function useCityName(lat: number | null | undefined, lng: number | null |
         const name = await fetchCityName(lat, lng);
         if (cancelled || !name) return;
         setCity(name);
-        console.log("🏙️ [CITY DETECTED]", { city: name, lat, lon: lng });
+        dlog("🏙️ [CITY DETECTED]", { city: name, lat, lon: lng });
       } catch (error) {
         console.error("❌ [CITY DETECTION ERROR]", error);
       }

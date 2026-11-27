@@ -2,6 +2,7 @@ import React, { createContext, useContext, useRef, useCallback, useEffect } from
 import { toast } from "sonner";
 import { useVigla } from "@/lib/vigla-store";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
+import { dlog } from "@/lib/debug";
 
 /**
  * P6 REWRITE — centralized polyline click handling.
@@ -82,12 +83,12 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
 
       if (!closestPoint || closestDist > HIT_RADIUS_PX) {
         if (closestDist !== Infinity) {
-          console.log("❌ [CLICK TOO FAR]", `${closestDist.toFixed(0)}px from polyline`);
+          dlog("❌ [CLICK TOO FAR]", `${closestDist.toFixed(0)}px from polyline`);
         }
         return null;
       }
 
-      console.log(
+      dlog(
         "📌 [CLOSEST POINT FOUND]",
         `dist: ${closestDist.toFixed(0)}px, lat: ${closestPoint.lat.toFixed(4)}, lng: ${closestPoint.lng.toFixed(4)}`,
       );
@@ -98,7 +99,7 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
 
   const addWaypointAtPoint = useCallback(
     (lat: number, lng: number) => {
-      console.log("✅ [WAYPOINT ADD ATTEMPT]", `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      dlog("✅ [WAYPOINT ADD ATTEMPT]", `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
 
       const { route, position } = useVigla.getState();
       if (!route || route.coords.length < 2) {
@@ -118,7 +119,7 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
 
       const index = (route.waypoints ?? []).filter((w) => w.type !== "destination").length + 1;
       const name = `Point ${index}`;
-      console.log("📍 [ROUTE UPDATE]", `waypoints: ${index}`);
+      dlog("📍 [ROUTE UPDATE]", `waypoints: ${index}`);
       busyRef.current = true;
 
       void addWaypoint({ name, lat, lng, type: "waypoint" })
@@ -130,7 +131,7 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
           const total = (useVigla.getState().route?.waypoints ?? []).filter(
             (w) => w.type !== "destination",
           ).length;
-          console.log("🎯 [WAYPOINT ADDED]", `Total waypoints: ${total}`);
+          dlog("🎯 [WAYPOINT ADDED]", `Total waypoints: ${total}`);
         })
         .finally(() => {
           busyRef.current = false;
@@ -144,13 +145,13 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
       document.removeEventListener("click", listenerFuncRef.current, true);
       listenerFuncRef.current = null;
       listenerRef.current = false;
-      console.log("🔊 [GLOBAL LISTENER DETACHED]");
+      dlog("🔊 [GLOBAL LISTENER DETACHED]");
     }
   }, []);
 
   const attachGlobalListener = useCallback(() => {
     if (listenerFuncRef.current) return;
-    console.log("🔊 [GLOBAL LISTENER ATTACHING]");
+    dlog("🔊 [GLOBAL LISTENER ATTACHING]");
 
     const handleMapClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -160,7 +161,7 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
 
       const closestPoint = getClosestPointOnPolyline(e.clientX, e.clientY);
       if (closestPoint) {
-        console.log(
+        dlog(
           "🎯 [POLYLINE CLICK DETECTED]",
           `lat: ${closestPoint.lat.toFixed(4)}, lng: ${closestPoint.lng.toFixed(4)}`,
         );
@@ -171,12 +172,12 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
     listenerFuncRef.current = handleMapClick;
     listenerRef.current = true;
     document.addEventListener("click", handleMapClick, true);
-    console.log("🔊 [GLOBAL LISTENER ATTACHED]");
+    dlog("🔊 [GLOBAL LISTENER ATTACHED]");
   }, [getClosestPointOnPolyline, addWaypointAtPoint]);
 
   const registerPolyline = useCallback(
     (coords: [number, number][]) => {
-      console.log("🗺️ [POLYLINE REGISTERED]", `${coords.length} points`);
+      dlog("🗺️ [POLYLINE REGISTERED]", `${coords.length} points`);
       polylineRef.current = coords;
       if (!listenerRef.current) attachGlobalListener();
     },
@@ -184,14 +185,14 @@ export function MapInteractionProvider({ children }: { children: React.ReactNode
   );
 
   const unregisterPolyline = useCallback(() => {
-    console.log("🗺️ [POLYLINE UNREGISTERED]");
+    dlog("🗺️ [POLYLINE UNREGISTERED]");
     polylineRef.current = null;
     detachGlobalListener();
   }, [detachGlobalListener]);
 
   const setMapRef = useCallback((mapInstance: LeafletMapLike | null) => {
     mapRef.current = mapInstance;
-    if (mapInstance) console.log("🗺️ [MAP INSTANCE REGISTERED]");
+    if (mapInstance) dlog("🗺️ [MAP INSTANCE REGISTERED]");
   }, []);
 
   useEffect(() => detachGlobalListener, [detachGlobalListener]);

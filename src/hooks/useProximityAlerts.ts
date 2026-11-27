@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useVigla } from "@/lib/vigla-store";
 import { haversine } from "@/lib/geo";
 import type { FastfoodBrand } from "@/types/fastfoods";
+import { dlog } from "@/lib/debug";
 
 /** Any POI eligible for a 300 m proximity alert (restaurants, fuel). */
 export interface ProximityPOI {
@@ -71,9 +72,9 @@ export function useProximityAlerts(pois: ProximityPOI[], enabled: boolean) {
       setAlert((current) => {
         if (current) {
           if (reason === "manual") {
-            console.log(`🚫 [POI DISMISSED] ${current.poi.name}`);
+            dlog(`🚫 [POI DISMISSED] ${current.poi.name}`);
           } else if (reason === "added") {
-            console.log(`📍 [POI ADDED TO ROUTE] ${current.poi.name}`);
+            dlog(`📍 [POI ADDED TO ROUTE] ${current.poi.name}`);
           }
         }
         return null;
@@ -88,10 +89,10 @@ export function useProximityAlerts(pois: ProximityPOI[], enabled: boolean) {
       seenRef.current.clear();
       clearTimer();
       setAlert(null);
-      console.log("🚫 [NAV MODE INACTIVE]");
+      dlog("🚫 [NAV MODE INACTIVE]");
       return;
     }
-    console.log("✅ [NAV MODE ACTIVE]");
+    dlog("✅ [NAV MODE ACTIVE]");
 
     const tick = () => {
       const position = useVigla.getState().position;
@@ -144,7 +145,7 @@ export function useProximityAlerts(pois: ProximityPOI[], enabled: boolean) {
         if (current) return current;
         seenRef.current.set(best!.poi.id, now);
         lastAlertAtRef.current = now;
-        console.log(
+        dlog(
           `${best!.poi.kind === "gas_station" ? "⛽" : "🍔"} [POI ALERT 300M] ${best!.poi.name} • ${Math.round(best!.distanceM)}m • Type: ${best!.poi.kind}`,
         );
         clearTimer();

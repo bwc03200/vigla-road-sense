@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useVigla } from "@/lib/vigla-store";
 import { buildRouteState, fetchOsrmRouteVia } from "@/lib/routing";
 import type { RouteWaypoint } from "@/types/vigla";
+import { dlog } from "@/lib/debug";
 
 export interface AddWaypointPayload {
   name: string;
@@ -34,13 +35,13 @@ function makeWaypointId(type: string) {
  */
 export function useRouteWaypoint() {
   const addWaypoint = useCallback(async (waypoint: AddWaypointPayload) => {
-    console.log("🍔 [ROUTE] Adding waypoint:", waypoint);
+    dlog("🍔 [ROUTE] Adding waypoint:", waypoint);
     const { position, route, hazards, navigation, setRoute, setNavigation } =
       useVigla.getState();
 
     if (!position) {
       toast.error("Position GPS indisponible");
-      console.log("🍔 [ROUTE ERROR]", "no-position");
+      dlog("🍔 [ROUTE ERROR]", "no-position");
       return null;
     }
 
@@ -127,13 +128,13 @@ export function useRouteWaypoint() {
 
       const eta = formatEta(newRoute.durationS);
       const distance = formatDistance(newRoute.distanceM);
-      console.log("🍔 [ROUTE SUCCESS]", { eta, distance, waypoints: nextWaypoints });
+      dlog("🍔 [ROUTE SUCCESS]", { eta, distance, waypoints: nextWaypoints });
       toast.success(`✅ ${waypoint.name} ajouté`, {
         description: `ETA: ${eta} • ${distance}`,
       });
       return { eta, distance, route: newRoute };
     } catch (error) {
-      console.log("🍔 [ROUTE ERROR]", error);
+      dlog("🍔 [ROUTE ERROR]", error);
       toast.error("Erreur", {
         description: "Impossible d'ajouter le waypoint",
       });
@@ -149,7 +150,7 @@ export function useRouteWaypoint() {
     const { position, hazards, setRoute } = useVigla.getState();
     if (!position) {
       toast.error("Position GPS indisponible");
-      console.log(`❌ [QUICK ROUTE FAILED] — POI: ${poi.name}, error: no-gps, modal remains open`);
+      dlog(`❌ [QUICK ROUTE FAILED] — POI: ${poi.name}, error: no-gps, modal remains open`);
       return null;
     }
 
@@ -174,13 +175,13 @@ export function useRouteWaypoint() {
 
       const eta = formatEta(newRoute.durationS);
       const distance = formatDistance(newRoute.distanceM);
-      console.log(
+      dlog(
         `🚀 [QUICK ROUTE TO POI] — POI: ${poi.name}, distance: ${distance}, destination set, navigation started`,
       );
       toast.success(`🚀 ${poi.name}`, { description: `ETA: ${eta} • ${distance}` });
       return { eta, distance, route: newRoute };
     } catch (error) {
-      console.log(`❌ [QUICK ROUTE FAILED] — POI: ${poi.name}, error: ${String(error)}`);
+      dlog(`❌ [QUICK ROUTE FAILED] — POI: ${poi.name}, error: ${String(error)}`);
       toast.error("Erreur", { description: "Itinéraire indisponible" });
       return null;
     }
@@ -261,15 +262,15 @@ export function useRouteWaypoint() {
 
       const eta = formatEta(newRoute.durationS);
       const distance = formatDistance(newRoute.distanceM);
-      console.log("🟢 [ROUTE UPDATED:", nextWaypoints.length, "waypoints ]");
-      console.log("🗑️ [WAYPOINT REMOVED]", { removed: removed.name, eta, distance });
+      dlog("🟢 [ROUTE UPDATED:", nextWaypoints.length, "waypoints ]");
+      dlog("🗑️ [WAYPOINT REMOVED]", { removed: removed.name, eta, distance });
 
       toast.success(`🗑️ ${removed.name} supprimé`, {
         description: `ETA: ${eta} • ${distance}`,
       });
       return { eta, distance, route: newRoute };
     } catch (error) {
-      console.log("🗑️ [WAYPOINT REMOVE ERROR]", error);
+      dlog("🗑️ [WAYPOINT REMOVE ERROR]", error);
       toast.error("Erreur", { description: "Recalcul impossible" });
       return null;
     }

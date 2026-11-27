@@ -40,6 +40,7 @@ import { useFootRouting } from "@/hooks/useFootRouting";
 import { FootModePanel } from "@/components/vigla/FootModePanel";
 
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
+import { dlog } from "@/lib/debug";
 
 
 
@@ -597,15 +598,15 @@ export function MapView() {
 
   useEffect(() => {
     if (!showFastfoods) {
-      console.log("🍔 [LAYER] FastFoods layer hidden");
+      dlog("🍔 [LAYER] FastFoods layer hidden");
     } else if (visibleFastfoods.length === 0) {
-      console.log("🍔 [LAYER] enabled but 0 POIs in viewport", {
+      dlog("🍔 [LAYER] enabled but 0 POIs in viewport", {
         fetched: fastfoods.length,
         zoom: viewport?.zoom,
         bbox: signalBBox,
       });
     } else {
-      console.log("🍔 [LAYER] rendering", visibleFastfoods.length, "markers");
+      dlog("🍔 [LAYER] rendering", visibleFastfoods.length, "markers");
     }
   }, [showFastfoods, visibleFastfoods.length, fastfoods.length, viewport?.zoom, signalBBox]);
 
@@ -707,7 +708,7 @@ export function MapView() {
   }, [showFastfoods]);
   const openPoiPreview = useCallback(
     (poi: (typeof inViewFastfoods)[number]) => {
-      console.log("🍔 [PREVIEW OPEN]", poi.name);
+      dlog("🍔 [PREVIEW OPEN]", poi.name);
       setPoiPreview(poi);
     },
     [],
@@ -719,7 +720,7 @@ export function MapView() {
         0,
         list.findIndex((p) => p.id === poi.id),
       );
-      console.log("🍔 [POPUP OPEN]", poi.name, `${index + 1}/${list.length}`);
+      dlog("🍔 [POPUP OPEN]", poi.name, `${index + 1}/${list.length}`);
       setPoiPopup({ list, index });
     },
     [inViewFastfoods],
@@ -739,19 +740,19 @@ export function MapView() {
       }
 
       // Immediate feedback: button disabled + spinner visible.
-      console.log("🟢 [BUTTON DISABLED]");
-      console.log("🟢 [SPINNER VISIBLE]");
+      dlog("🟢 [BUTTON DISABLED]");
+      dlog("🟢 [SPINNER VISIBLE]");
 
       const t0 = performance.now();
-      console.log(`🟢 [OSRM REQUEST START] ${label}`);
+      dlog(`🟢 [OSRM REQUEST START] ${label}`);
 
       // Slow-network toast if OSRM takes longer than 2.5 s.
       const slowThresholdMs = 2500;
       let slowToastShown = false;
       const slowTimeout = setTimeout(() => {
         slowToastShown = true;
-        console.log(`🟢 [OSRM SLOW: >${(slowThresholdMs / 1000).toFixed(1)}s]`);
-        console.log("🟢 [TOAST: Calcul en cours...]");
+        dlog(`🟢 [OSRM SLOW: >${(slowThresholdMs / 1000).toFixed(1)}s]`);
+        dlog("🟢 [TOAST: Calcul en cours...]");
         toast.info("Calcul en cours...", {
           description: "Nous préparons votre itinéraire",
           duration: 4000,
@@ -762,18 +763,18 @@ export function MapView() {
         // 🟢 [FOOT MODE ROUTING START]
         const isFootModeNow = useVigla.getState().isFootMode;
         const profile = isFootModeNow ? "foot" : "car";
-        console.log(`🗺️ [OSRM PROFILE] ${profile.toUpperCase()}`);
+        dlog(`🗺️ [OSRM PROFILE] ${profile.toUpperCase()}`);
         const result = await fetchOsrmRoute(from.lat, from.lng, lat, lng, undefined, {
           profile,
         });
         clearTimeout(slowTimeout);
 
         const elapsed = (performance.now() - t0) / 1000;
-        console.log(`🟢 [OSRM RESPONSE OK: ${elapsed.toFixed(1)}s]`);
+        dlog(`🟢 [OSRM RESPONSE OK: ${elapsed.toFixed(1)}s]`);
         if (elapsed > slowThresholdMs / 1000 && !slowToastShown) {
-          console.log(`🟢 [OSRM SLOW: >${(slowThresholdMs / 1000).toFixed(1)}s]`);
+          dlog(`🟢 [OSRM SLOW: >${(slowThresholdMs / 1000).toFixed(1)}s]`);
         }
-        console.log(
+        dlog(
           `🟢 [OSRM OK] ${label} — ${(result.distanceM / 1000).toFixed(1)}km / ${Math.round(result.durationS / 60)}min / ${result.coords.length} pts`,
         );
         const state = buildRouteState(
@@ -793,7 +794,7 @@ export function MapView() {
         // 🟢 [EXTRACT FOOT STEPS]
         const footSteps = isFootModeNow ? state.steps : [];
         if (isFootModeNow) {
-          console.log(`📋 [FOOT STEPS EXTRACTED] ${footSteps.length} steps`);
+          dlog(`📋 [FOOT STEPS EXTRACTED] ${footSteps.length} steps`);
         }
         // 🟢 [ATOMIC STATE WRITE] — single setState so route, navigation and
         // footModeSteps can never be read out of sync by FootModePanel.
@@ -817,12 +818,12 @@ export function MapView() {
             alertsReceived: 0,
           },
         });
-        console.log("🟢 [ATOMIC STATE WRITE] route + navigation + footModeSteps synced");
-        console.log(
+        dlog("🟢 [ATOMIC STATE WRITE] route + navigation + footModeSteps synced");
+        dlog(
           `🟢 [ROUTE CREATED] destination: ${label}, waypoints: ${state.waypoints.length}`,
         );
-        console.log("🟢 [NAV BANNER CREATED] navigation active — banner visible");
-        console.log("🟢 [TOAST: Route créée ✓]");
+        dlog("🟢 [NAV BANNER CREATED] navigation active — banner visible");
+        dlog("🟢 [TOAST: Route créée ✓]");
         toast.success("Route créée ✓", {
           description: `${label} • ${(state.distanceM / 1000).toFixed(1)} km • ${Math.round(state.durationS / 60)} min`,
         });
@@ -831,7 +832,7 @@ export function MapView() {
       } catch (err) {
         clearTimeout(slowTimeout);
         console.error("🔴 [ROUTE FAILED]", err);
-        console.log("🟢 [TOAST: Erreur calcul]");
+        dlog("🟢 [TOAST: Erreur calcul]");
         toast.error("Erreur calcul", {
           description: t("route.serviceUnavailable"),
         });
@@ -856,7 +857,7 @@ export function MapView() {
         animate: true,
         duration: 0.5,
       });
-      console.log("🎯 [POI TAPPED]", poi.name);
+      dlog("🎯 [POI TAPPED]", poi.name);
 
       setPoiRouting(true);
       try {
@@ -897,7 +898,7 @@ export function MapView() {
       setTapPoint([lat, lng]);
       const index = (current.waypoints ?? []).filter((w) => w.type !== "destination").length + 1;
       const name = `Point ${index}`;
-      console.log(
+      dlog(
         `🎯 [P6] Route tap → lat=${lat.toFixed(5)}, lng=${lng.toFixed(5)}, creating "${name}"`,
       );
       toast.info("🎯 Tap détecté sur la route", { duration: 1200 });
@@ -908,7 +909,7 @@ export function MapView() {
           const total =
             (useVigla.getState().route?.waypoints ?? []).filter((w) => w.type !== "destination")
               .length;
-          console.log(`✅ [P6] Waypoint added. Total intermediate waypoints: ${total}`, res);
+          dlog(`✅ [P6] Waypoint added. Total intermediate waypoints: ${total}`, res);
           toast.success(`📍 ${name} ajouté ! Total : ${total}`, {
             description: `ETA: ${res.eta} • ${res.distance}`,
             duration: 2500,
@@ -963,7 +964,7 @@ export function MapView() {
   const handleGasStationSelect = useCallback(
     async (station: { id: string; latitude: number; longitude: number; name: string | null }) => {
       const label = station.name ?? t("layers.gasStations");
-      console.log("🎯 [POI TAPPED]", label);
+      dlog("🎯 [POI TAPPED]", label);
       setPoiRouting(true);
       try {
         const state = await startRouteToPoi(station.latitude, station.longitude, label);
@@ -978,7 +979,7 @@ export function MapView() {
 
   // P11-E: tapping a fuel marker opens the price popup instead of routing.
   const openGasPopup = useCallback((station: GasStation) => {
-    console.log("⛽ [P11-E] station sélectionnée", station.name ?? station.id);
+    dlog("⛽ [P11-E] station sélectionnée", station.name ?? station.id);
     setGasPopup(station);
   }, []);
 

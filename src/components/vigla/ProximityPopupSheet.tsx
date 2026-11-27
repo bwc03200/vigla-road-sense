@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Loader2, Plus, X } from "lucide-react";
 import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import type { ProximityAlert } from "@/hooks/useProximityAlerts";
+import { dlog } from "@/lib/debug";
 
 interface Props {
   alert: ProximityAlert;
@@ -34,7 +35,7 @@ export function ProximityPopupSheet({
   const typeLabel = poi.kind === "gas_station" ? "Station essence" : "Restaurant";
 
   useEffect(() => {
-    console.log(
+    dlog(
       `🟢 [POPUP AUTO-SHOW: ${(autoCloseMs / 1000).toFixed(1)}s] ${poi.name}${priceLabel ? ` • ${priceLabel}` : ""}`,
     );
     // Log once per POI shown.
@@ -58,7 +59,7 @@ export function ProximityPopupSheet({
       type: poi.kind === "gas_station" ? "waypoint" : "restaurant",
       brand: poi.brand,
     });
-    console.log(`📍 [POI ADDED] ${poi.name} added to route`);
+    dlog(`📍 [POI ADDED] ${poi.name} added to route`);
     setAdding(false);
     onDismiss("added");
   };

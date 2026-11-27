@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { GUEST_USER_ID, isGuestUser, readGuestData, writeGuestData } from "./access-mode";
 import { loadTrips, deleteTrip } from "./trip-history";
+import { dlog } from "@/lib/debug";
 
 export interface SavedTripRow {
   id: string;
@@ -52,7 +53,7 @@ export async function listSavedTrips(userId: string): Promise<SavedTripRow[]> {
     .order("is_favorite", { ascending: false })
     .order("created_at", { ascending: false });
   if (error) {
-    console.log("🔴 [TRIP HISTORY LOAD ERROR]", error.message);
+    dlog("🔴 [TRIP HISTORY LOAD ERROR]", error.message);
     return [];
   }
   return (data ?? []) as unknown as SavedTripRow[];
@@ -70,7 +71,7 @@ export async function insertSavedTrip(userId: string, trip: NewSavedTrip) {
     writeGuestData("saved-trips", [row, ...readGuestData<SavedTripRow[]>("saved-trips", [])].slice(0, 50));
     return true;
   }
-  console.log("🟢 [TRIP RECORDED:", `${trip.startName} → ${trip.endName}]`);
+  dlog("🟢 [TRIP RECORDED:", `${trip.startName} → ${trip.endName}]`);
   const { error } = await supabase.from("saved_trips").insert({
     user_id: userId,
     start_name: trip.startName,
@@ -84,10 +85,10 @@ export async function insertSavedTrip(userId: string, trip: NewSavedTrip) {
     duration_s: trip.durationS,
   });
   if (error) {
-    console.log("🔴 [DB INSERT FAILED]", error.message);
+    dlog("🔴 [DB INSERT FAILED]", error.message);
     return false;
   }
-  console.log("🟢 [DB INSERT: Supabase]");
+  dlog("🟢 [DB INSERT: Supabase]");
   return true;
 }
 
@@ -101,10 +102,10 @@ export async function toggleSavedTripFavorite(id: string, next: boolean) {
     .update({ is_favorite: next })
     .eq("id", id);
   if (error) {
-    console.log("🔴 [FAVORITE TOGGLE FAILED]", error.message);
+    dlog("🔴 [FAVORITE TOGGLE FAILED]", error.message);
     return false;
   }
-  console.log("🟢 [FAVORITE TOGGLED]", next ? "on" : "off");
+  dlog("🟢 [FAVORITE TOGGLED]", next ? "on" : "off");
   return true;
 }
 
@@ -120,9 +121,9 @@ export async function deleteSavedTrip(id: string) {
   }
   const { error } = await supabase.from("saved_trips").delete().eq("id", id);
   if (error) {
-    console.log("🔴 [TRIP DELETE FAILED]", error.message);
+    dlog("🔴 [TRIP DELETE FAILED]", error.message);
     return false;
   }
-  console.log("🟢 [TRIP DELETED]", id);
+  dlog("🟢 [TRIP DELETED]", id);
   return true;
 }

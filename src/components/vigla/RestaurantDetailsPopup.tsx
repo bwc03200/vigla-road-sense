@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { BRAND_COLORS, BRAND_ICONS, type FastfoodPOI } from "@/types/fastfoods";
 import { haversine, formatDistance } from "@/lib/geo";
+import { dlog } from "@/lib/debug";
 
 interface Details {
   address?: string;
@@ -97,7 +98,7 @@ export function RestaurantDetailsPopup({
 
   const go = (delta: number) => {
     const next = (index + delta + pois.length) % pois.length;
-    console.log("🍔 [POPUP NAV]", { from: pois[index]?.name, to: pois[next]?.name });
+    dlog("🍔 [POPUP NAV]", { from: pois[index]?.name, to: pois[next]?.name });
     onIndexChange(next);
   };
 

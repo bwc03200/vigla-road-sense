@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { RouteWaypoint } from "@/types/vigla";
+import { dlog } from "@/lib/debug";
 
 interface WaypointRowProps {
   index: number;
@@ -65,7 +66,7 @@ export function WaypointRow({
     startXRef.current = null;
     const shouldReveal = offset <= -SWIPE_TRIGGER_PX;
     if (shouldReveal && !revealed) {
-      console.log("🟢 [SWIPE-DELETE DETECTED]", waypoint.name);
+      dlog("🟢 [SWIPE-DELETE DETECTED]", waypoint.name);
       navigator.vibrate?.(15);
     }
     setRevealed(shouldReveal);
@@ -79,7 +80,7 @@ export function WaypointRow({
       return;
     }
     setDeleting(true);
-    console.log("🟢 [OSRM RECALC START]", `removing ${waypoint.name}`);
+    dlog("🟢 [OSRM RECALC START]", `removing ${waypoint.name}`);
     await onDelete(waypoint.id);
     setDeleting(false);
     setRevealed(false);

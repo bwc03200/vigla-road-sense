@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
 import { formatDistance } from "@/lib/geo";
 import { useStreetName } from "@/hooks/useStreetName";
+import { dlog } from "@/lib/debug";
 
 /**
  * Compact blue navigation banner (top-left): current street + remaining
@@ -22,7 +23,7 @@ export function NavigationBannerBlue() {
     const now = Date.now();
     if (now - lastLogRef.current < 2000) return;
     lastLogRef.current = now;
-    console.log(
+    dlog(
       `🧭 [NAV BANNER] Street: ${street ?? "inconnu"} • Distance: ${(distanceM / 1000).toFixed(1)}km • ETA: ${etaMin}min`,
     );
   }, [navigation, street, distanceM, etaMin]);

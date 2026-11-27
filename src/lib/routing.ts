@@ -2,6 +2,7 @@ import type { HazardReport, RouteState, RouteStep } from "@/types/vigla";
 import { distanceToPolyline } from "./geo";
 import i18n from "@/i18n/i18n";
 import { useFootModeStore } from "@/lib/foot-mode-store";
+import { dlog } from "@/lib/debug";
 
 const ROUTE_HAZARD_RADIUS_M = 500;
 
@@ -129,7 +130,7 @@ async function fetchOsrmRaw(
   signal?: AbortSignal,
 ): Promise<Response> {
   const url = `https://router.project-osrm.org/route/v1/${osrmProfile}/${path}?overview=full&geometries=geojson&steps=true`;
-  console.log(`[OSRM REQUEST] /route/v1/${osrmProfile}/${path.slice(0, 80)}…`);
+  dlog(`[OSRM REQUEST] /route/v1/${osrmProfile}/${path.slice(0, 80)}…`);
   return fetch(url, { signal });
 }
 
@@ -142,7 +143,7 @@ export async function fetchOsrmRouteVia(
   if (points.length < 2) throw new Error("no-route");
   const path = points.map(([lat, lng]) => `${lng},${lat}`).join(";");
   const profile = options?.profile ?? getRoutingProfile();
-  console.log(
+  dlog(
     profile === "foot"
       ? "[FOOT MODE ROUTING] Profile changed to foot"
       : "[FOOT MODE OFF] Profile back to car",
@@ -154,7 +155,7 @@ export async function fetchOsrmRouteVia(
     // The public OSRM demo server only serves the "driving" profile. Fall back
     // to it and scale the duration to walking speed so foot mode still works
     // without surfacing network errors.
-    console.log("[FOOT MODE ROUTING] Foot profile unavailable, estimating from car geometry");
+    dlog("[FOOT MODE ROUTING] Foot profile unavailable, estimating from car geometry");
     res = await fetchOsrmRaw("driving", path, signal);
     footEstimated = true;
   }
@@ -217,11 +218,11 @@ export async function fetchOsrmRouteVia(
         step.durationSeconds = step.distanceMeters / FOOT_SPEED_MPS;
       }
     }
-    console.log(`[DURATION FOOT] ${durationS}s (${Math.round(durationS / 60)} min)`);
+    dlog(`[DURATION FOOT] ${durationS}s (${Math.round(durationS / 60)} min)`);
   } else {
-    console.log(`[DURATION CAR] ${durationS}s (${Math.round(durationS / 60)} min)`);
+    dlog(`[DURATION CAR] ${durationS}s (${Math.round(durationS / 60)} min)`);
   }
-  console.log(`[DISTANCE] ${Math.round(distanceM)}m`);
+  dlog(`[DISTANCE] ${Math.round(distanceM)}m`);
   return {
     coords,
     distanceM,
@@ -270,7 +271,7 @@ export function buildRouteState(
     // the car geometry, only the duration differs).
     route.footDurationS = result.durationS;
     route.footDistanceM = result.distanceM;
-    console.log(
+    dlog(
       `[ROUTE STATE UPDATED] footDuration: ${route.footDurationS}s, footDistance: ${route.footDistanceM}m set`,
     );
   }
