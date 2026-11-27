@@ -38,6 +38,28 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks-active/scripts/watch/check-setup.sh\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks-active/scripts/superpowers/session-start\"",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   }
 }

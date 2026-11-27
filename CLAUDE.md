@@ -31,6 +31,30 @@ des agents/skills ci-dessous — aucun agent ne doit "refactorer" ou
   (avertissent sans bloquer). Reste des hooks ECC dans
   `.claude/hooks-available/`, inactifs.
 
+**Skill `watch` (depuis claude-video — github.com/bradautomates/claude-video, MIT) :**
+- `.claude/skills/watch/` — donne à Claude la capacité de "regarder" une vidéo
+  (URL YouTube/TikTok/Vimeo ou fichier local) : téléchargement, extraction de
+  frames, transcription, puis analyse par Claude.
+- Deux moteurs : `gemini` (clé gratuite sur https://aistudio.google.com/apikey)
+  ou `local` (ffmpeg + yt-dlp + WhisperX/Groq/OpenAI en fallback). Prérequis :
+  Python 3.10+, ffmpeg/ffprobe, yt-dlp.
+- Hook `SessionStart` associé (lecture seule, toujours exit 0, n'avertit que).
+- N'auto-génère PAS de skill permanent à partir d'une vidéo — analyse ponctuelle.
+
+**Skills `superpowers` (depuis obra/superpowers — github.com/obra/superpowers,
+MIT, Jesse Vincent) :**
+- 15 skills dans `.claude/skills/` : `brainstorming`, `writing-plans`,
+  `executing-plans`, `test-driven-development`, `systematic-debugging`,
+  `using-superpowers`, `writing-skills`, `subagent-driven-development`,
+  `dispatching-parallel-agents`, `using-git-worktrees`,
+  `finishing-a-development-branch`, `requesting-code-review`,
+  `receiving-code-review`, `verification-before-completion`,
+  `diagnosing-superpowers`. Méthodes de travail (planification, TDD, debug
+  systématique, code review) — complète les skills ECC, pas de conflit.
+- Hook `SessionStart` associé (lecture seule, exit 0) : peut ne pas injecter
+  le contexte automatiquement hors installation plugin officielle — les
+  skills restent utilisables via l'outil Skill dans tous les cas.
+
 ---
 
 ## Session Start Protocol ⚡
