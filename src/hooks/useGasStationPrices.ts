@@ -21,6 +21,7 @@ import { toast } from "sonner";
 const CACHE_PREFIX = "vigla_essence_cache_";
 const LEGACY_CACHE_KEY = "vigla:fuel-prices-cache";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1h MAX — never show stale fuel prices
+const PRICE_TIMEOUT_MS = 4000; // hard budget per source, both run in parallel
 const RADIUS_KM = 25;
 const LIMIT = 300;
 const API =
@@ -126,23 +127,6 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number) {
   const h =
     Math.sin(dLat / 2) ** 2 + Math.cos(la1) * Math.cos(la2) * Math.sin(dLng / 2) ** 2;
   return 2 * R * Math.asin(Math.sqrt(h));
-}
-
-/**
- * Adaptive timeout from the visible bbox, tuned to match radar fetch
- * reactivity: 1.5s in dense urban viewports, 2.5s MAX in rural ones.
- * No endless waiting — popup prices appear in ~1-2s like other POI layers.
- */
-function getAdaptiveTimeout(bbox: FuelBBox | null): number {
-  // BASELINE: radars appear in ~1500 ms. Fuel prices must never feel slower.
-  if (!bbox) return 1500;
-  const area = Math.abs(bbox.north - bbox.south) * Math.abs(bbox.east - bbox.west);
-  // < ~0.05°² ≈ zoomed-in city block level → dense; larger → rural
-  const t = area < 0.05 ? 1500 : 2500;
-  console.log(
-    `⛽ [TIMEOUT BASELINE] Radars ~1500ms → gas timeout ${t}ms (${area < 0.05 ? "dense" : "rural"})`,
-  );
-  return t;
 }
 
 /**
@@ -257,7 +241,7 @@ export function useGasStationPrices(
   // effect deps stable so we don't re-query the API on every position update.
   const keyLat = center ? Math.round(center.lat * 100) / 100 : null;
   const keyLng = center ? Math.round(center.lng * 100) / 100 : null;
-  const timeoutMs = getAdaptiveTimeout(bbox);
+  const timeoutMs = PRICE_TIMEOUT_MS;
 
   useEffect(() => {
     if (!enabled || keyLat === null || keyLng === null) return;
@@ -305,63 +289,67 @@ export function useGasStationPrices(
       "ms",
     );
 
-    // 3️⃣ ADAPTIVE TIMEOUT — no infinite waiting, UX stays fast everywhere.
+    // 3️⃣ PARALLEL RACE — primary (data.economie.gouv.fr) and fallback
+    // (api.prix-carburants) start together; the first valid answer wins.
+    // Each has its own controller and a generous budget: prices are additive,
+    // so a slow answer is still better than none (the old 1.5–2.5 s cut-off
+    // aborted both sources and no price ever showed).
     const controller = new AbortController();
-    const timer = window.setTimeout(() => controller.abort(), timeoutMs);
+    const fbController = new AbortController();
+    fbAbort = fbController;
+    const timer = window.setTimeout(() => {
+      controller.abort();
+      fbController.abort();
+    }, PRICE_TIMEOUT_MS);
 
-    fetch(url, { headers: { Accept: "application/json" }, signal: controller.signal })
+    const fbUrl =
+      `${FALLBACK_API}?limit=${LIMIT}` +
+      `&where=${encodeURIComponent(`within_distance(geom, ${geomLiteral}, ${RADIUS_KM}km)`)}`;
+
+    const fromPrimary = fetch(url, {
+      headers: { Accept: "application/json" },
+      signal: controller.signal,
+    })
       .then((r) => {
         if (!r.ok) throw new Error(`HTTP ${r.status}`);
         return r.json() as Promise<{ results?: ApiRecord[] }>;
       })
       .then((data) => {
-        if (cancelled) return null;
         const rows = (data.results ?? [])
           .map(toEntry)
           .filter((e): e is FuelPriceEntry => e !== null);
         if (rows.length === 0) throw new Error("empty primary response");
-        console.log(
-          `⛽ [FETCH OK:PRIMARY] ${rows.length} prix (${timeoutMs}ms budget)`,
-        );
+        console.log(`⛽ [FETCH OK:PRIMARY] ${rows.length} prix`);
         return rows;
+      });
+
+    const fromFallback = fetch(fbUrl, {
+      headers: { Accept: "application/json" },
+      signal: fbController.signal,
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json() as Promise<{ results?: FallbackRecord[] }>;
       })
-      .catch(async (primaryErr) => {
-        // 3️⃣-bis FALLBACK SOURCE — legacy flux-instantané dataset (v1).
-        if (cancelled) return null;
-        console.log(
-          "⛽ [FAIL:PRIMARY] essai fallback v1 →",
-          primaryErr instanceof DOMException && primaryErr.name === "AbortError"
-            ? `timeout ${timeoutMs}ms`
-            : String(primaryErr),
-        );
-        const fbUrl =
-          `${FALLBACK_API}?limit=${LIMIT}` +
-          `&where=${encodeURIComponent(
-            `within_distance(geom, ${geomLiteral}, ${RADIUS_KM}km)`,
-          )}`;
-        try {
-          // Fresh controller + own timeout: the primary's controller is already
-          // aborted when its budget ran out, so reusing it failed the fallback
-          // instantly and the prices never showed.
-          const fbController = new AbortController();
-          fbAbort = fbController;
-          const fbTimer = window.setTimeout(() => fbController.abort(), timeoutMs);
-          const r = await fetch(fbUrl, {
-            headers: { Accept: "application/json" },
-            signal: fbController.signal,
-          }).finally(() => window.clearTimeout(fbTimer));
-          if (!r.ok) throw new Error(`HTTP ${r.status}`);
-          const data = (await r.json()) as { results?: FallbackRecord[] };
-          const rows = (data.results ?? [])
-            .map(fallbackToEntry)
-            .filter((e): e is FuelPriceEntry => e !== null);
-          if (rows.length === 0) return null;
-          console.log(`⛽ [FETCH OK:FALLBACK v1] ${rows.length} prix`);
-          return rows;
-        } catch (fbErr) {
-          console.log("⛽ [FAIL:FALLBACK]", String(fbErr));
-          return null;
-        }
+      .then((data) => {
+        const rows = (data.results ?? [])
+          .map(fallbackToEntry)
+          .filter((e): e is FuelPriceEntry => e !== null);
+        if (rows.length === 0) throw new Error("empty fallback response");
+        console.log(`⛽ [FETCH OK:FALLBACK v1] ${rows.length} prix`);
+        return rows;
+      });
+
+    Promise.any([fromPrimary, fromFallback])
+      .catch((err) => {
+        console.log("⛽ [FAIL:BOTH SOURCES]", String(err));
+        return null;
+      })
+      .then((rows) => {
+        // Winner found: stop the loser's request too.
+        controller.abort();
+        fbController.abort();
+        return rows;
       })
       .then((rows) => {
         if (cancelled) return;
@@ -399,7 +387,7 @@ export function useGasStationPrices(
       controller.abort();
       fbAbort?.abort();
     };
-  }, [enabled, keyLat, keyLng, timeoutMs]);
+  }, [enabled, keyLat, keyLng]);
 
   /** Nearest price record within 500 m of a fuel POI (coordinate-level match). */
   const findPrice = useCallback(

@@ -26,7 +26,7 @@ const ENDPOINTS = [
   "https://overpass.osm.ch/api/interpreter",
 ];
 
-const MIRROR_TIMEOUT_MS = 9000;
+const MIRROR_TIMEOUT_MS = 4000;
 
 export async function queryGasStations(bbox: FuelBBox): Promise<FuelNode[]> {
   const b = `${bbox.south},${bbox.west},${bbox.north},${bbox.east}`;
