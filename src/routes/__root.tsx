@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import startup from "@/assets/vigla-apple-splash.png.asset.json";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { MapInteractionProvider } from "../context/MapInteractionContext";
 import { syncClientLocale } from "../i18n/i18n";
@@ -114,7 +113,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "apple-touch-icon", href: "/icons/icon-192.png", sizes: "192x192" },
       {
         rel: "apple-touch-startup-image",
-        href: startup.url,
+        href: "/icons/apple-splash-1170x2532.png",
         media: "(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3)",
       },
     ],
