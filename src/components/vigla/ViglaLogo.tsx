@@ -1,9 +1,8 @@
 import { useTranslation } from "react-i18next";
 import logo from "@/assets/vigla-logo.png.asset.json";
-import icon from "@/assets/vigla-icon-180.png.asset.json";
 
 export function ViglaLogo({ full = false, className = "" }: { full?: boolean; className?: string }) {
-  return <img src={full ? logo.url : icon.url} alt="VIGLA Road Sense" width={full ? 1024 : 48} height={full ? 1024 : 48} className={`shrink-0 object-contain ${full ? "h-auto w-full" : "h-12 w-12 rounded-lg"} ${className}`} />;
+  return <img src={full ? logo.url : "/icons/icon-192.png"} alt="VIGLA Road Sense" width={full ? 1024 : 48} height={full ? 1024 : 48} className={`shrink-0 object-contain ${full ? "h-auto w-full" : "h-12 w-12 rounded-lg"} ${className}`} />;
 }
 
 export function ViglaSplash() {
