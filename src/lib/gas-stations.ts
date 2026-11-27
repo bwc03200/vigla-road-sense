@@ -43,12 +43,30 @@ function covers(outer: FuelBBox | null, inner: FuelBBox): boolean {
   );
 }
 
+/**
+ * Small box (~3 km) around the centre of `bbox`: a much lighter Overpass query,
+ * so the stations next to the driver can appear first, before the full view.
+ */
+export function nearBBox(bbox: FuelBBox, half = 0.03): FuelBBox {
+  const lat = (bbox.north + bbox.south) / 2;
+  const lng = (bbox.east + bbox.west) / 2;
+  return {
+    south: Math.max(bbox.south, lat - half),
+    north: Math.min(bbox.north, lat + half),
+    west: Math.max(bbox.west, lng - half),
+    east: Math.min(bbox.east, lng + half),
+  };
+}
+
 /** Throttled Overpass fetch for amenity=fuel POIs inside `bbox`. */
-export async function fetchGasStations(bbox: FuelBBox): Promise<GasStation[] | null> {
+export async function fetchGasStations(
+  bbox: FuelBBox,
+  opts: { bypassThrottle?: boolean } = {},
+): Promise<GasStation[] | null> {
   if (inFlight) return null;
   if (covers(lastBBox, bbox)) return loadCachedGasStations()?.stations ?? [];
   const now = Date.now();
-  if (now - lastRequestAt < MIN_INTERVAL_MS) return null;
+  if (!opts.bypassThrottle && now - lastRequestAt < MIN_INTERVAL_MS) return null;
 
   lastRequestAt = now;
   inFlight = true;

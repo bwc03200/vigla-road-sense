@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useVigla } from "@/lib/vigla-store";
-import { fetchGasStations, loadCachedGasStations, type FuelBBox } from "@/lib/gas-stations";
+import { fetchGasStations, loadCachedGasStations, nearBBox, type FuelBBox } from "@/lib/gas-stations";
 
 /** Below this zoom we don't query Overpass for fuel stations. */
 export const MIN_ZOOM_FOR_GAS_STATIONS = 10;
@@ -29,7 +29,14 @@ export function useGasStations(bbox: FuelBBox | null, zoom: number, enabled: boo
         console.log("🟢 Fuel stations: hidden", { zoom: z, minZoom: MIN_ZOOM_FOR_GAS_STATIONS, filterActive: on });
         return;
       }
-      const rows = await fetchGasStations(b);
+      // Nothing on screen yet: fetch a small box around the driver first so the
+      // nearby stations show in ~1-2 s, then the full view replaces them.
+      const empty = useVigla.getState().gasStations.length === 0;
+      if (empty) {
+        const quick = await fetchGasStations(nearBBox(b), { bypassThrottle: true });
+        if (!cancelled && quick?.length) setGasStations(quick.slice(0, FUEL_MARKER_CAP));
+      }
+      const rows = await fetchGasStations(b, { bypassThrottle: empty });
       if (!cancelled && rows) {
         const capped = rows.slice(0, FUEL_MARKER_CAP);
         console.log("🟢 Fuel stations: visible at zoom", { zoom: z, cap: FUEL_MARKER_CAP, count: capped.length, bounds: b });
