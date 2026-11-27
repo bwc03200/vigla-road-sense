@@ -1,5 +1,7 @@
 {
-  "brand": { "tagline": "Drive informed, drive with peace of mind" },
+  "brand": {
+    "tagline": "Drive informed, drive with peace of mind"
+  },
   "common": {
     "cancel": "Cancel",
     "close": "Close",
@@ -128,7 +130,13 @@
     "hazardsSuffix": " · {{n}} hazard(s)",
     "duration": "Duration",
     "distance": "Distance",
-    "onFoot": "On foot"
+    "onFoot": "On foot",
+    "stops": {
+      "title": "Stops along the route",
+      "searching": "Searching… {{pct}}%",
+      "none": "No stop within 400 m of the route",
+      "add": "Add this stop"
+    }
   },
   "generator": {
     "quickRide": "Quick Ride",

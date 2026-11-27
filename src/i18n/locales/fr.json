@@ -1,5 +1,7 @@
 {
-  "brand": { "tagline": "Roulez informé, roulez serein" },
+  "brand": {
+    "tagline": "Roulez informé, roulez serein"
+  },
   "common": {
     "cancel": "Annuler",
     "close": "Fermer",
@@ -128,7 +130,13 @@
     "hazardsSuffix": " · {{n}} zone(s) de danger",
     "duration": "Durée",
     "distance": "Distance",
-    "onFoot": "À pied"
+    "onFoot": "À pied",
+    "stops": {
+      "title": "Arrêts sur le trajet",
+      "searching": "Recherche… {{pct}} %",
+      "none": "Aucun arrêt à moins de 400 m du trajet",
+      "add": "Ajouter cet arrêt"
+    }
   },
   "generator": {
     "quickRide": "Quick Ride",

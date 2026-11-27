@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigation, X, Flag, Loader2, SignalLow } from "lucide-react";
+import { Navigation, X, Flag, Loader2, SignalLow, Fuel, UtensilsCrossed, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TopBar } from "@/components/vigla/TopBar";
 import {
@@ -16,6 +16,8 @@ import { ManeuverIcon } from "@/components/vigla/NavigationHUD";
 import { savePreferences } from "@/hooks/usePreferences";
 import { useVigla } from "@/lib/vigla-store";
 import { useNavigationEngine } from "@/hooks/useNavigationEngine";
+import { useRouteStops } from "@/hooks/useRouteStops";
+import { useRouteWaypoint } from "@/hooks/useRouteWaypoint";
 import { formatDistance } from "@/lib/geo";
 import { useHudInset } from "@/lib/hud-insets";
 import type { ActiveNavigation } from "@/types/vigla";
@@ -53,6 +55,8 @@ export function StartTripBar() {
   const cardRef = useRef<HTMLDivElement | null>(null);
   const visible = !!route && !navigation;
   useHudInset(cardRef, "bottom", visible);
+  const { stops, loading: stopsLoading, progress: stopsProgress } = useRouteStops(visible);
+  const { addWaypoint } = useRouteWaypoint();
 
   if (!route || navigation) return null;
 
@@ -101,6 +105,54 @@ export function StartTripBar() {
                 t("route.hazardsSuffix", { n: route.hazardIds.length })}
             </div>
           </div>
+        </div>
+        <div className="mb-3">
+          <div className="mb-1.5 text-xs font-semibold text-slate-700">
+            {t("route.stops.title")}
+            {stopsLoading && (
+              <span className="ml-2 font-normal text-slate-500">
+                {t("route.stops.searching", { pct: Math.round(stopsProgress * 100) })}
+              </span>
+            )}
+          </div>
+          {stops.length === 0 ? (
+            !stopsLoading && (
+              <div className="text-xs text-slate-500">{t("route.stops.none")}</div>
+            )
+          ) : (
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {stops.map((stop) => {
+                const Icon = stop.kind === "fuel" ? Fuel : UtensilsCrossed;
+                return (
+                  <div
+                    key={stop.id}
+                    className="flex shrink-0 items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1.5 pl-2.5 pr-1.5 text-xs text-slate-800"
+                  >
+                    <Icon className="h-3.5 w-3.5 text-orange-600" aria-hidden />
+                    <span className="max-w-[9rem] truncate font-medium">{stop.name}</span>
+                    <span className="tabular-nums text-slate-500">
+                      {(stop.alongM / 1000).toFixed(1)} {t("common.km")}
+                    </span>
+                    <button
+                      type="button"
+                      aria-label={t("route.stops.add")}
+                      className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-white"
+                      onClick={() =>
+                        void addWaypoint({
+                          name: stop.name,
+                          lat: stop.lat,
+                          lng: stop.lng,
+                          type: stop.kind === "fuel" ? "waypoint" : "restaurant",
+                        })
+                      }
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" className="h-12 flex-1" onClick={() => setRoute(null)}>

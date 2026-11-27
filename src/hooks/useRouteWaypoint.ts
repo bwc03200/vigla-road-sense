@@ -4,6 +4,7 @@ import { useVigla } from "@/lib/vigla-store";
 import { buildRouteState, fetchOsrmRouteVia } from "@/lib/routing";
 import type { RouteWaypoint } from "@/types/vigla";
 import { dlog } from "@/lib/debug";
+import { projectOnPolyline } from "@/lib/geo";
 
 export interface AddWaypointPayload {
   name: string;
@@ -85,6 +86,15 @@ export function useRouteWaypoint() {
             newWaypoint,
             ...baseWaypoints.slice(destIndex),
           ];
+        }
+        // Stops are kept in the order the road passes them, so a stop added
+        // later on the motorway never sends the route back to an earlier exit.
+        if (route && route.coords.length > 1) {
+          const along = (w: RouteWaypoint) =>
+            projectOnPolyline(w.lat, w.lon, route.coords).distanceAlongM;
+          const stops = nextWaypoints.filter((w) => w.type !== "destination");
+          const dest = nextWaypoints.filter((w) => w.type === "destination");
+          nextWaypoints = [...stops.sort((a, b) => along(a) - along(b)), ...dest];
         }
       }
 

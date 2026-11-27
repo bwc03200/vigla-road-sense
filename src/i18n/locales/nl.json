@@ -130,7 +130,13 @@
     "hazardsSuffix": " · {{n}} gevarenzone(s)",
     "duration": "Duur",
     "distance": "Afstand",
-    "onFoot": "Te voet"
+    "onFoot": "Te voet",
+    "stops": {
+      "title": "Stops langs de route",
+      "searching": "Zoeken… {{pct}}%",
+      "none": "Geen stop binnen 400 m van de route",
+      "add": "Deze stop toevoegen"
+    }
   },
   "generator": {
     "quickRide": "Snelle rit",
