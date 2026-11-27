@@ -1,6 +1,6 @@
 import { trackPoiFetch } from "@/lib/poi-timing";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getFastfoods } from "@/lib/fastfoods.functions";
 import { checkCache, storeCache } from "@/lib/fastfood-cache";
 import type { FastfoodPOI } from "@/types/fastfoods";
@@ -17,6 +17,18 @@ export interface FastfoodBBox {
 export const MIN_ZOOM_FOR_FASTFOODS = 11;
 
 const MAX_RETRIES = 3;
+
+/** Small box (~3 km) around the centre of the viewport, for a fast first answer. */
+function nearBBox(b: FastfoodBBox, half = 0.03): FastfoodBBox {
+  const lat = (b.north + b.south) / 2;
+  const lng = (b.east + b.west) / 2;
+  return {
+    south: Math.max(b.south, lat - half),
+    north: Math.min(b.north, lat + half),
+    west: Math.max(b.west, lng - half),
+    east: Math.min(b.east, lng + half),
+  };
+}
 
 /** Round the bbox so tiny GPS-driven viewport shifts don't refetch constantly. */
 function keyOf(b: FastfoodBBox): string {
@@ -46,7 +58,7 @@ export function useFastfoods(
   // and Overpass answers 429 (rate limit) when we hammer it like that.
   const [settledKey, setSettledKey] = useState(bboxKey);
   useEffect(() => {
-    const id = setTimeout(() => setSettledKey(bboxKey), 700);
+    const id = setTimeout(() => setSettledKey(bboxKey), 300);
     return () => clearTimeout(id);
   }, [bboxKey]);
 
@@ -59,6 +71,9 @@ export function useFastfoods(
     setRetryCount(0);
   }, [bboxKey]);
 
+  const queryClient = useQueryClient();
+  const hasShownRef = useRef(false);
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["fastfoods", settledKey],
     queryFn: async () => {
@@ -68,7 +83,19 @@ export function useFastfoods(
       // An empty cache entry must never block discovery — refetch instead.
       if (cached && cached.length > 0) {
         setRetryCount(0);
+        hasShownRef.current = true;
         return cached;
+      }
+      // First load: a small box around the driver is queried first so the
+      // nearby restaurants appear in ~1-2 s; the full view replaces them.
+      if (!hasShownRef.current) {
+        const quick = await getFastfoods({
+          data: { ...nearBBox(bbox!), zoom: Math.round(zoom) },
+        });
+        if (quick.ok && quick.data.length > 0) {
+          hasShownRef.current = true;
+          queryClient.setQueryData(["fastfoods", settledKey], quick.data);
+        }
       }
       console.log("🍔 [FETCH START]", settledKey, "zoom:", zoom);
       const res = await trackPoiFetch("RESTAURANTS", () =>
@@ -82,6 +109,7 @@ export function useFastfoods(
         console.log("🍔 [CACHE_STORED]", pois.length);
       }
       setRetryCount(0);
+      hasShownRef.current = true;
       return pois;
     },
 

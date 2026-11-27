@@ -55,7 +55,7 @@ const OVERPASS_HEADERS: Record<string, string> = {
 };
 
 /** Per-mirror budget: fail fast instead of stalling the whole lookup. */
-const MIRROR_TIMEOUT_MS = 15000;
+const MIRROR_TIMEOUT_MS = 6000;
 
 const BRAND_RE = "McDonald's|KFC|Burger King|Subway|Quick";
 const AMENITY_RE = "restaurant|fast_food|cafe|pub|bar";
