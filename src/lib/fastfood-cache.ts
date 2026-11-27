@@ -8,6 +8,29 @@ interface CacheEntry {
 
 const TTL_MS = 30 * 60 * 1000;
 const fastFoodCache = new Map<string, CacheEntry>();
+const STORE_KEY = "vigla:fastfood-cache";
+const MAX_PERSISTED = 30;
+
+/** Survives an app reload: the same commute area shows its restaurants at once. */
+function readPersisted(): Record<string, CacheEntry> {
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    return raw ? (JSON.parse(raw) as Record<string, CacheEntry>) : {};
+  } catch {
+    return {};
+  }
+}
+
+function writePersisted(all: Record<string, CacheEntry>): void {
+  try {
+    const kept = Object.entries(all)
+      .sort((a, b) => b[1].timestamp - a[1].timestamp)
+      .slice(0, MAX_PERSISTED);
+    localStorage.setItem(STORE_KEY, JSON.stringify(Object.fromEntries(kept)));
+  } catch {
+    /* quota or private mode: memory cache still works */
+  }
+}
 
 /**
  * Zoom bucket: POIs are fetched for the whole padded viewport, so nearby
@@ -27,7 +50,14 @@ export function getCacheKey(lat: number, lon: number, zoom: number): string {
 
 export function checkCache(lat: number, lon: number, zoom: number): FastfoodPOI[] | null {
   const key = getCacheKey(lat, lon, zoom);
-  const cached = fastFoodCache.get(key);
+  let cached = fastFoodCache.get(key);
+  if (!cached) {
+    const persisted = readPersisted()[key];
+    if (persisted) {
+      cached = persisted;
+      fastFoodCache.set(key, persisted);
+    }
+  }
 
   if (cached && Date.now() - cached.timestamp < TTL_MS) {
     dlog("✅ [CACHE HIT]", key);
@@ -41,10 +71,17 @@ export function checkCache(lat: number, lon: number, zoom: number): FastfoodPOI[
 
 export function storeCache(lat: number, lon: number, zoom: number, data: FastfoodPOI[]): void {
   const key = getCacheKey(lat, lon, zoom);
-  fastFoodCache.set(key, { data, timestamp: Date.now() });
+  const entry = { data, timestamp: Date.now() };
+  fastFoodCache.set(key, entry);
+  writePersisted({ ...readPersisted(), [key]: entry });
   dlog("💾 [CACHE STORED]", key);
 }
 
 export function clearFastfoodCache(): void {
   fastFoodCache.clear();
+  try {
+    localStorage.removeItem(STORE_KEY);
+  } catch {
+    /* ignore */
+  }
 }

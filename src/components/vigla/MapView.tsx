@@ -208,10 +208,10 @@ function AutoResumeFollow({ following, onResume }: { following: boolean; onResum
   const map = useMap();
   useEffect(() => {
     if (following) return;
-    let timer = window.setTimeout(onResume, 10_000);
+    let timer = window.setTimeout(onResume, 30_000);
     const rearm = () => {
       window.clearTimeout(timer);
-      timer = window.setTimeout(onResume, 10_000);
+      timer = window.setTimeout(onResume, 30_000);
     };
     map.on("dragstart zoomstart", rearm);
     return () => {
