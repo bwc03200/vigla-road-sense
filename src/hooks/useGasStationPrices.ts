@@ -295,6 +295,7 @@ export function useGasStationPrices(
       `&order_by=${encodeURIComponent(`distance(geom, ${geomLiteral})`)}`;
 
     let cancelled = false;
+    let fbAbort: AbortController | null = null;
     setLoading(true);
     console.log(
       "🟢 [API CALL: prix-carburants.gouv.fr]",
@@ -339,10 +340,16 @@ export function useGasStationPrices(
             `within_distance(geom, ${geomLiteral}, ${RADIUS_KM}km)`,
           )}`;
         try {
+          // Fresh controller + own timeout: the primary's controller is already
+          // aborted when its budget ran out, so reusing it failed the fallback
+          // instantly and the prices never showed.
+          const fbController = new AbortController();
+          fbAbort = fbController;
+          const fbTimer = window.setTimeout(() => fbController.abort(), timeoutMs);
           const r = await fetch(fbUrl, {
             headers: { Accept: "application/json" },
-            signal: controller.signal,
-          });
+            signal: fbController.signal,
+          }).finally(() => window.clearTimeout(fbTimer));
           if (!r.ok) throw new Error(`HTTP ${r.status}`);
           const data = (await r.json()) as { results?: FallbackRecord[] };
           const rows = (data.results ?? [])
@@ -390,6 +397,7 @@ export function useGasStationPrices(
       cancelled = true;
       window.clearTimeout(timer);
       controller.abort();
+      fbAbort?.abort();
     };
   }, [enabled, keyLat, keyLng, timeoutMs]);
 

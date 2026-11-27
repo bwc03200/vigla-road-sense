@@ -4,7 +4,7 @@ import { getGasStations } from "@/lib/gas-stations.functions";
 import type { GasStation } from "@/types/vigla";
 
 const CACHE_KEY = "vigla:gas-stations-cache";
-const MIN_INTERVAL_MS = 6000;
+const MIN_INTERVAL_MS = 1500;
 
 export interface FuelBBox {
   south: number;

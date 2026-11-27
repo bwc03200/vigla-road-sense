@@ -35,71 +35,69 @@ export async function raceOverpassMirrors({
   const controllers = endpoints.map(() => new AbortController());
   const abortAll = () => controllers.forEach((c) => c.abort());
 
-  const attempts = endpoints.map(async (url, i) => {
-    const host = new URL(url).host;
-    const controller = controllers[i]!;
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    try {
-      const res =
-        method === "POST"
-          ? await fetch(url, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                "User-Agent": "VIGLA/1.0",
-                Accept: "application/json",
-              },
-              body: new URLSearchParams({ data: query }).toString(),
-              signal: controller.signal,
-            })
-          : await fetch(`${url}?data=${encodeURIComponent(query)}`, {
-              method: "GET",
-              headers: { "User-Agent": "VIGLA/1.0", Accept: "application/json" },
-              signal: controller.signal,
-            });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = (await res.json()) as { elements?: unknown[] };
-      // An empty `elements` array is a VALID answer (no POI in this bbox) —
-      // treating it as a failure made whole layers error out.
-      if (!Array.isArray(json.elements)) throw new Error("malformed response");
-      return { json, mirror: host, ms: Date.now() - started } satisfies RaceOutcome;
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : String(err);
-      failures.push(`${host}: ${msg}`);
-      throw new Error(msg);
-    } finally {
-      clearTimeout(timer);
-    }
+  // First NON-EMPTY answer wins and returns at once: we no longer wait for the
+  // slowest mirror (which used to fix the latency at its full timeout). An
+  // empty `elements` array is only used when no mirror had data, once all of
+  // them have settled.
+  const outcome = await new Promise<RaceOutcome | null>((resolve) => {
+    let pending = endpoints.length;
+    let emptyAnswer: RaceOutcome | null = null;
+    let done = false;
+    const finish = (value: RaceOutcome | null) => {
+      if (done) return;
+      done = true;
+      abortAll();
+      resolve(value);
+    };
+
+    endpoints.forEach(async (url, i) => {
+      const host = new URL(url).host;
+      const controller = controllers[i]!;
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const res =
+          method === "POST"
+            ? await fetch(url, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/x-www-form-urlencoded",
+                  "User-Agent": "VIGLA/1.0",
+                  Accept: "application/json",
+                },
+                body: new URLSearchParams({ data: query }).toString(),
+                signal: controller.signal,
+              })
+            : await fetch(`${url}?data=${encodeURIComponent(query)}`, {
+                method: "GET",
+                headers: { "User-Agent": "VIGLA/1.0", Accept: "application/json" },
+                signal: controller.signal,
+              });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = (await res.json()) as { elements?: unknown[] };
+        if (!Array.isArray(json.elements)) throw new Error("malformed response");
+        const out = { json, mirror: host, ms: Date.now() - started } satisfies RaceOutcome;
+        if ((json.elements?.length ?? 0) > 0) {
+          console.log(`🟢 [${label}] ${host} won in ${(out.ms / 1000).toFixed(1)}s`);
+          finish(out);
+        } else {
+          emptyAnswer ??= out;
+        }
+      } catch (err) {
+        failures.push(`${host}: ${err instanceof Error ? err.message : String(err)}`);
+      } finally {
+        clearTimeout(timer);
+        pending -= 1;
+        if (pending === 0) {
+          if (emptyAnswer) {
+            console.log(`🟡 [${label}] aucun résultat (réponse vide de ${emptyAnswer.mirror})`);
+          }
+          finish(emptyAnswer);
+        }
+      }
+    });
   });
 
-  // A mirror can answer 200 with an EMPTY `elements` array while another has
-  // the data (observed on overpass.osm.ch for amenity=fuel). Racing blindly
-  // let that empty answer win and the layer looked broken. So: wait for every
-  // mirror, then pick the FIRST NON-EMPTY answer; an empty answer is only used
-  // when every mirror either failed or came back empty.
-  const settled = await Promise.allSettled(attempts);
-  abortAll();
-
-  const successes: RaceOutcome[] = [];
-  for (let i = 0; i < settled.length; i++) {
-    const result = settled[i];
-    if (result.status === "fulfilled") successes.push(result.value);
-    // failures already logged in attempts
-  }
-
-  // First non-empty response wins.
-  const winner = successes.find((s) => (s.json.elements?.length ?? 0) > 0);
-  if (winner) {
-    console.log(`🟢 [${label}] ${winner.mirror} won in ${(winner.ms / 1000).toFixed(1)}s`);
-    return winner;
-  }
-
-  // Every mirror succeeded but returned empty elements: valid "no POI here".
-  if (successes.length > 0) {
-    const fallback = successes[0];
-    console.log(`🟡 [${label}] aucun résultat (réponse vide de ${fallback.mirror})`);
-    return fallback;
-  }
+  if (outcome) return outcome;
 
   // Some mirrors answer 500 to POST but serve GET fine (and vice versa).
   // One automatic retry with the other verb before declaring failure.
