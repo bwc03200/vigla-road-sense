@@ -16,17 +16,19 @@
   ],
   "icons": [
     {
-      "src": "/__l5e/assets-v1/72978e36-e2df-42da-9b6f-9913c342b645/vigla-icon-192.png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/21ee36d1-07be-43a7-bdfd-f610ca05b6cb/vigla-icon-512.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/__l5e/assets-v1/21ee36d1-07be-43a7-bdfd-f610ca05b6cb/vigla-icon-512.png",
+      "src": "/icons/icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
